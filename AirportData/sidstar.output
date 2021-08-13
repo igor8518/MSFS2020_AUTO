@@ -1,0 +1,273 @@
+Terminals unused in grammar
+
+   RIGHT
+   TURN
+   N260
+   N261
+   N262
+   APPROACHES
+   APPROACH
+   N265
+   N266
+   N267
+   N268
+   N269
+   N271
+   SIDS
+   SID1
+   ENDSIDS
+   STARS
+   STAR
+   ENDSTARS
+   RNWS
+   RNW
+   RNWNUM
+   ENDRNWS
+   N286
+   N287
+   FROM
+   N289
+   ATORABOVE
+   ATORBELOW
+   N292
+   N293
+   N297
+   N298
+   TO
+   INTERCEPT
+   UNTIL
+   N302
+   N303
+   N304
+   N305
+   N306
+   N307
+   N308
+   N309
+   DIRECT
+   RADIAL
+   SPEED
+   TRK
+
+
+State 9 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: EVALUATE1 $end
+
+    1 EVALUATE1: EXPR
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL VAL DIGIE VAL VAL
+    3         | FIXPOINT FIXPOINT
+
+    4 EXPR: FIXES FIXPOINT ENDFIXES
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+RIGHT (258)
+TURN (259)
+N260 (260)
+N261 (261)
+N262 (262)
+APPROACHES (263)
+APPROACH (264)
+N265 (265)
+N266 (266)
+N267 (267)
+N268 (268)
+N269 (269)
+FIXES (270) 4
+N271 (271)
+ENDFIXES (272) 4
+SIDS (273)
+SID1 (274)
+ENDSIDS (275)
+STARS (276)
+STAR (277)
+ENDSTARS (278)
+RNWS (279)
+RNW (280)
+RNWNUM (281)
+ENDRNWS (282)
+NAMEROUTE (283) 2
+FIX (284) 2
+VAL (285) 2
+N286 (286)
+N287 (287)
+FROM (288)
+N289 (289)
+ATORABOVE (290)
+ATORBELOW (291)
+N292 (292)
+N293 (293)
+LATLON (294) 2
+DIGIN (295) 2
+DIGIE (296) 2
+N297 (297)
+N298 (298)
+TO (299)
+INTERCEPT (300)
+UNTIL (301)
+N302 (302)
+N303 (303)
+N304 (304)
+N305 (305)
+N306 (306)
+N307 (307)
+N308 (308)
+N309 (309)
+DIRECT (310)
+RADIAL (311)
+SPEED (312)
+TRK (313)
+
+
+Nonterminals, with rules where they appear
+
+$accept (59)
+    on left: 0
+EVALUATE1 (60)
+    on left: 1, on right: 0
+FIXPOINT (61)
+    on left: 2 3, on right: 3 4
+EXPR (62)
+    on left: 4, on right: 1
+
+
+state 0
+
+    0 $accept: . EVALUATE1 $end
+
+    FIXES  shift, and go to state 1
+
+    EVALUATE1  go to state 2
+    EXPR       go to state 3
+
+
+state 1
+
+    4 EXPR: FIXES . FIXPOINT ENDFIXES
+
+    FIX  shift, and go to state 4
+
+    FIXPOINT  go to state 5
+
+
+state 2
+
+    0 $accept: EVALUATE1 . $end
+
+    $end  shift, and go to state 6
+
+
+state 3
+
+    1 EVALUATE1: EXPR .
+
+    $default  reduce using rule 1 (EVALUATE1)
+
+
+state 4
+
+    2 FIXPOINT: FIX . NAMEROUTE LATLON DIGIN VAL VAL DIGIE VAL VAL
+
+    NAMEROUTE  shift, and go to state 7
+
+
+state 5
+
+    3 FIXPOINT: FIXPOINT . FIXPOINT
+    4 EXPR: FIXES FIXPOINT . ENDFIXES
+
+    ENDFIXES  shift, and go to state 8
+    FIX       shift, and go to state 4
+
+    FIXPOINT  go to state 9
+
+
+state 6
+
+    0 $accept: EVALUATE1 $end .
+
+    $default  accept
+
+
+state 7
+
+    2 FIXPOINT: FIX NAMEROUTE . LATLON DIGIN VAL VAL DIGIE VAL VAL
+
+    LATLON  shift, and go to state 10
+
+
+state 8
+
+    4 EXPR: FIXES FIXPOINT ENDFIXES .
+
+    $default  reduce using rule 4 (EXPR)
+
+
+state 9
+
+    3 FIXPOINT: FIXPOINT . FIXPOINT
+    3         | FIXPOINT FIXPOINT .
+
+    FIX  shift, and go to state 4
+
+    FIX       [reduce using rule 3 (FIXPOINT)]
+    $default  reduce using rule 3 (FIXPOINT)
+
+    FIXPOINT  go to state 9
+
+
+state 10
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON . DIGIN VAL VAL DIGIE VAL VAL
+
+    DIGIN  shift, and go to state 11
+
+
+state 11
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN . VAL VAL DIGIE VAL VAL
+
+    VAL  shift, and go to state 12
+
+
+state 12
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL . VAL DIGIE VAL VAL
+
+    VAL  shift, and go to state 13
+
+
+state 13
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL VAL . DIGIE VAL VAL
+
+    DIGIE  shift, and go to state 14
+
+
+state 14
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL VAL DIGIE . VAL VAL
+
+    VAL  shift, and go to state 15
+
+
+state 15
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL VAL DIGIE VAL . VAL
+
+    VAL  shift, and go to state 16
+
+
+state 16
+
+    2 FIXPOINT: FIX NAMEROUTE LATLON DIGIN VAL VAL DIGIE VAL VAL .
+
+    $default  reduce using rule 2 (FIXPOINT)

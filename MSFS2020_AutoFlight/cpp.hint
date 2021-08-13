@@ -1,0 +1,6 @@
+// Файлы указаний помогают среде IDE Visual Studio интерпретировать идентификаторы Visual C++
+// (например, имена функций и макросов).
+// Дополнительные сведения: https://go.microsoft.com/fwlink/?linkid=865984
+#define Q_PROPERTY(__VA_ARGS__) QT_ANNOTATE_CLASS(qt_property, __VA_ARGS__)
+#define Q_PROPERTY(text) QT_ANNOTATE_CLASS(qt_property, text)
+#define Q_PROPERTY(text) Q_PROPERTY(text)

@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MSFS2020_AutoFlightClass</class>
+ <widget class="QMainWindow" name="MSFS2020_AutoFlightClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1323</width>
+    <height>462</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MSFS2020_AutoFlight</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="ConnectButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>851</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Connect</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_2">
+    <property name="geometry">
+     <rect>
+      <x>1190</x>
+      <y>360</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Quit</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="listWidget">
+    <property name="geometry">
+     <rect>
+      <x>870</x>
+      <y>10</y>
+      <width>441</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="autoScroll">
+     <bool>false</bool>
+    </property>
+    <property name="alternatingRowColors">
+     <bool>true</bool>
+    </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
+    <property name="horizontalScrollMode">
+     <enum>QAbstractItemView::ScrollPerPixel</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>350</y>
+      <width>1161</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::PlainText</enum>
+    </property>
+   </widget>
+   <widget class="QCustomPlot" name="Graph" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>461</width>
+      <height>301</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSlider" name="vs1">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>70</y>
+      <width>71</width>
+      <height>241</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>-16383</number>
+    </property>
+    <property name="maximum">
+     <number>16383</number>
+    </property>
+    <property name="singleStep">
+     <number>10</number>
+    </property>
+    <property name="pageStep">
+     <number>100</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+    <property name="tickPosition">
+     <enum>QSlider::TicksBothSides</enum>
+    </property>
+    <property name="tickInterval">
+     <number>1</number>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cb1">
+    <property name="geometry">
+     <rect>
+      <x>470</x>
+      <y>40</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cb2">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>40</y>
+      <width>111</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cb3">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>40</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cc1">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>320</y>
+      <width>70</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Control</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="sb1P">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>80</y>
+      <width>101</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+    <property name="minimum">
+     <double>-32768.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>99000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="sb1I">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>110</y>
+      <width>101</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+    <property name="minimum">
+     <double>-32768.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>99000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="sb1D">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>140</y>
+      <width>101</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+    <property name="minimum">
+     <double>-32768.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>99000.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.010000000000000</double>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1323</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="msfs2020_autoflight.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1286</x>
+     <y>365</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>144</x>
+     <y>151</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ConnectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_ButtonConnect()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>490</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>519</x>
+     <y>129</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cc1</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_cc1(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>505</x>
+     <y>357</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>630</x>
+     <y>347</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>vs1</sender>
+   <signal>sliderMoved(int)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_vs1(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>520</x>
+     <y>208</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>656</x>
+     <y>248</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb1</sender>
+   <signal>activated(QString)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_cb1curr(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>536</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>629</x>
+     <y>216</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb2</sender>
+   <signal>activated(QString)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_cb2curr(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>636</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>678</x>
+     <y>125</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cb3</sender>
+   <signal>activated(QString)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_cb3curr(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>785</x>
+     <y>82</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>804</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sb1P</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_sb1P(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>602</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>557</x>
+     <y>202</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sb1I</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_sb1I(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>580</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>554</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sb1D</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_sb1D(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>610</x>
+     <y>191</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>583</x>
+     <y>210</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>on_ButtonConnect()</slot>
+  <slot>on_cc1(bool)</slot>
+  <slot>on_vs1(int)</slot>
+  <slot>on_cb1past(QString)</slot>
+  <slot>on_cb1curr(QString)</slot>
+  <slot>on_cb2curr(QString)</slot>
+  <slot>on_cb3curr(QString)</slot>
+  <slot>on_sb1P(double)</slot>
+  <slot>on_sb1I(double)</slot>
+  <slot>on_sb1D(double)</slot>
+ </slots>
+</ui>
