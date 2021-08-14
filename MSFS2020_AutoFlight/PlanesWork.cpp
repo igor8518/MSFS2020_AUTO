@@ -13,7 +13,9 @@ void PlanesWork::TimerProc() {
 	GSpeedSet(0);
 	//AccselerationSet(0, 10);
 	TrustSet(0, 10);
-	ThrottleSet(0, 10);
+	if (GetData(INDICATED_ALTITUDE) < 3000) {
+		ThrottleSet(0, 10);
+	}
 	AileronSet(0, 10);
 	ElevatorSet(0, 10);
 	RudderSet(0, 10);

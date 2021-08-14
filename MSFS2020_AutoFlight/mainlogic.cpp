@@ -8,1822 +8,6 @@
 
 
 
-
-
-
-/*bool STAR = false;
-double speed = 10;
-UINT Timer = 0;
-bool InTimer = false;
-IAirportData * PAirportData;
-DWORD attach = 0;
-bool aFlag = true;
-
-
-//Set throttle position
-//TO DO Programming to floating change
-void ThrottleLever(int position) {
-	throttle.L = (double)position;
-	throttle.R = (double)position;
-	SimConnect_SetDataOnSimObject(hSimConnect, DEF_THROTTLE, 0, 0, 0, sizeof(tthrottle), &throttle);
-}
-
-
-
-//Set and maintain thrust level with throttle position
-//TO DO Optimize
-void SetThrust(FLOAT thrust) {
-	static clock_t startTime;
-	static double throttle = 0;
-	static double startThrust = PMDG_TEST::thrust.N1L;
-	clock_t endTime = clock()+1;
-	double endThrust = PMDG_TEST::thrust.N1L;
-	double timeOff = endTime - startTime;
-	double thrustOff = endThrust - startThrust;
-	double thrustA = (timeOff/1000)*thrustOff;
-	double dT = thrust - endThrust;
-	double dA = (dT / 1) - thrustA;
-	double dThrottle = dA;
-	if (dThrottle < -5) {
-		dThrottle = -5;
-	}
-	else if (dThrottle > 5) {
-		dThrottle = 5;
-	}
-	throttle = throttle+dThrottle;
-	bool thrustSet = FALSE; 
-	if (throttle < 0) {
-		throttle = 0;
-	}
-	else if (throttle > 100) {
-		throttle = 100;
-	}
-	ThrottleLever(throttle);
-	thrustSet = TRUE;
-	startTime = clock();
-	startThrust = PMDG_TEST::thrust.N1L;
-}
-
-
-
-//Set and maintain ground speed with trust level
-//TO DO Optimize
-void SetGSpeed(FLOAT speed, FLOAT Tr=0) {
-	static clock_t startTime;
-	static double thrust = PMDG_TEST::thrust.N1L;
-	static double throttle = 0;
-	static double startSpeed = PMDG_TEST::speeds.GS;
-	clock_t endTime = clock() + 1;
-	double endSpeed = PMDG_TEST::speeds.GS;
-	double timeOff = endTime - startTime;
-	double speedOff = endSpeed - startSpeed;
-	double speedA = (timeOff/1000)*speedOff;
-	double dS = speed - endSpeed;
-	double dA = (dS/5) - speedA;
-	double dThrust = dA;
-	if (dThrust < -5) {
-		dThrust = -5;
-	}
-	else if (dThrust > 5) {
-		dThrust = 5;
-	}
-	if ((speedA < -0.3) && (speedA > -0.4)) {
-		dThrust = dThrust + 2;
-	}
-	else if ((speedA > 0.3) && (speedA < 0.4)) {
-		dThrust = dThrust - 2;
-	}
-	if (speedA < -0.4) {
-		dThrust = dThrust+5;
-	}
-	else if (speedA >= 0.4) {
-		dThrust = dThrust - 5;
-	}
-	thrust = PMDG_TEST::thrust.N1L + dThrust;
-	bool thrustSet = FALSE;
-	if (thrust < 21) {
-		thrust = 21;
-	}
-	else if (thrust > 100) {
-		thrust = 100;
-	}
-	SetThrust(thrust);
-	thrustSet = TRUE;
-	startTime = clock();
-	startSpeed = PMDG_TEST::speeds.GS;
-}
-
-bool f = false; //test
-
-
-void DrawAirport(IAirportData* PAirportData, double Lat, double Lon, double Hed) {
-	if (aDC != NULL) {
-		RECT rc;
-		HWND PDraw = (HWND)MainForm::mainForm->AirportImage->Handle.ToPointer();
-		GetClientRect(PDraw, &rc);
-		MainForm::mainForm->AirportImage->Refresh();
-		SelectObject(aDC, hPenSolid2Grey);
-		double MinLat = 360.0, MinLon = 360.0, MaxLat = -360.0, MaxLon = -360.0;
-		IAirport* Air = PAirportData->GetAirport();
-		for (int i = 0; i < Air->PTaxiwayPoints->size(); i++) {
-			if (SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat) < MinLat) {
-				MinLat = SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat);
-			}
-			if (SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat) > MaxLat) {
-				MaxLat = SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat);
-			}
-			if (SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon) < MinLon) {
-				MinLon = SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon);
-			}
-			if (SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon) > MaxLon) {
-				MaxLon = SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon);
-			}
-		}
-		for (int i = 0; i < Air->PTaxiwayParks->size(); i++) {
-			if (SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i).Lat) < MinLat) {
-				MinLat = SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i).Lat);
-			}
-			if (SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i).Lat) > MaxLat) {
-				MaxLat = SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i).Lat);
-			}
-			if (SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i).Lon) < MinLon) {
-				MinLon = SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i).Lon);
-			}
-			if (SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i).Lon) > MaxLon) {
-				MaxLon = SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i).Lon);
-			}
-		}
-		double dLat = MaxLat - MinLat;
-		double dLon = MaxLon - MinLon;
-		double rcRate = (rc.right - 10.0) / (rc.bottom - 10.0);
-		double AirRate = dLon / dLat;
-		double drawRate;
-		if (AirRate <= rcRate) {
-			drawRate = (rc.bottom - 10.0) / dLat;
-		}
-		else {
-			drawRate = (rc.right - 10.0) / dLon;
-		}
-		for (int i = 0; i < Air->PTaxiwayPaths->size(); i++) {
-			if ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x1) {
-				SelectObject(aDC, hPenSolid2Blue);
-			}
-			if ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x2) {
-				SelectObject(aDC, hPenSolid2Grey);
-			}
-			if ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x3) {
-				SelectObject(aDC, hPenSolidRed);
-			}
-			if ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x4) {
-				SelectObject(aDC, hPenSolid2Green);
-			}
-			SelectObject(aDC, hPenSolid2Grey);
-			if (((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x1) || ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x2) || ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x4)) {
-				MoveToEx(aDC,
-					((SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexStartPoint).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexStartPoint).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)), NULL);
-				LineTo(aDC,
-					((SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexEndPoint & 0xfff).Lon) - MinLon)* drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexEndPoint & 0xfff).Lat) - MinLat)* drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)));
-			}
-			if ((Air->PTaxiwayPaths->at(i).Type & 0xf) == 0x3) {
-				MoveToEx(aDC,
-					((SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexStartPoint).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(Air->PTaxiwayPaths->at(i).IndexStartPoint).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)), NULL);
-				LineTo(aDC,
-					((SIMMATH::DecodeLon(Air->PTaxiwayParks->at(Air->PTaxiwayPaths->at(i).IndexEndPoint & 0xfff).Lon) - MinLon)* drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayParks->at(Air->PTaxiwayPaths->at(i).IndexEndPoint & 0xfff).Lat) - MinLat)* drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)));
-			}
-			SelectObject(aDC, hPenSolid2Green);
-			for (int i = 0; i < PAirportData->ReturnPath->size() - 1; i++) {
-				MoveToEx(aDC,
-					(((PAirportData->ReturnPath->at(i).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - (((PAirportData->ReturnPath->at(i).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)), NULL);
-				LineTo(aDC,
-					(((PAirportData->ReturnPath->at(i + 1).Lon) - MinLon)* drawRate) + (((dLon * drawRate) - rc.right) / 2.0),
-					(rc.bottom - (((PAirportData->ReturnPath->at(i + 1).Lat) - MinLat)* drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)));
-			}
-		}
-		double INF = 1000000000.0;
-		double dMin = INF, dMax = 0.0;
-		for (int i = 0; i < PAirportData->d->size() - 1; i++) {
-			if ((PAirportData->d->at(i) < INF) && (PAirportData->d->at(i) > 0.0)) {
-				if (PAirportData->d->at(i) < dMin) {
-					dMin = PAirportData->d->at(i);
-				}
-				if (PAirportData->d->at(i) > dMax) {
-					dMax = PAirportData->d->at(i);
-				}
-			}
-		}
-		double dD = (1279.0 / (dMax - dMin));
-		for (int i = 0; i < PAirportData->d->size() - 2; i++) {
-			if ((PAirportData->d->at(i) > 0.0)&&(PAirportData->d->at(i) < INF)) {
-				int dRel = (PAirportData->d->at(i) - dMin) * dD;
-				if (i == 700) {
-					std::cout << 1;
-				}
-				int R, G, B;
-				if ((dRel <= 255) && (dRel >= 0)) {
-					R = 0;
-					G = 0;
-					B = dRel;
-				}
-				else if ((dRel <= 511) && (dRel >= 256)) {
-					R = 0;
-					G = (dRel - 256);
-					B = 255;
-				}
-				else if ((dRel <= 767) && (dRel >= 512)) {
-					R = 0;
-					G = 255;
-					B = 255 - (dRel - 512);
-				}
-				else if ((dRel <= 1023) && (dRel >= 768)) {
-					R = dRel - 768;
-					G = 255;
-					B = 0;
-				}
-				else if ((dRel <= 1279) && (dRel >= 1024)) {
-					R = 255;
-					G = 255 - (dRel - 1024);
-					B = 0;
-				}
-				else {
-					std::cout << 1;
-				}
-				HPEN hPen = CreatePen(PS_SOLID, 2, RGB(R, G, B));
-				SelectObject(aDC, hPen);
-				if (i < Air->PTaxiwayPoints->size()) {
-					Ellipse(aDC,
-						((SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) - 2,
-						(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) - 2,
-						((SIMMATH::DecodeLon(Air->PTaxiwayPoints->at(i).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) +2,
-						(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayPoints->at(i).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) + 2);
-				}
-				else {
-					Ellipse(aDC,
-						((SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i- Air->PTaxiwayPoints->size()).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) - 2,
-						(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i - Air->PTaxiwayPoints->size()).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) - 2,
-						((SIMMATH::DecodeLon(Air->PTaxiwayParks->at(i - Air->PTaxiwayPoints->size()).Lon) - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) + 2,
-						(rc.bottom - ((SIMMATH::DecodeLat(Air->PTaxiwayParks->at(i - Air->PTaxiwayPoints->size()).Lat) - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) + 2);
-				}
-				DeleteObject(hPen);
-			}
-		}
-		SelectObject(aDC, hPenSolidRed);
-		Ellipse(aDC,
-			((Lon - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) - 4,
-			(rc.bottom - ((Lat - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) - 4,
-			((Lon - MinLon) * drawRate) + (((dLon * drawRate) - rc.right) / 2.0) + 4,
-			(rc.bottom - ((Lat - MinLat) * drawRate) + (((dLat * drawRate) - rc.bottom) / 2.0)) + 4);
-	}
-}
-
-
-
-VOID CALLBACK TimerProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ UINT_PTR idEvent, _In_ DWORD dwTime) {
-	if (!InTimer) {
-		InTimer = true;
-		SUCC(SimConnect_CallDispatch(hSimConnect, FDispatchProc, NULL));
-		hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-		aircraftData* PaircraftData = &AircraftData;
-		if (PAirportData == NULL) {
-			if (PaircraftData->lat != 0.0 && PaircraftData->lon != 0.0) {
-				PAirportData = ::GetAirportData();
-				PAirportData->SetHSim(hSimConnect);
-        while (1) {
-          if (PAirportData->GetProgress() == 100) {
-            break;
-          }
-        }
-			}
-		}
-		else {
-			if (WP != NULL) {
-        hr = SimConnect_WeatherRequestObservationAtNearestStation(hSimConnect, REQ_WEATHER_LATLON, WP->at(WP->size() - 1).lat, WP->at(WP->size() - 1).lon);
-			}
-switch (mode) {
-case PREPARE: {
-					brakes.LBrake = 1.0;
-					brakes.RBrake = 1.0;
-					SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-			    //AddText("MODE: PREPARE" + "\n", true);
-					setA20NDataDouble(KEY_FLAPS_INCR, KEY_FLAPS_DECR, 0.5, &Vars.var_FLAPS_HANDLE_PERCENT, 0.0);
-					setA20NDataDouble(KEY_SPOILERS_TOGGLE, KEY_SPOILERS_TOGGLE, 0, &Vars.var_SPOILERS_HANDLE_POSITION, 0.0);
-					setA20NDataBool(KEY_TOGGLE_FLIGHT_DIRECTOR, KEY_TOGGLE_FLIGHT_DIRECTOR, TRUE, &Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE[0], 1);
-					setA20NDataBool(KEY_TOGGLE_FLIGHT_DIRECTOR, KEY_TOGGLE_FLIGHT_DIRECTOR, TRUE, &Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE[1], 2);
-					ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AP_MANAGED_SPEED_IN_MACH_OFF, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-					setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, 161, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-					ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_HEADING_SLOT_INDEX_SET, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-					setA20NDataHeading(KEY_HEADING_BUG_INC, KEY_HEADING_BUG_DEC, 80, &Vars.var_AUTOPILOT_HEADING_LOCK_DIR, 0.5, "degree");
-					ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_ALTITUDE_SLOT_INDEX_SET, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-					setA20NDataDouble(KEY_AP_ALT_VAR_INC, KEY_AP_ALT_VAR_DEC, Flight.cruiseLevel, &Vars.var_AUTOPILOT_ALTITUDE_LOCK_VAR, 99.0);
-					setA20NDataDouble(KEY_ELEV_TRIM_UP, KEY_ELEV_TRIM_DN, 0.6, &Vars.var_ELEVATOR_TRIM_POSITION, 0.1, "degree");
-					getA20NDataDouble(&Vars.var_AMBIENT_PRESSURE, "inHG");
-					setA20NDataDouble(KEY_KOHLSMAN_INC, KEY_KOHLSMAN_DEC, *Vars.var_AMBIENT_PRESSURE, &Vars.var_KOHLSMAN_SETTING_HG, 0.01, "inHG");
-					//1 - NAV
-					//2 - BEACON
-					//4 - LANDING
-					//8 - TAXI/RUNWAY
-					//16 - STROBE
-					//32 - 
-					setLightMask(&Vars.var_LIGHT_STATES, 0b100101011);
-			    if (GetNGXData) {
-				    if (AircraftData.simOnGround == TRUE) {
-					    double AngleToDesc = GetDescentAngle(Ways);
-					    Flight.cruiseLevel = CruiseLevel;
-					    setNGXDataBool(EVT_MCP_FD_SWITCH_L, TRUE, &NGX.MCP_FDSw[0]);
-					    setNGXDataBool(EVT_MCP_FD_SWITCH_R, TRUE, &NGX.MCP_FDSw[1]);
-							
-
-					    setNGXDataBool(EVT_MCP_AT_ARM_SWITCH, TRUE, &NGX.MCP_annunATArm);
-					    setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 161, &NGX.MCP_IASMach);
-					    setNGXDataUShort(EVT_MCP_HEADING_SELECTOR, 80, &NGX.MCP_Heading);
-					    setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, Flight.cruiseLevel, &NGX.MCP_Altitude);
-					    setNGXDataDouble(EVT_CONTROL_STAND_TRIM_WHEEL, 6.44 - 3.9, &AircraftData.elevTrim);
-					    setNGXDataDouble(EVT_EFIS_CPT_BARO, AircraftData.Pressure, &AircraftData.PressureSet, 0.01, -0.01, TRUE);
-					    setNGXDataBool(EVT_OH_LIGHTS_LOGO, TRUE, &NGX.LTS_LogoSw);
-					    setNGXDataBool(EVT_OH_LIGHTS_TAXI, TRUE, &NGX.LTS_TaxiSw);
-					    setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-					    //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, TRUE, &NGX.LTS_RunwayTurnoffSw[0]);
-					    //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, TRUE, &NGX.LTS_RunwayTurnoffSw[1]);
-					    setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 0, &NGX.LTS_PositionSw, FALSE);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_POS_STROBE, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-					    setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-					    setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-					    setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[0]);
-					    setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[1]);
-					    //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_CONTROL_STAND_SPEED_BRAKE_LEVER_UP, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-							//setA20NDataDouble(KEY_SPOILERS_TOGGLE, KEY_SPOILERS_TOGGLE, 0, &A20nDataInstruments.SPOILER, 0.0);
-					    mode = TAXI_OUT;
-				    }
-				    else {
-					    //CurrentWay = 12;
-					    //mode = CLIMB;
-				    }
-			    }
-					mode = TAXI_OUT;
-			    break;
-		    }
-case START: {
-					SetUpBrake(100);
-					
-			    if (!FW) {
-				    FillWays();
-			    }
-			    CabLight = 0;
-			    //SetLight(0);
-			    //SimConnect_CallDispatch(hSimConnect, FDispatchProc, NULL);
-			    DateTime Dt = DateTime(2018, 12, 9, 3, 15, 0);
-			    if (DateTime::Now < Dt) {
-				    AddText("MODE: " + "START" + "\n" + DateTime::Now, true);
-			      FW = true;
-				    break;
-			    }
-			    AddText("MODE: " + "START" + "\n", true);
-			    AirportList ApList = PAirportData->GetNearAirport(PaircraftData->lat, PaircraftData->lon);
-					if (ApList.ICAO != "RJCI") {
-						DWORD index = PAirportData->GetNearTaxiwayPoint(PaircraftData->lat, PaircraftData->lon);
-
-						if (PaircraftData->simOnGround != 0.0) {
-							//std::vector<RunwayPaths> *RP = new std::vector<RunwayPaths>();
-							std::vector<RunwayPaths>* RP = PAirportData->GetRunways();
-							PAirportData->GetRunwayStart(0, 0, 0);
-							//std::vector<TPath> Path = PAirportData->GetPath(index, PaircraftData->hed, PaircraftData->WindDirection);
-							std::vector<std::vector<TPath>>* RunwayWays = new std::vector<std::vector<TPath>>();
-							std::vector<TPath> P;
-							for (int i = 1; i <= RP->size(); i++) {
-								P = PAirportData->GetPath1(index, PaircraftData->hed, i);
-
-								RP->at(i - 1).RunwayName1 = P[P.size() - 1].name;
-								RP->at(i - 1).R1Dist = SIMMATH::GetPathLength(&P);
-								RP->at(i - 1).Deg1 = SIMMATH::GetRWAngle(&P);
-								RunwayWays->push_back(P);
-								P = PAirportData->GetPath1(index, PaircraftData->hed, -i);
-								RP->at(i - 1).RunwayName2 = P[P.size() - 1].name;
-								RP->at(i - 1).R2Dist = SIMMATH::GetPathLength(&P);
-								RP->at(i - 1).Deg2 = SIMMATH::GetRWAngle(&P);
-								RunwayWays->push_back(P);
-								RP->at(i - 1).Lenght = SIMMATH::GetRWLength(&P);
-							}
-							int DirWind = 5;
-							std::vector<std::string>* RWSForTL = new std::vector<std::string>();
-							while (1) {
-								for (int i = 0; i < RP->size(); i++) {
-									if (abs(PaircraftData->WindDirection - RP->at(i).Deg1 - PaircraftData->MagVar) < DirWind) {
-										RWSForTL->push_back(RP->at(i).RunwayName1);
-									}
-									if (abs(PaircraftData->WindDirection - RP->at(i).Deg2 - PaircraftData->MagVar) < DirWind) {
-										RWSForTL->push_back(RP->at(i).RunwayName2);
-									}
-								}
-								if (RWSForTL->size() != 0) {
-									break;
-								}
-								else
-								{
-									DirWind = DirWind + 5;
-								}
-							}
-							double DToRW = 10000;
-							int RWIndex = -1;
-							for (int i = 0; i < RP->size(); i++)
-							{
-								for (int j = 0; j < RWSForTL->size(); j++)
-								{
-									if (RWSForTL->at(j) == RP->at(i).RunwayName1) {
-										if (DToRW > RP->at(i).R1Dist) {
-											DToRW = RP->at(i).R1Dist;
-											for (int k = 0; k < RunwayWays->size(); k++) {
-												if (RunwayWays->at(k).at(RunwayWays->at(k).size() - 1).name == RP->at(i).RunwayName1) {
-													RWIndex = k;
-													break;
-												}
-											}
-										}
-									}
-									if (RWSForTL->at(j) == RP->at(i).RunwayName2) {
-										if (DToRW > RP->at(i).R2Dist) {
-											DToRW = RP->at(i).R2Dist;
-											for (int k = 0; k < RunwayWays->size(); k++) {
-												if (RunwayWays->at(k).at(RunwayWays->at(k).size() - 1).name == RP->at(i).RunwayName2) {
-													RWIndex = k;
-													break;
-												}
-											}
-										}
-									}
-								}
-							}
-							double DtoRun = 0.0;
-							for (int i = 0; i < RunwayWays->size(); i++) {
-								//char ss[50] = "";
-								//sprintf(ss, "%s\0", RunwayWays->at(i).at(RunwayWays->at(i).size() - 1).name.c_str());
-								//strcat((char*)Menu1, ss);
-								std::string Recom = "";
-
-								for (int k = 0; k < RWSForTL->size(); k++) {
-									if (RWSForTL->at(k) == RunwayWays->at(i).at(RunwayWays->at(i).size() - 1).name) {
-										Recom = " (Recomented)";
-									}
-									if (RWIndex == i) {
-										Recom = " (Very recomented)";
-									}
-								}
-								for (int m = 0; m < RP->size(); m++)
-								{
-									if (RP->at(m).RunwayName1 == RunwayWays->at(i).at(RunwayWays->at(i).size() - 1).name) {
-										DtoRun = RP->at(m).R1Dist;
-									}
-									if (RP->at(m).RunwayName2 == RunwayWays->at(i).at(RunwayWays->at(i).size() - 1).name) {
-										DtoRun = RP->at(m).R2Dist;
-									}
-								}
-							}
-							//SimConnect_Text(hSimConnect, SIMCONNECT_TEXT_TYPE_MENU, 30.0, EVENT_MENU_1, sizeof(Menu1), (void*)Menu1.str().c_str());
-							//SimConnect_Text(hSimConnect, SIMCONNECT_TEXT_TYPE_SCROLL_BLUE, 0, EVENT_TEXT_1, sizeof(Text1), (void*)Text1);
-							//SimConnect_Text(hSimConnect, SIMCONNECT_TEXT_TYPE_MESSAGE_WINDOW, 0, EVENT_MESSAGE_1, sizeof(Message1), (void*)Message1);
-							/*while (rrr < 0) {
-								hr = SimConnect_CallDispatch(hSimConnect, MyDispatchProc, NULL);
-							}*\
-							if (rrr == RunwayWays->size() || rrr == 55) {
-								rrr = RWIndex;
-							}
-							else if (rrr > RunwayWays->size()) {
-								rrr = 0;
-							}
-							//for (int i = 0; i < Path.size() - 1; i++) {
-							for (int i = 0; i < RunwayWays->at(rrr).size() - 1; i++) {
-								AddWayPoint(RunwayWays->at(rrr).at(i).Lon, RunwayWays->at(rrr).at(i).Lat, 0.0, RunwayWays->at(rrr)[i].Type, RunwayWays->at(rrr).at(i).name);
-							}
-							SIMMATH::DSHEH HeadTakeOff = { RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 2).Lat,RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 2).Lon,0.0,RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1).Lat,RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1).Lon,0.0 };
-							SIMMATH::DOrtoKM(&HeadTakeOff);
-							AddWayPoint(RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1).Lon, RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1).Lat, Flight.cruiseLevel, RUNWAY, RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1).name);
-							SIDPoint = CountWays - 2;
-							//
-							Ways[SIDPoint]->nameEndPoint = AddSID(PAirportData, PaircraftData, &RunwayWays->at(rrr).at(RunwayWays->at(rrr).size() - 1), HeadTakeOff.EH);
-							//CountWays = SIDPoint + 2;
-							//
-							RoutePoint = CountWays;
-						}
-					}
-			    else {
-				    AddWayPoint(WP->at(1).lon, WP->at(1).lat, CruiseLevel, FIX, WP->at(1).ICAO, 0, CRUISEALT);
-			    }
-			    CabLight = 4;
-			    //SetLight(4);
-			    Flight.cruiseLevel = CruiseLevel;
-			    for (int kk = 2; kk < WP->size() - 1; kk++) {
-				    AddWayPoint(WP->at(kk).lon, WP->at(kk).lat, Flight.cruiseLevel, WAYPOINT, WP->at(kk).ICAO, 0, CRUISEALT);
-			    }
-			    AddWayPoint(WP->at(WP->size() - 1).lon, WP->at(WP->size() - 1).lat, WP->at(WP->size() - 1).alt, FIX, WP->at(WP->size() - 1).ICAO, 0, FIXALT);
-			    STARPoint = CountWays - 1;
-			    STAR = false;
-			    CabLight = 1;
-					//SetLight(4);
-			    //SimConnect_CallDispatch(hSimConnect, FDispatchProc, NULL);
-			    mode = PUSHBACK;
-          //mode = CLIMB;
-					//mode = LANDING;
-					break;
-		    }
-case PUSHBACK: {
-          //break;
-					//brakes = { 0.0,0.0 };
-					//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-					//brakes = { 0.1,0.1 };
-					//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-			    hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_PUSH_SPEED, DEF_SPEED, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-			    DrawAirport(PAirportData, PaircraftData->lat, PaircraftData->lon, PaircraftData->hed);
-			    aircraftData* PaircraftData = &AircraftData;
-			    //setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, Flight.cruiseLevel, &NGX.MCP_Altitude);
-					//KEY_AP_ALT_VAR_INC
-					//KEY_AP_ALT_VAR_DEC
-					ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_ALTITUDE_SLOT_INDEX_SET, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-					setA20NDataDouble(KEY_AP_ALT_VAR_INC, KEY_AP_ALT_VAR_DEC, Flight.cruiseLevel, &Vars.var_AUTOPILOT_ALTITUDE_LOCK_VAR, 99.0);
-
-			    speed = 5;
-			    CurrentPos = *Ways[CurrentWay];
-			    if (CurrentPos.typePath == 11) {
-				    CurrentPos.Slla.Latitude = PaircraftData->lat;
-				    CurrentPos.Slla.Longitude = PaircraftData->lon;
-				    SIMMATH::DOrtoKM(&CurrentPos);
-				    int icw = CurrentWay;
-				    double DCommon = CurrentPos.D;
-				    while ((Ways[icw]->typePath != RUNWAY) && (icw < (CountWays - 1))) {
-					    DCommon += Ways[icw + 1]->D;
-					    icw++;
-				    }
-				    CHAR s[256];
-				    double REangle = 0.045;
-				    if ((CurrentWay + 1) >= CountWays) {
-					    REangle = (Ways[0]->SH - Ways[CurrentWay]->EH);
-				    }
-				    else {
-					    REangle = Ways[CurrentWay + 1]->SH - Ways[CurrentWay]->EH;
-				    }
-				    if (REangle > 180) {
-					    REangle = REangle - 360;
-				    }
-				    else if (REangle < -180) {
-					    REangle = REangle + 360;
-				    }
-				    REangle = (REangle * 10 * 2 / 100000);
-				    double EangleRel = CurrentPos.EH - Ways[CurrentWay]->EH;
-				    if (EangleRel > 180) {
-					    EangleRel = EangleRel - 360;
-				    }
-				    else if (EangleRel < -180) {
-					    EangleRel = EangleRel + 360;
-				    }
-				    if ((EangleRel > 60) || (EangleRel < -60) || (CurrentPos.D < abs(REangle))) {
-					    CurrentWay = CurrentWay + 1;
-
-				    }
-				    else {
-					    double HeadingRel = PBHeadWithWay(Ways[CurrentWay], true);
-					    if ((HeadingRel < 5) && (EangleRel < 5) && (HeadingRel > -5) && (EangleRel > -5) && (CurrentPos.D > 0.2)) {
-						    speed = 2;
-					    }
-					    else {
-						    speed = 5;
-					    }
-				    }
-			    }
-			    else {
-				    CabLight = 1;
-				    mode = PREPARE;
-						//brakes = { 0.0,0.0 };
-						//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes.LBrake);
-			    }
-			    break;
-		    }
-case TAXI_OUT: {
-			    hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-			    aircraftData* PaircraftData = &AircraftData;
-			    DrawAirport(PAirportData, PaircraftData->lat, PaircraftData->lon, PaircraftData->hed);
-			    CurrentPos = *Ways[CurrentWay];
-			    CurrentPos.Slla.Latitude = PaircraftData->lat;
-			    CurrentPos.Slla.Longitude = PaircraftData->lon;
-			    SIMMATH::DOrtoKM(&CurrentPos);
-			    int icw = CurrentWay;
-			    double DCommon = CurrentPos.D;
-			    while ((Ways[icw]->typePath != RUNWAY) && (icw < (CountWays - 1))) {
-				    DCommon += Ways[icw + 1]->D;
-				    icw++;
-			    }
-			    CHAR s[256];
-			    sprintf(s, "MODE: TAXI_OUT To \"%s\" - \"%s\" Current: %.3f km Total: %.3f km \n Speed %.3f; Current way: %d Name: \"%s\" Type: %d Total ways: %d", Ways[icw-1]->nameEndPoint.c_str(), Ways[icw]->nameEndPoint.c_str(), CurrentPos.D, DCommon, speed, CurrentWay, CurrentPos.nameEndPoint.c_str(), CurrentPos.typePath, CountWays);
-			    AddText(gcnew String(s), true);
-			    double kDToHed = 0.00004;
-			    double DToHed;
-			    double REangle;
-			    REangle = GetAnglePM180(Ways[CurrentWay + 1]->SH - Ways[CurrentWay]->EH);
-			    DToHed = abs(REangle) * PMDG_TEST::speeds.GS * kDToHed;
-			    if (DToHed < 0.025) {
-				    DToHed = 0.025;
-			    }
-			    double EangleRel = GetAnglePM180(CurrentPos.EH - Ways[CurrentWay]->EH);
-			    double a = GetFixDA(sin(EangleRel*M_PI / 180)* CurrentPos.D, EangleRel);
-			    double HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-			    if ((abs(EangleRel) > 60) || (CurrentPos.D < DToHed)) {
-				    CurrentWay = CurrentWay + 1;
-			    }
-			    else {
-				    if ((abs(HeadingRel) < 5.0) && (abs(a) < 0.005) && (CurrentPos.D > 0.200)) {
-					    if (((CurrentWay + 1) != CountWays) && ((Ways[CurrentWay]->typePath == RUNWAY))) {
-						    speed = 0;
-								//1 - NAV
-					//2 - BEACON
-					//4 - LANDING
-					//8 - TAXI/RUNWAY
-					//16 - STROBE
-					//32 - 
-								setLightMask(&Vars.var_LIGHT_STATES, 0b100111111);
-								/*brakes.LBrake = 0.5;
-								brakes.RBrake = 0.5;
-								SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 2, sizeof(brakes), &brakes);*\
-						    if (PaircraftData->GS < 1) {
-							    //setNGXDataDouble(EVT_EFIS_CPT_BARO, AircraftData.Pressure, &AircraftData.PressureSet, 0.01, -0.01, TRUE);
-							    //setNGXDataBool(EVT_MCP_AT_ARM_SWITCH, TRUE, &NGX.MCP_annunATArm);
-							    SetThrust(40);
-							    speed = 180;
-							    mode = TAKE_OFF;
-									
-						    }
-					    }
-					    else {
-						    speed = 20;
-					    }
-				    }
-				    else {
-					    if ((abs(EangleRel) > 60) || (CurrentPos.D < (DToHed + 0.050))) {
-						    speed = 20;
-						    if (abs(REangle) > 10) {
-							    speed = 15;
-						    }
-						    if (abs(REangle) > 30) {
-							    speed = 12;
-						    }
-						    if (abs(REangle) > 50) {
-							    speed = 10;
-						    }
-						    if (abs(REangle) > 100) {
-							    speed = 5;
-						    }
-						    if (abs(HeadingRel) > 5) {
-							    speed = 5;
-						    }
-					    }
-					    else {
-						    speed = 20;
-					    }
-					    if (abs(a) > 0.005) {
-						    if ((abs(HeadingRel) > 5)) {
-							    speed = 5;
-						    }
-						    else if((abs(HeadingRel) > 10)) {
-							    speed = 7;
-						    }
-						    else if ((abs(HeadingRel) > 15)) {
-							    speed = 10;
-						    }
-						    else {
-							    speed = 12;
-						    }
-					    }					
-				    }
-						if (speed == 0) {
-							SetThrust(0);
-							brakes.LBrake = 0.5;
-							brakes.RBrake = 0.5;
-						}
-				    else if (PaircraftData->GS > (speed)) {
-					    //double brake = (PaircraftData->GS - speed) / 70.0;
-							double brake = (PaircraftData->GS - speed) / 50.0;
-					    SetThrust(0);
-							if (brake > 1.0) {
-								brake = 1.0;
-							}
-					    brakes.LBrake = brake;
-					    brakes.RBrake = brake;
-							//ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_BRAKES, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-				    }
-				    else if (PaircraftData->GS < (speed)) {
-					    brakes.LBrake = 0.0;
-					    brakes.RBrake = 0.0;
-				    }
-						else {
-							brakes.LBrake = 0.0;
-							brakes.RBrake = 0.0;
-						}
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_LEFT_BRAKE_SET, (brakes.LBrake * 32767)-16384, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_RIGHT_BRAKE_SET, (brakes.RBrake * 32767) - 16384, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(tbrakes), &brakes);
-			    }
-			    break;
-		    }
-case TAKE_OFF: {
-          static int StartThrottle = 0;
-          aircraftData* PaircraftData = &AircraftData;
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-          static clock_t sTime = 0; //Начальное время
-          clock_t eTime = clock();
-          static double sHed;
-          static double sSpeed;
-          double eHed = PaircraftData->hed;
-          double eSpeed = PaircraftData->GS;
-          double NPitch = 0;
-					NPitch = -15;
-          /*if (ExportData.HorEnabled == 1) {
-            NPitch = -ExportData.HorBar;
-          }
-          else {
-            NPitch = -10;
-          }/**\
-					//1 - NAV
-					//2 - BEACON
-					//4 - LANDING
-					//8 - TAXI/RUNWAY
-					//16 - STROBE
-					//32 - 
-					setLightMask(&Vars.var_LIGHT_STATES, 0b100111111);
-          /*setNGXDataBool(EVT_OH_LIGHTS_LOGO, TRUE, &NGX.LTS_LogoSw);
-          setNGXDataBool(EVT_OH_LIGHTS_TAXI, TRUE, &NGX.LTS_TaxiSw);
-          setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-          //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, TRUE, &NGX.LTS_RunwayTurnoffSw[0]);
-          //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, TRUE, &NGX.LTS_RunwayTurnoffSw[1]);
-          //setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, TRUE);
-          setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, FALSE);
-          setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 2, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-          setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 2, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_POS_STROBE, 2, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_L_RETRACT, 2, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_R_RETRACT, 2, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, TRUE, &NGX.LTS_LandingLtFixedSw[0]);
-          setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, TRUE, &NGX.LTS_LandingLtFixedSw[1]);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_LOGO, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_TAXI, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_ANT_COL, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_L_TURNOFF, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_R_TURNOFF, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_L_FIXED, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_OH_LIGHTS_R_FIXED, 1, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);*\
-          if (PaircraftData->N1L > 40) {
-            if (!TOGA) {
-							//setThrust(100);
-							ThrottleLever(100);
-							ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_LEFT_BRAKE_SET, -16384, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-							ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_RIGHT_BRAKE_SET, -16384, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_TOGA, 1, \
-              //  SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              TOGA = TRUE;
-            }
-          }	
-          else {
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_LEFT_BRAKE_SET, 16383, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AXIS_RIGHT_BRAKE_SET, 16383, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            ThrottleLever(StartThrottle);
-            if (SetTimeOff(TAKE_OFF, 3000)) {
-              StartThrottle = StartThrottle + 4;
-            }
-          }
-          if (PaircraftData->AS > 230) {
-            //setNGXDataUChar(EVT_GEAR_LEVER, 1, &NGX.MAIN_GearLever, TRUE);
-            ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_GEAR_UP, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						NPitch = *Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH;
-          }
-          else if (PaircraftData->AS > 220) {
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_0, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						setA20NDataDouble(KEY_FLAPS_INCR, KEY_FLAPS_DECR, 0.0, &Vars.var_FLAPS_HANDLE_PERCENT, 0.0);
-						getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, "degree");
-						NPitch = *Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH;
-						/*if (ExportData.HorEnabled == 1) {
-							NPitch = -ExportData.HorBar;
-						}
-						else {
-							NPitch = -10;
-						}*\
-          }
-          else if (PaircraftData->AS > 190) {
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_1, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						setA20NDataDouble(KEY_FLAPS_INCR, KEY_FLAPS_DECR, 0.25, &Vars.var_FLAPS_HANDLE_PERCENT, 0.0);
-						getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, "degree");
-						NPitch = *Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH;
-            /*if (ExportData.HorEnabled == 1) {
-              NPitch = -ExportData.HorBar;
-            }
-            else {
-              NPitch = -10;
-            }*\
-          }
-
-          if ((PaircraftData->AS < 170) && (PaircraftData->simOnGround == FALSE)) {
-            if (ExportData.HorEnabled == 1) {
-              NPitch = -ExportData.HorBar;
-            }
-            else {
-							/// <summary>
-							//mode = LANDING;
-							/// </summary>
-
-							
-              NPitch = -15;
-							//getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, "degree");
-							//NPitch = *Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH;
-							
-            }
-            SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_RUDDER_SET, 0, \
-              SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-					ManPitchWithFD(NPitch, PaircraftData);
-          if (PaircraftData->AS > 150) {
-            if ((PaircraftData->VS > 10) && (PaircraftData->simOnGround == FALSE)) {
-              double intpParameter = 0.0;
-							ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_AILERON_SET, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_SetDataOnSimObject(hSimConnect, DEF_AILERON, 0, 0, 0, sizeof(intpParameter), &intpParameter);
-              //setNGXDataUChar(EVT_GEAR_LEVER, 0, &NGX.MAIN_GearLever, TRUE);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //Sleep(300);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //Sleep(300);              
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-             // hr = SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              TOGA = FALSE;
-              CurrentWay = CurrentWay + 1;
-              PPID.FT = true;
-              mode = CLIMB;
-            }
-            if (PaircraftData->alt > 1800) {
-              //setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-            }
-
-						getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, "degree");
-						ManPitchWithFD(*Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, PaircraftData);
-            /*if (ExportData.HorEnabled == 1) {
-              ManPitchWithFD(-ExportData.HorBar, PaircraftData);
-            }
-            else {
-              ManPitchWithFD(NPitch, PaircraftData);
-            }*\
-						getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_BANK, "degree");
-						ManBankWithFD(-*Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_BANK, PaircraftData);
-            /*if (ExportData.VerEnabled == 1) {
-              ManBankWithFD(-ExportData.VerBar, PaircraftData);
-            }
-            else {
-              ManBankWithFD(0, PaircraftData);
-            }*\
-
-          }
-          else if ((PaircraftData->AS > 140) && (PaircraftData->AS <= 150)) {
-						//ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_ELE, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_ELEVATOR_SET, -2500, \
-              SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-          CurrentPos = *Ways[CurrentWay];
-          CurrentPos.Slla.Latitude = PaircraftData->lat;
-          CurrentPos.Slla.Longitude = PaircraftData->lon;
-          SIMMATH::DOrtoKM(&CurrentPos);
-          double DCommon = GetDistanceToWayType(GSWAY);
-          double DToChange = CalcToNewWay(false);
-          CHAR s[512];
-          sprintf(s, "MODE: TAKEOFF Current: %.3f km Total: %.3f km \nCurrent way: %d Type: %d Total ways: %d D for head: %.3f", CurrentPos.D, DCommon, CurrentWay, CurrentPos.typePath, CountWays, DToChange);
-          AddText(gcnew String(s), true);
-          if (AircraftData.simOnGround == 1) {
-            double HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-          }
-          else {
-            double HeadingRel = BankWithHead(GetAnglePM180(Ways[CurrentWay]->EH));
-          }
-          break;
-        }
-case ABORT_TAKE_OFF: {
-					mode = LANDING;
-					      break;
-		    }
-case CIRCLE_TAXI: {
-					      break;
-		    }
-case CLIMB: {
-					CabLight = 0;
-          aircraftData* PaircraftData = &AircraftData;
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-
-          if (PaircraftData->alt > 1800) {
-						ThrottleLever(85);
-            //setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-						////setA20NDataBool(KEY_AP_MASTER, KEY_AP_MASTER, TRUE, &Vars.var_AUTOPILOT_MASTER, 0);
-          }
-          if (PaircraftData->AS > 230) {
-            //setNGXDataUChar(EVT_GEAR_LEVER, 1, &NGX.MAIN_GearLever, TRUE);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_OFF, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-          else if (PaircraftData->AS > 218) {
-						setA20NDataDouble(KEY_FLAPS_INCR, KEY_FLAPS_DECR, 0.0, &Vars.var_FLAPS_HANDLE_PERCENT, 0.0);
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_GEAR_UP, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_0, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-          else if (PaircraftData->AS > 190) {
-						setA20NDataDouble(KEY_FLAPS_INCR, KEY_FLAPS_DECR, 0.25, &Vars.var_FLAPS_HANDLE_PERCENT, 0.0);
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_GEAR_UP, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_1, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVT_GEAR_LEVER, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-          else
-          {
-						ExSimConnect_TransmitClientEvent(hSimConnect, 0, KEY_GEAR_UP, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_UN, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-          }
-					getA20NDataBool(&Vars.var_AUTOPILOT_MASTER);
-          if (*Vars.var_AUTOPILOT_AVAILABLE) {
-            //break;
-          }
-          CurrentPos = *Ways[CurrentWay];
-					if (CurrentPos.Speed == 0.0) {
-						if (PaircraftData->alt > 10500) {
-							getA20NDataDouble(&Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR);
-							if (*Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR > 10.0) {
-								setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, 335, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-								//setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 335, &NGX.MCP_IASMach);
-							}
-							else {
-								setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, 0.79, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-								//setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 0.79, &NGX.MCP_IASMach);
-							}
-						}
-						else if (PaircraftData->alt < 9500) {
-							setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, 250, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-							//setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 250, &NGX.MCP_IASMach);
-					}
-          }
-          else {
-						setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, Ways[CurrentWay]->Speed, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-            //setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, Ways[CurrentWay]->Speed, &NGX.MCP_IASMach);
-          }
-          if (PaircraftData->alt < 10000) {
-						//1 - NAV
-					//2 - BEACON
-					//4 - LANDING
-					//8 - TAXI/RUNWAY
-					//16 - STROBE
-					//32 - COMM
-						//256 - LOGO
-						//512 - DOME
-						setLightMask(&Vars.var_LIGHT_STATES, 0b100111011);
-            //setNGXDataBool(EVT_OH_LIGHTS_LOGO, TRUE, &NGX.LTS_LogoSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_TAXI, TRUE, &NGX.LTS_TaxiSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[1]);
-            //setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, FALSE);
-            //setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-            //setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[1]);
-          }
-          else {
-						//1 - NAV
-					//2 - BEACON
-					//4 - LANDING
-					//8 - TAXI/RUNWAY
-					//16 - STROBE
-					//32 - COMM
-						//256 - LOGO
-						//512 - DOME
-						setLightMask(&Vars.var_LIGHT_STATES, 0b100110011);
-            //setNGXDataBool(EVT_OH_LIGHTS_LOGO, FALSE, &NGX.LTS_LogoSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_TAXI, FALSE, &NGX.LTS_TaxiSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[1]);
-            //setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, FALSE);
-            //setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-            //setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[1]);
-          }
-          if (PaircraftData->alt < 10000) {
-            CabLight = 1;
-          }
-          else {
-            CabLight = 4;
-          }
-          if (PaircraftData->alt > 28000) {
-						setA20NDataDouble(KEY_AP_SPD_VAR_INC, KEY_AP_SPD_VAR_DEC, 0.79, &Vars.var_AUTOPILOT_AIRSPEED_HOLD_VAR, 0.0);
-            //setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 0.79, &NGX.MCP_IASMach);
-          }
-          if (PaircraftData->alt > 3600) {
-            if (((PaircraftData->PressureSet - 0.01) > 29.92) || ((PaircraftData->PressureSet + 0.01) < 29.92)) {
-              //Control.Parameter = MOUSE_FLAG_LEFTSINGLE;
-              //Control.Event = EVT_EFIS_CPT_BARO_STD;
-              //SimConnect_SetClientData(hSimConnect, PMDG_NG3_CONTROL_ID, PMDG_NG3_CONTROL_DEFINITION,
-               // 0, 0, sizeof(PMDG_NG3_Control), &Control);
-            }
-          }
-          CurrentPos.Slla.Latitude = PaircraftData->lat;
-          CurrentPos.Slla.Longitude = PaircraftData->lon;
-          SIMMATH::DOrtoKM(&CurrentPos);
-          double DCommon = GetDistanceToWayType(GSWAY);
-          if (((DCommon < 230.0) || ((CurrentWay + 1) == CountWays)) && (!STAR)) {
-            AirportList ApList = PAirportData->GetNearAirport(WP->at(WP->size() - 1).lat, WP->at(WP->size() - 1).lon);
-            std::vector<int>* StartIndex;
-            if (DestMetar.WindSpeed >= 0.0) {
-              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, DestMetar.WindDir);
-            }
-            else {
-              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, PaircraftData->WindDirection);
-            }
-            for (int iii = 0; iii < StartIndex->size(); iii++) {
-              DATA_RUNWAY runway = PAirportData->GetStartCoord(StartIndex->at(iii));
-              SIMCONNECT_DATA_LATLONALT latlon = SIMMATH::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
-              CountWays = CountWays - 1;
-              STARPoint = CountWays - 1;
-              Ways[STARPoint]->nameEndPoint = AddSTAR(PAirportData, PaircraftData, &runway);
-              if (Ways[STARPoint]->nameEndPoint != "") {
-                break;
-              }
-            }
-            STAR = true;
-          }
-          CHAR s[512];
-          double AngleToDesc = GetDescentAngle(Ways);
-					setA20NDataDouble(KEY_AP_ALT_VAR_INC, KEY_AP_ALT_VAR_DEC, Flight.cruiseLevel, &Vars.var_AUTOPILOT_ALTITUDE_LOCK_VAR, 99.0);
-          //setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, Flight.cruiseLevel, &NGX.MCP_Altitude);
-          if (AngleToDesc >= GetAngleToDesc(PaircraftData->alt)) {
-            mode = DESCENT;
-          }
-          if (CurrentPos.typePath != GSWAY) {
-            int Alt = Flight.cruiseLevel / 100;
-            double HeadingRel;
-            if ((!NGX.MCP_annunCMD_A) && (PaircraftData->simOnGround == 0)) {
-							getA20NDataDouble(&Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, "degree");
-							//ManPitchWithFD(-*Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH, PaircraftData);
-							AltPitchWithPos(*Vars.var_AUTOPILOT_FLIGHT_DIRECTOR_PITCH);
-              /*if (ExportData.HorEnabled == 1) {
-                AltPitchWithPos(-ExportData.HorBar);
-              }
-              else {
-                AltPitchWithPos(-10);
-              }*\
-              if ((CurrentPos.typePath == HEADINGUNTILALT) || (CurrentPos.typePath == HEADINGUNTILFROMDIST)) {
-                double AngleWind = PaircraftData->WindDirection - CurrentPos.SH;
-                double AngleDrift = asin(sin(AngleWind / 180 * M_PI) * PaircraftData->WindSpeed / PaircraftData->TS) * 180 / M_PI;
-                HeadingRel = BankWithHead(GetAnglePM180(Ways[CurrentWay]->H + AircraftData.MagVar));
-              }
-              else if (CurrentPos.typePath == TRKINTERCEPTRADIAL) {
-                double AngleWind = PaircraftData->WindDirection - CurrentPos.SH;
-                double AngleDrift = asin(sin(AngleWind / 180 * M_PI) * PaircraftData->WindSpeed / PaircraftData->TS) * 180 / M_PI;
-                HeadingRel = BankWithHead(GetAnglePM180(Ways[CurrentWay]->H + AircraftData.MagVar));
-              }
-              else {
-                HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-              }
-            }
-            double DToChange = CalcToNewWay();
-            sprintf(s, "MODE: CLIMB \"%s\" Current: %.3f km Total: %.3f km \nCurrent way: %d Type: %d Name: \"%s\" Total ways: %d D for head: %.3f \n ATD: %.3f Current angle: %.3f", Ways[STARPoint]->nameEndPoint.c_str(), CurrentPos.D, DCommon, CurrentWay, CurrentPos.typePath, CurrentPos.nameEndPoint.c_str(), CountWays, DToChange, AngleToDesc, GetAngleToDesc(PaircraftData->alt));
-            AddText(gcnew String(s), true);
-          }
-          else {
-            mode = LANDING;
-          }
-          /*if ((PaircraftData->alt + 100) > Flight.cruiseLevel) {
-            mode = CRUISE;
-          }*\
-					if ((PaircraftData->alt + 100) > Flight.cruiseLevel) {
-						mode = CRUISE;
-					}
-          if (AngleToDesc >= ((PaircraftData->alt / 48148) + 2.19)) {
-            //setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-            //mode = DESCENT;
-          }
-          break;
-        }
-case CRUISE: {
-          CabLight = 2;
-          aircraftData* PaircraftData = &AircraftData;
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-          CurrentPos = *Ways[CurrentWay];
-          CurrentPos.Slla.Latitude = PaircraftData->lat;
-          CurrentPos.Slla.Longitude = PaircraftData->lon;
-          SIMMATH::DOrtoKM(&CurrentPos);
-          int icw = CurrentWay;
-          double DCommon = CurrentPos.D;
-          while ((Ways[icw]->typePath != RUNWAY) && (icw < (CountWays - 1))) {
-            DCommon += Ways[icw + 1]->D;
-            icw++;
-          }
-          if (DCommon < 20) {
-            CurrentWay = icw;
-          }
-          if (DCommon < 15) {
-            setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 161, &NGX.MCP_IASMach);
-          }
-          else if (DCommon < 20) {
-            setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 180, &NGX.MCP_IASMach);
-          }
-          else if (DCommon < 25) {
-            setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 200, &NGX.MCP_IASMach);
-          }
-          else if (DCommon < 30) {
-            setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 200, &NGX.MCP_IASMach);
-          }
-          if (((DCommon <300.0) || ((CurrentWay + 1) == CountWays)) && (!STAR)) {
-            AirportList ApList = PAirportData->GetNearAirport(WP->at(WP->size() - 1).lat, WP->at(WP->size() - 1).lon);
-            std::vector<int>* StartIndex;
-            if (DestMetar.WindSpeed >= 0.0) {
-	              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, DestMetar.WindDir);
-            }
-            else {
-              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, PaircraftData->WindDirection);
-            }
-						//std::vector<RunwayPaths> *RP = new std::vector<RunwayPaths>();
-						
-            for (int iii = 0; iii < StartIndex->size(); iii++) {
-              DATA_RUNWAY runway = PAirportData->GetStartCoord(StartIndex->at(iii));
-              SIMCONNECT_DATA_LATLONALT latlon = SIMMATH::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
-              CountWays = CountWays - 1;
-              STARPoint = CountWays - 1;
-              Ways[STARPoint]->nameEndPoint = AddSTAR(PAirportData, PaircraftData, &runway);
-              if (Ways[STARPoint]->nameEndPoint != "") {
-                break;
-              }
-            }
-            STAR = true;
-          }
-          CHAR s[512];
-          if (PaircraftData->alt < 10000) {
-            CabLight = 1;
-          }
-          else {
-            CabLight = 4;
-          }
-          if (PaircraftData->alt < 4500)
-          {
-            setNGXDataDouble(EVT_EFIS_CPT_BARO, AircraftData.Pressure, &AircraftData.PressureSet, 0.01, -0.01, TRUE);
-          }
-          double AngleToDesc = GetDescentAngle(Ways);
-          setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, Flight.cruiseLevel, &NGX.MCP_Altitude);
-          if (AngleToDesc >= GetAngleToDesc(PaircraftData->alt)) {
-            setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-            mode = DESCENT;
-          }
-          if ((PaircraftData->alt + 100) < Flight.cruiseLevel) {
-						setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-            mode = CLIMB;
-          }
-          double HeadingRel;
-          if ((!NGX.MCP_annunCMD_A) && (PaircraftData->simOnGround == 0)) {
-            if (ExportData.HorEnabled == 1) {
-              if (TestControl == FALSE) {
-                AltPitchWithPos(-ExportData.HorBar);
-              }
-              else {
-                AltPitchWithPos(pidPitch.inVal);
-              }
-            }
-            else {
-              AltPitchWithPos(-10);
-            }
-            if (ExportData.VerEnabled == 1) {
-              if (TestControl == FALSE) {
-                HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-              }
-              else {
-                AltVSpeedWithPitch(pidVSpeed.inVal);
-              }
-            }
-            else {
-              HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-            }
-          }
-          double DToChange = CalcToNewWay();
-          sprintf(s, "MODE: CRUISE \"%s\" Current: %.3f km Total: %.3f km \nCurrent way: %d Type: %d Name: \"%s\" Total ways: %d D for head: %.3f \n ATD: %.3f Current angle: %.3f", Ways[STARPoint]->nameEndPoint.c_str(), CurrentPos.D, DCommon, CurrentWay, CurrentPos.typePath, CurrentPos.nameEndPoint.c_str(), CountWays, DToChange, AngleToDesc, GetAngleToDesc(PaircraftData->alt));
-          AddText(gcnew String(s), true);
-          break;
-        }
-case DESCENT: {
-          CabLight = 4;
-          aircraftData* PaircraftData = &AircraftData;
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-          if (PaircraftData->alt < 4600) {
-            if (((PaircraftData->PressureSet - 0.01) <= 29.92) && ((PaircraftData->PressureSet + 0.01) >= 29.92)) {
-              Control.Parameter = MOUSE_FLAG_LEFTSINGLE;
-              Control.Event = EVT_EFIS_CPT_BARO_STD;
-              SimConnect_SetClientData(hSimConnect, PMDG_NG3_CONTROL_ID, PMDG_NG3_CONTROL_DEFINITION,
-                0, 0, sizeof(PMDG_NG3_Control), &Control);
-            }
-            setNGXDataDouble(EVT_EFIS_CPT_BARO, AircraftData.Pressure, &AircraftData.PressureSet, 0.01, -0.01, TRUE);
-          }
-					if ((PaircraftData->alt + 100) < Flight.cruiseLevel) {
-						setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-						mode = CLIMB;
-					}
-          if (!abortLanding2) {
-            if (PaircraftData->AS < 165) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_30, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 170) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_20, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 175) {
-              //setNGXDataUChar(EVT_GEAR_LEVER, 2, &NGX.MAIN_GearLever, TRUE);
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              Sleep(300);
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 180) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_15, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 200) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_5, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 218) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_1, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else if (PaircraftData->AS < 230) {
-              //setNGXDataUChar(EVT_GEAR_LEVER, 1, &NGX.MAIN_GearLever, TRUE);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              //Sleep(300);
-              //SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-          }
-          if ((PaircraftData->alt > 10000) && (PaircraftData->alt < 12000)) {
-            if (NGX.MCP_IASMach > 10.0) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 240, &NGX.MCP_IASMach);
-            }
-          }
-          else if (PaircraftData->alt >= 12000) {
-            if (NGX.MCP_IASMach > 10.0) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 335, &NGX.MCP_IASMach);
-            }
-            else {
-              setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 0.79, &NGX.MCP_IASMach);
-            }
-          }
-          if (PaircraftData->alt < 10000) {
-            setNGXDataBool(EVT_OH_LIGHTS_LOGO, TRUE, &NGX.LTS_LogoSw);
-            setNGXDataBool(EVT_OH_LIGHTS_TAXI, TRUE, &NGX.LTS_TaxiSw);
-            setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[1]);
-            setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, FALSE);
-            setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-            setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-            setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[0]);
-            setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[1]);
-          }
-          else {
-            setNGXDataBool(EVT_OH_LIGHTS_LOGO, FALSE, &NGX.LTS_LogoSw);
-            setNGXDataBool(EVT_OH_LIGHTS_TAXI, FALSE, &NGX.LTS_TaxiSw);
-            setNGXDataBool(EVT_OH_LIGHTS_ANT_COL, TRUE, &NGX.LTS_AntiCollisionSw);
-            //setNGXDataBool(EVT_OH_LIGHTS_L_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[0]);
-            //setNGXDataBool(EVT_OH_LIGHTS_R_TURNOFF, FALSE, &NGX.LTS_RunwayTurnoffSw[1]);
-            setNGXDataUChar(EVT_OH_LIGHTS_POS_STROBE, 2, &NGX.LTS_PositionSw, FALSE);
-            setNGXDataUChar(EVT_OH_LIGHTS_L_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[0], TRUE);
-            setNGXDataUChar(EVT_OH_LIGHTS_R_RETRACT, 0, &NGX.LTS_LandingLtRetractableSw[1], TRUE);
-            setNGXDataBool(EVT_OH_LIGHTS_L_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[0]);
-            setNGXDataBool(EVT_OH_LIGHTS_R_FIXED, FALSE, &NGX.LTS_LandingLtFixedSw[1]);
-          }
-          if (PaircraftData->alt < 10000) {
-            CabLight = 1;
-          }
-          else {
-            CabLight = 4;
-          }
-          if (CurrentWay >= CountWays) {
-            //CurrentWay = AppPoint;
-            //abortLanding = false;
-          }
-          CurrentPos = *Ways[CurrentWay];
-          CurrentPos.Slla.Latitude = PaircraftData->lat;
-          CurrentPos.Slla.Longitude = PaircraftData->lon;
-          SIMMATH::DOrtoKM(&CurrentPos);
-          int icw = CurrentWay;
-          double DCommon = CurrentPos.D;
-          while ((Ways[icw]->typePath != RUNWAY) && (icw < (CountWays - 1))) {
-            DCommon += Ways[icw + 1]->D;
-            icw++;
-          }
-          if (!abortLanding) {
-            if (DCommon < 15.0) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_DOWN, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              flare = true;
-              VSPID.FT = true;
-              PPID.FT = true;
-              mode = LANDING;
-            }
-            if (DCommon < 20) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 161, &NGX.MCP_IASMach);
-            }
-            else if (DCommon < 25) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 180, &NGX.MCP_IASMach);
-            }
-            else if (DCommon < 30) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 200, &NGX.MCP_IASMach);
-            }
-            else if (DCommon < 35) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 200, &NGX.MCP_IASMach);
-            }
-            else if (DCommon > 40 && PaircraftData->alt < 10000.0 && !abortLanding2) {
-              setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 240, &NGX.MCP_IASMach);
-            }
-          }
-          else {
-            //setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 250, &NGX.MCP_IASMach);
-            int appcount = CountWays - AppPoint;
-            int newapppoint = CountWays;
-            for (int ii = 0; ii < appcount; ii++) {
-              //Ways[CountWays] = Ways[AppPoint+ii];
-              AddWayPoint(Ways[AppPoint + ii]->Slla.Longitude,
-                Ways[AppPoint + ii]->Slla.Latitude,
-                Ways[AppPoint + ii]->Slla.Altitude,
-                Ways[AppPoint + ii]->typePath,
-                Ways[AppPoint + ii]->nameEndPoint,
-                Ways[AppPoint + ii]->EH,
-                Ways[AppPoint + ii]->fixAlt,
-                Ways[AppPoint + ii]->Speed,
-                Ways[AppPoint + ii]->H);
-              //SIMMATH::DOrtoKM(Ways[CountWays]);
-              //CountWays++;
-            }
-            AppPoint = newapppoint;
-            abortLanding = false;
-          }
-          CHAR s[512];
-          if (((DCommon < 230.0) || ((CurrentWay + 1) == CountWays)) && (!STAR)) {
-            AirportList ApList = PAirportData->GetNearAirport(WP->at(WP->size() - 1).lat, WP->at(WP->size() - 1).lon);
-            std::vector<int>* StartIndex;
-            if (DestMetar.WindSpeed >= 0.0) {
-              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, DestMetar.WindDir);
-            }
-            else {
-              StartIndex = PAirportData->GetRunwayStart(PaircraftData->lat, PaircraftData->lon, PaircraftData->WindDirection);
-            }
-            for (int iii = 0; iii < StartIndex->size(); iii++) {
-              DATA_RUNWAY runway = PAirportData->GetStartCoord(StartIndex->at(iii));
-              SIMCONNECT_DATA_LATLONALT latlon = SIMMATH::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
-              CountWays = CountWays - 1;
-              STARPoint = CountWays - 1;
-              Ways[STARPoint]->nameEndPoint = AddSTAR(PAirportData, PaircraftData, &runway);
-              if (Ways[STARPoint]->nameEndPoint != "") {
-                break;
-              }
-            }
-            STAR = true;
-          }
-          double currentAngle = GetDescentAngle(Ways);
-          double VSD = ManVSWithAngle(currentAngle);
-          int VS = VSD;
-          if (SetTimeOff(DESCENT, 30000)) {
-            if ((VSD + (20.0 * DCommon)) < (PaircraftData->VS * 60.0)) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_UP, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-            else {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_DOWN, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            }
-          }
-          if ((CurrentPos.typePath != RUNWAY) && ((CurrentPos.typePath != GSWAY))) {
-            int Alt = CurrentPos.TargetAlt / 100;
-            setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, Alt * 100, &NGX.MCP_Altitude);
-            if (abortLanding2 && PaircraftData->alt > 1800.0) {
-              setNGXDataBool(EVT_MCP_LVL_CHG_SWITCH, TRUE, &NGX.MCP_annunLVL_CHG);
-              abortLanding2 = false;
-            }
-            double HeadingRel;
-            if ((!NGX.MCP_annunCMD_A) && (PaircraftData->simOnGround == 0)) {
-              if (ExportData.HorEnabled == 1) {
-                if (TestControl == FALSE) {
-                  AltPitchWithPos(-ExportData.HorBar);
-                }
-                else {
-                  AltPitchWithPos(pidPitch.inVal);
-                }
-              }
-              else {
-                AltPitchWithPos(-10);
-              }
-              if (ExportData.VerEnabled == 1) {
-                if (TestControl == FALSE) {
-                  HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-                }
-                else {
-                  AltVSpeedWithPitch(pidVSpeed.inVal);
-                }
-              }
-              else {
-                HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-              }
-            }
-            double DToChange = CalcToNewWay();
-            sprintf(s, "MODE: DESCENT \"%s\" Current: %.3f km Total: %.3f km \nCurrent way: %d Type: %d Name: \"%s\" Total ways: %d D for head: %.3f \nVS: %.d CurrentAngle to EOD: %.3f", Ways[STARPoint]->nameEndPoint.c_str(), CurrentPos.D, DCommon, CurrentWay, CurrentPos.typePath, CurrentPos.nameEndPoint.c_str(), CountWays, DToChange, VS, currentAngle);
-            AddText(gcnew String(s), true);
-          }
-          else {
-            SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_DOWN, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-            flare = true;
-            VSPID.FT = true;
-            PPID.FT = true;
-            mode = LANDING;
-          }
-          break;
-        }
-case LANDING: {
-          aircraftData* PaircraftData = &AircraftData;
-          hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-          int Alt = Ways[CurrentWay]->Ella.Altitude / 100;
-          setNGXDataUShort(EVT_MCP_ALTITUDE_SELECTOR, 2700, &NGX.MCP_Altitude);
-          if (SetTimeOff(5, 5000)) {
-            setNGXDataBool(EVT_MCP_VS_SWITCH, TRUE, &NGX.MCP_annunVS);
-          }
-          while ((Ways[CurrentWay]->typePath != RUNWAY) && CurrentWay < CountWays) {
-            CurrentWay = CurrentWay + 1;
-          }
-          
-          CurrentPos = *Ways[CurrentWay];
-          CurrentPos.Slla.Latitude = PaircraftData->lat;
-          CurrentPos.Slla.Longitude = PaircraftData->lon;
-          SIMMATH::DOrtoKM(&CurrentPos);
-          double TAlt = 0.0;
-          int VS = ManVSWithGlide(Ways[CurrentWay], 3, TAlt);
-          if (PaircraftData->alt < 1000.0 && (VS < -1000.0 || PaircraftData->AS > 170.0)) {
-            //mode = ABORT_LANDING;
-          }
-          if (VS > 1800) {
-            VS = 1800;
-          }
-          else if (VS < -1100) {
-            VS = -1000;
-          }
-          else if (VS < -2000) {
-            //mode = ABORT_LANDING;
-          }
-          double DCommon = CurrentPos.D;
-					if (!PaircraftData->simOnGround) {
-						if (DCommon < 15) {
-							setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 161, &NGX.MCP_IASMach);
-						}
-						else if (DCommon < 20) {
-							setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 180, &NGX.MCP_IASMach);
-						}
-						else if (DCommon < 25) {
-							setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 200, &NGX.MCP_IASMach);
-						}
-						else if (DCommon < 30) {
-							setNGXDataFloat(EVT_MCP_SPEED_SELECTOR, 230, &NGX.MCP_IASMach);
-						}
-						if ((PaircraftData->AS < 168)) {
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_30, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						else if ((PaircraftData->AS < 175) && (PaircraftData->AS > 170)) {
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_20, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						else if ((PaircraftData->AS < 190) && (PaircraftData->AS > 180)) {
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_15, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						else if ((PaircraftData->AS < 215) && (PaircraftData->AS > 200)) {
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_5, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						else if ((PaircraftData->AS < 222) && (PaircraftData->AS > 218)) {
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_1, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						else if ((PaircraftData->AS < 230) && (PaircraftData->AS > 225)) {
-							//setNGXDataUChar(EVT_GEAR_LEVER, 1, &NGX.MAIN_GearLever, TRUE);
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_RIGHTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						if ((PaircraftData->AS < 173)) {
-							//setNGXDataUChar(EVT_GEAR_LEVER, 2, &NGX.MAIN_GearLever, TRUE);
-							SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_GEAR_LEVER, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-						}
-						if (PaircraftData->alt < 10000) {
-							CabLight = 1;
-						}
-						else {
-							CabLight = 4;
-						}
-					}
-          setNGXDataShort(EVT_MCP_VS_SELECTOR, VS, &NGX.MCP_VertSpeed, TRUE);
-          double HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-          if ((!NGX.MCP_annunCMD_A) && (PaircraftData->simOnGround == 0)) {
-            if (ExportData.HorEnabled == 1) {
-              if (TestControl == FALSE) {
-                AltVSpeedWithPitch(VS);
-              }
-              else {
-                AltVSpeedWithPitch(VS);
-              }
-            }
-            else {
-              AltVSpeedWithPitch(VS);
-            }
-            if (ExportData.VerEnabled == 1) {
-              if (TestControl == FALSE) {
-                HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-              }
-              else {
-                AltBankWithPos(pidBank.inVal);
-              }
-            }
-            else {
-              HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-            }
-          }
-          CHAR s[512];
-          sprintf(s, "MODE: LANDING Current: %.3f km Total: %.3f km \nCurrent way: %d Type: %d Name: \"%s\" Total ways: %d \nVS: %.d", CurrentPos.D, DCommon, CurrentWay, CurrentPos.typePath, CurrentPos.nameEndPoint.c_str(), CountWays, VS);
-          AddText(gcnew String(s), true);
-          if (PaircraftData->GAlt < 200) {
-            setNGXDataBool(EVT_MCP_AT_ARM_SWITCH, FALSE, &NGX.MCP_annunATArm);
-            if ((PaircraftData->AS > 80) && (PaircraftData->simOnGround == 1)) {
-              SimConnect_TransmitClientEvent(hSimConnect, -5000, EVENT_ELEVATOR_SET, 0, \
-                SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              if (SetTimeOff(LANDING, 2000)) {
-                ThrottleLever(-37);
-                brakes.LBrake = 0.0;
-                brakes.RBrake = 0.0;
-                SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-                SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_UP, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              }
-            }
-            else {
-              brakes.LBrake = 0.4;
-              brakes.RBrake = 0.4;
-              SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-              if (PaircraftData->GAlt < 50.0) {
-                ThrottleLever(0);
-              }
-            }
-            if (PaircraftData->GS <= 35.0) {
-              SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_SPEED_BRAKE_LEVER_DOWN, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-              brakes.LBrake = 0.0;
-              brakes.RBrake = 0.0;
-              SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-              VSPID.FT = true;
-              AirportList ApList = PAirportData->GetNearAirport(PaircraftData->lat, PaircraftData->lon);
-              DWORD indexPath = PAirportData->GetNearTaxiwayPath(PaircraftData->lat, PaircraftData->lon, PaircraftData->hed);
-              TaxiwayParks* Park = new TaxiwayParks();
-              std::vector<TPath> Path = PAirportData->GetPathGate(indexPath, PaircraftData->hed, 15.0, Park);
-              DWORD PI = Park->TaxiParkInfo;
-              DWORD PIi = (PI >> 12) & 0xfff;
-              DWORD PIt = (PI >> 8) & 0xf;
-              DWORD PIn = PI & 0x1f;
-              ParkN = new std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn]);
-              CountWays = CurrentWay + 1;
-              AddWayPoint(PaircraftData->lon, PaircraftData->lat, 0.0, RUNWAY, "Go out");
-              for (int i = 0; i < Path.size() - 1; i++) {
-                AddWayPoint(Path.at(i).Lon, Path.at(i).Lat, 0.0, Path[i].Type, Path.at(i).name);
-              }
-              AddWayPoint(Path.at(Path.size() - 1).Lon, Path.at(Path.size() - 1).Lat, Flight.cruiseLevel, GATE, Path.at(Path.size() - 1).name);
-              CurrentWay = CurrentWay + 2;
-              mode = TAXI_IN;
-            }
-          }
-          break;
-        }
-case ABORT_LANDING: {
-			    SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_TOGA, 1, \
-				    SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-			    TOGA = TRUE;
-			    SimConnect_TransmitClientEvent(hSimConnect, 0, EVENT_CONTROL_STAND_FLAPS_LEVER_15, MOUSE_FLAG_LEFTSINGLE, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
-			    //setNGXDataUChar(EVT_GEAR_LEVER, 0, &NGX.MAIN_GearLever);
-			    CurrentWay++;
-			    mode = DESCENT;
-          abortLanding = true;
-          abortLanding2 = true;
-					break;
-		    }
-case BRAKE: {
-          break;
-        }
-case TAXI_IN:{
-					
-						
-					
-			    hr = SimConnect_RequestDataOnSimObject(hSimConnect, REQ_AIRCRAFT_USER, DEF_AIRCRAFT_USER, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-			    aircraftData* PaircraftData = &AircraftData;
-			    DrawAirport(PAirportData, PaircraftData->lat, PaircraftData->lon, PaircraftData->hed);
-					if (Ways[CurrentWay] != NULL ) {
-						CurrentPos = *Ways[CurrentWay];
-					}
-			    CurrentPos.Slla.Latitude = PaircraftData->lat;
-			    CurrentPos.Slla.Longitude = PaircraftData->lon;
-			    SIMMATH::DOrtoKM(&CurrentPos);
-			    int icw = CurrentWay-1;
-			    double DCommon = CurrentPos.D;
-			    while ((Ways[icw]->typePath != RUNWAY) && (icw < (CountWays - 1))) {
-				    DCommon += Ways[icw + 1]->D;
-				    icw++;
-						if (Ways[icw] == NULL) {
-							break;
-						}
-			    }
-					//mode = START;
-			    CHAR s[256];
-			    sprintf(s, "MODE: TAXI_IN to: \"%s\" Current: %.3f km Total: %.3f km \n Speed %.3f; Current way: %d Name: \"%s\" Type: %d Total ways: %d", ParkN->c_str(), CurrentPos.D, DCommon, speed, CurrentWay, CurrentPos.nameEndPoint.c_str(), CurrentPos.typePath, CountWays);
-			    AddText(gcnew String(s), true);
-			    double kDToHed = 0.00004;
-			    double DToHed;
-			    double REangle;
-			    if ((CurrentWay + 1) <= CountWays) {
-				    REangle = GetAnglePM180(Ways[CurrentWay]->SH - Ways[CurrentWay]->EH);
-			    }
-			    else {
-				    REangle = GetAnglePM180(Ways[CurrentWay + 1]->SH - Ways[CurrentWay]->EH);
-			    }
-			    DToHed = abs(REangle) * PMDG_TEST::speeds.GS * kDToHed;
-			    if (DToHed < 0.025) {
-				    DToHed = 0.025;
-			    }
-			    if ((CurrentWay + 1) >= CountWays) {
-				    DToHed = 0.001;
-			    }
-			    double EangleRel = GetAnglePM180(CurrentPos.EH - Ways[CurrentWay]->EH);
-			    double a = GetFixDA(sin(EangleRel*M_PI / 180)* CurrentPos.D, EangleRel);
-			    double HeadingRel = ManHeadWithWay(Ways[CurrentWay]);
-			    if (minDCommon > DCommon) {
-				    minDCommon = DCommon;
-			    }
-			    if (((CurrentWay + 1) >= CountWays) && (DCommon < 0.003) && ((minDCommon + 0.001) < DCommon)) {
-				    speed = 0;
-				    double brake = 0.5; // (PaircraftData->GS - speed) / 70.0;
-				    SetThrust(0);
-				    brakes.LBrake = brake;
-				    brakes.RBrake = brake;
-				    if (PaircraftData->GS < 0.05) {
-					    SetThrust(0);
-					    brakes.LBrake = 1.0;
-					    brakes.RBrake = 1.0;
-					    CabLight = 4;
-					    //SetLight(4);
-					    AddText(gcnew String("DONE"), true);
-							//mode = START;
-					    //CurrentWay = CurrentWay + 1;
-				    }
-				    SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-			    }
-			    if ((abs(EangleRel) > 60) || (CurrentPos.D < DToHed)) {
-				    if ((CurrentWay + 1) >= CountWays) {
-					    speed = 0;
-					    double brake = 0.5; // (PaircraftData->GS - speed) / 70.0;
-					    SetThrust(0);
-					    brakes.LBrake = brake;
-					    brakes.RBrake = brake;
-					    if (PaircraftData->GS < 0.05)
-					    {
-						    SetThrust(0);
-						    brakes.LBrake = 1.0;
-						    brakes.RBrake = 1.0;
-						    CabLight = 4;
-						    //SetLight(4);
-						    AddText(gcnew String("DONE"), true);
-								//mode = START;
-								if (CurrentWay + 1 < CountWays) {
-									CurrentWay = CurrentWay + 1;
-								}
-					    }
-					    SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-				    }
-				    else {
-							if (CurrentWay + 1 < CountWays) {
-								CurrentWay = CurrentWay + 1;
-							}
-				    }
-			    }
-			    else
-			    {
-            if ((abs(HeadingRel) < 5.0) && (abs(a) < 0.005) && (CurrentPos.D > 0.200)) {
-              speed = 20;
-            }
-				    else {
-					    if ((abs(EangleRel) > 60) || (CurrentPos.D < (DToHed + 0.050))) {
-						    speed = 20;
-						    if (abs(REangle) > 10) {
-							    speed = 15;
-						    }
-						    if (abs(REangle) > 30) {
-							    speed = 12;
-						    }
-						    if (abs(REangle) > 50) {
-							    speed = 10;
-						    }
-						    if (abs(REangle) > 100) {
-							    speed = 5;
-						    }
-						    if (abs(HeadingRel) > 5) {
-							    speed = 5;
-						    }
-					    }
-					    else {
-						    speed = 20;
-					    }
-					    if (abs(a) > 0.005) {
-						    if ((abs(HeadingRel) > 5)) {
-							    speed = 5;
-						    }
-						    else if ((abs(HeadingRel) > 10)) {
-							    speed = 7;
-						    }
-						    else if ((abs(HeadingRel) > 15)) {
-							    speed = 10;
-						    }
-						    else {
-							    speed = 12;
-						    }
-					    }
-					    if (DCommon < 0.2) {
-						    speed = 10;
-						    if (DCommon < 0.100) {
-							    speed = 5;
-						    }
-						    if (DCommon < 0.002) {
-							    SetThrust(0);
-							    speed = 0;
-							    brakes.LBrake = 0.1;
-							    brakes.RBrake = 0.1;
-							    SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-							    if (PaircraftData->GS < 0.5) {
-								    SetThrust(0);
-								    speed = 0;
-								    brakes.LBrake = 0;
-								    brakes.RBrake = 0;
-								    SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-								    mode = SHUTDOWN;
-							    }
-						    }
-						    if ((CurrentWay + 1) >= CountWays) {
-							    speed = 3;
-						    }
-						    if (DCommon < 0.100) {
-							    speed = 3;
-						    }
-					    }
-				    }
-				    if (DCommon < 0.2) {
-					    if (PaircraftData->GS >(speed + 1)) {
-						    double brake = (PaircraftData->GS - speed) / 70.0;
-						    SetThrust(0);
-						    brakes.LBrake = brake;
-						    brakes.RBrake = brake;
-					    }
-					    else if (PaircraftData->GS < (speed)) {
-						    brakes.LBrake = 0.0;
-						    brakes.RBrake = 0.0;
-					    }
-				    }
-				    else {
-					    if (PaircraftData->GS > (speed + 2)) {
-						    double brake = (PaircraftData->GS - speed) / 70.0;
-						    SetThrust(0);
-						    brakes.LBrake = brake;
-						    brakes.RBrake = brake;
-					    }
-					    else if (PaircraftData->GS < (speed)) {
-						    brakes.LBrake = 0.0;
-						    brakes.RBrake = 0.0;
-					    }
-				    }
-				    SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes);
-			    }
-			    break;
-		    }
-case PARK: {
-          break;
-        }
-case SHUTDOWN: {
-          break;
-        }
-case SECURE: {
-          break;
-        }
-default: {
-          break;
-        }
-		  }
-		}
-		InTimer = false;
-	}
-	if (quit==1) {
-		KillTimer(NULL, Timer);
-		disconnectSafe();
-	}
-}
-
-*/
-
-
-
 double MainLogic::GetData(DWORD var, char* unit) {
 	double lVar;
 	emit GetDataSignal(MAINLOGIC_ID, var, &lVar, unit);
@@ -2237,7 +421,7 @@ VOID MainLogic::TimerProc()
 			}
 		}
 		Mode = PREPARE;
-		Mode = FILLWAY;
+		//Mode = FILLWAY;
 	}
 	if (Mode == FILLWAY) {
 		if (AirportData == NULL) {
@@ -2551,7 +735,7 @@ VOID MainLogic::TimerProc()
 
 			Mode = PREPARE;
 			//Mode = TAXIOUT;
-			Mode = TAKEOFF;
+			//Mode = TAKEOFF;
 			//Mode = CRUISE;
 			//SendCommand(HDG_SEL, 180, 0);
 			//Mode = ENGINESTART;
@@ -2571,7 +755,7 @@ VOID MainLogic::TimerProc()
 			if (preliminaryCocpitPrep == 2) {
 			if (cocpitPreparation == 0) {
 				emit CocpitPreparation(&cocpitPreparation);
-				while (data->GData.ATC_RUNWAY_SELECTED != 1);
+				//while (data->GData.ATC_RUNWAY_SELECTED != 1);
 				AtcRwy = std::string(data->GData.ATC_RUNWAY_AIRPORT_NAME);
 				
 			}
@@ -2602,7 +786,7 @@ VOID MainLogic::TimerProc()
 					if (GetData(PUSHBACK_AVAILABLE));
 					//SendEvent(KEY_PARKING_BRAKES, 1);
 					SendEvent(KEY_PUSHBACK_SET, 1);
-					while (GetData(GROUND_VELOCITY) < 0.05);
+					while (GetData(GROUND_VELOCITY) < 0.02);
 					SetData(PUSHBACK_WAIT, 1);
 					Sleep(60000);
 					//SendEvent(KEY_PARKING_BRAKES, 0);
@@ -2748,21 +932,21 @@ VOID MainLogic::TimerProc()
 			SendCommand(SET_GSPEED, -5, 0);
 			double brake = 0.5; // (PaircraftData->GS - speed) / 70.0;
 
-			if (data->GData.GROUND_VELOCITY < 0.1) {
-				SendCommand(SET_THROTTLE, 0, 0);
-				SendCommand(PARKBRAKE_SET, 1, 0);
+			//if (data->GData.GROUND_VELOCITY < 0.1) {
+				//SendCommand(SET_THROTTLE, 0, 0);
+				//SendCommand(PARKBRAKE_SET, 1, 0);
 
 				SendText("DONE!", true);
 				Mode = DONE;
-			}
+			//}
 		}
 		if ((abs(EangleRel) > 60) || (CurrentPos.Distance < DToHed)) {
 			if (((CurrentWay + 1) >= WayPoints->size()) && (DCommon < 0.003) && ((minDCommon + 0.001) < DCommon)) {
 				SendCommand(SET_GSPEED, -5, 0);
 
-				if (data->GData.GROUND_VELOCITY < 0.1) {
-					SendCommand(SET_THROTTLE, 0, 0);
-					SendCommand(PARKBRAKE_SET, 1, 0);
+				//if (data->GData.GROUND_VELOCITY < 0.1) {
+					//SendCommand(SET_THROTTLE, 0, 0);
+					//SendCommand(PARKBRAKE_SET, 1, 0);
 
 					SendText("DONE!", true);
 					Mode = DONE;
@@ -2771,7 +955,7 @@ VOID MainLogic::TimerProc()
 					if (CurrentWay + 1 < WayPoints->size()) {
 						CurrentWay = CurrentWay + 1;
 					}
-				}
+				//}
 			}
 			else {
 				if (CurrentWay + 1 < WayPoints->size()) {
@@ -2855,9 +1039,9 @@ VOID MainLogic::TimerProc()
 						SendCommand(SET_GSPEED, -5, 0);
 						double brake = 0.5; // (PaircraftData->GS - speed) / 70.0;
 
-						if (data->GData.GROUND_VELOCITY < 0.1) {
-							SendCommand(SET_THROTTLE, 0, 0);
-							SendCommand(PARKBRAKE_SET, 1, 0);
+						//if (data->GData.GROUND_VELOCITY < 0.1) {
+							//SendCommand(SET_THROTTLE, 0, 0);
+							//SendCommand(PARKBRAKE_SET, 1, 0);
 
 							SendText("DONE!", true);
 							Mode = DONE;
@@ -2866,7 +1050,7 @@ VOID MainLogic::TimerProc()
 							if (CurrentWay + 1 < WayPoints->size()) {
 								CurrentWay = CurrentWay + 1;
 							}
-						}
+						//}
 					}
 					if ((CurrentWay + 1) >= WayPoints->size()) {
 						speed = 3;
@@ -2878,17 +1062,24 @@ VOID MainLogic::TimerProc()
 			}
 			if ((Mode != TAKEOFF) && (Mode != DONE)) {
 				if (beforeTakeoff != 1) {
-					if (data->GData.ATC_CLEARED_TAXI || data->GData.ATC_CLEARED_TAKEOF) {
+					//if (data->GData.ATC_CLEARED_TAXI || data->GData.ATC_CLEARED_TAKEOF) {
 						SendCommand(SET_GSPEED, speed, 0);
-					}
+					/* }
 					else {
 						SendCommand(SET_GSPEED, -1, 0);
-					}
+					}*/
 				}
 				else {
 					SendCommand(SET_GSPEED, -1, 0);
 				}
 			}
+		}
+	}
+	if (Mode == DONE) {
+		if (data->GData.GROUND_VELOCITY < 0.1) {
+			SendCommand(SET_GSPEED, 0, 0);
+			SendCommand(PARKBRAKE_SET, 1, 0);
+			SendCommand(SET_THROTTLE, 0, 0);
 		}
 	}
 	if (Mode == TAKEOFF) {
@@ -3363,23 +1554,28 @@ VOID MainLogic::TimerProc()
 
 		if (DCommon > 17) {
 			if (IAlt > 10000) {
-				VSD = ManVSWithGlide(&WayPoints->at(CurrentWay), 2.8, CurrentPos.FinalAlt - 500);
+				VSD = ManVSWithGlide(&WayPoints->at(CurrentWay), 3.0, CurrentPos.FinalAlt - 500);
 			}
 			else {
-				VSD = ManVSWithGlide(&WayPoints->at(CurrentWay), 2.8, CurrentPos.FinalAlt - 500);
+				VSD = ManVSWithGlide(&WayPoints->at(CurrentWay), 2.7, CurrentPos.FinalAlt - 500);
 			}
 			//VSD = ManVSWithAngle(AngleToDesc);
 			SendCommand(ALT_SEL, FlightCruise, 20);
 			if (FlightCruise > (IAlt - 100)) {
 				SendCommand(PULL_ALT, 0, 0);
 			}
-			if (AngleToDesc >= GetAngleToDesc(IAlt)) {
+			if (AngleToDesc >= 2.5 /*GetAngleToDesc(IAlt)*/) {
 				if (FlightCruise > (IAlt - 100)) {
-					SendCommand(PULL_ALT, 0, 0);
+					if (FlightCruise != MaximumAltitude) {
+						SendCommand(PULL_ALT, 0, 0);
+					}
+					else {
+						SendCommand(PUSH_ALT, 0, 0);
+					}
 				}
 				else {
 
-
+					
 
 					if ((IAlt - 100) > FlightCruise) {
 						if ((ISpeed - 10) < data->AllData.A32NX_SPEEDS_MANAGED_PFD) {
@@ -3387,25 +1583,50 @@ VOID MainLogic::TimerProc()
 								SendCommand(VS_SEL, int((FlightCruise - IAlt) / 100) * 100, 20);
 							}
 							else {
-								if (VSD < -2500) {
-									SendCommand(VS_SEL, -2500, 20);
+								if (ISpeed > 200) {
+									if (VSD < -2500) {
+										SendCommand(VS_SEL, -2500, 20);
+									}
+									else {
+										SendCommand(VS_SEL, int(VSD / 100) * 100/* - 200*/, 20);
+									}
 								}
 								else {
-									SendCommand(VS_SEL, int(VSD / 100) * 100/* - 200*/, 20);
+									if (VSD < -2000) {
+										SendCommand(VS_SEL, -2000, 20);
+									}
+									else {
+										SendCommand(VS_SEL, int(VSD / 100) * 100/* - 200*/, 20);
+									}
 								}
 							}
 						}
 						else {
-							if (VSD < -1500+(ISpeed- data->AllData.A32NX_SPEEDS_MANAGED_PFD)*50) {
-								if ((-1500 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) > -500) {
-									SendCommand(VS_SEL, -500, 20);
+							if (ISpeed > 200) {
+								if (VSD < -1500 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) {
+									if ((-1500 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) > -500) {
+										SendCommand(VS_SEL, -500, 20);
+									}
+									else {
+										SendCommand(VS_SEL, int((-1500 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) / 100) * 100, 20);
+									}
 								}
 								else {
-									SendCommand(VS_SEL, int((-1500 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50)/100)*100, 20);
+									SendCommand(VS_SEL, int(VSD / 100) * 100, 20);
 								}
 							}
 							else {
-								SendCommand(VS_SEL, int(VSD / 100) * 100, 20);
+								if (VSD < -1000 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) {
+									if ((-1000 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) > -500) {
+										SendCommand(VS_SEL, -500, 20);
+									}
+									else {
+										SendCommand(VS_SEL, int((-1000 + (ISpeed - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) / 100) * 100, 20);
+									}
+								}
+								else {
+									SendCommand(VS_SEL, int(VSD / 100) * 100, 20);
+								}
 							}
 						}
 					}
@@ -3417,11 +1638,12 @@ VOID MainLogic::TimerProc()
 		}
 		else {
 			//LANDING
+			SendCommand(AUTOBRAKES_SET, 1, 0);
 			VSD = ManVSWithGlide(&WayPoints->at(CurrentWay), 3.0, WayPoints->at(CurrentWay).EAltitude);
 			//VSD = ManVSWithAngle(3);
 			
 			if (SOG) {
-				if (GSpeed < 30) {
+				if (GSpeed < 15) {
 					SendCommand(SET_THROTTLE, 0, 0);
 					SendCommand(SET_GSPEED, -1, 0);
 					SendCommand(SPOILER_SET, 0, 0);
@@ -3488,7 +1710,7 @@ VOID MainLogic::TimerProc()
 		
 		double DToChange = CalcToNewWay();
 
-		SendText("MODE: CRUISE \"" + WayPoints->at(STARPoint).Name + "\" Current: " + QString::number(CurrentPos.Distance, 'f', 3) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWay) + " Type: " + CurrentPos.Type + " Name: \"" + CurrentPos.Name + "\" Total ways: " + QString::number(WayPoints->size()) + " D for head: " + QString::number(DToChange, 'f', 3) + " \n VS: " + QString::number(VSD) + " \n ATD: " + QString::number(AngleToDesc, 'f', 3) + " Current angle: " + QString::number(GetAngleToDesc(IAlt), 'f', 3), false);
+		SendText("MODE: CRUISE \"" + WayPoints->at(STARPoint).Name + "\" Current: " + QString::number(CurrentPos.Distance, 'f', 3) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWay) + " Type: " + CurrentPos.Type + " Name: \"" + CurrentPos.Name + "\" Total ways: " + QString::number(WayPoints->size()) + " D for head: " + QString::number(DToChange, 'f', 3) + " \n VS: " + QString::number(VSD) + " D to alt: " + QString::number(CurrentPos.DistToAlt, 'f', 3) + " Next alt: " + QString::number(CurrentPos.FinalAlt, 'f', 3) + " \n ATD: " + QString::number(AngleToDesc, 'f', 3) + " Current angle: " + QString::number(GetAngleToDesc(IAlt), 'f', 3), false);
 
 	}
 	 /*if (Mode == DESCENT) {
@@ -3740,9 +1962,13 @@ double MainLogic::GetDescentAngle(std::vector<sWayPoint>* Way) {
 		while ((Way->at(wi).FixAlt != CRUISEALT) && (wi < (Way->size() - 1))) {
 			wi++;
 		}
+		if (wi != Way->size()) {
+			MaximumAltitude = Way->at(wi).EAltitude;
+		}
 		for (int i = wi - 1; i >= CurrentWay; i--) {
 			if ((MaxAlt > Way->at(i).EAltitude) && ((Way->at(i).FixAlt == ALTORBELOW) || (Way->at(i).FixAlt == FIXALT))) {
 				MaxAlt = Way->at(i).EAltitude;
+				
 			}
 		}
 		FlightCruise = (int(MaxAlt / 100.0)) * 100;
@@ -4248,7 +2474,7 @@ std::vector<TSTARS>* MainLogic::AddSTAR(SIDSTAR* sidstar, DATA_RUNWAY* runway, Q
 									STAR.wayPoint->push_back(sidstar->STARS->at(i).WayPoints->at(ii));
 									STAR.wayPoint->at(STAR.wayPoint->size() - 1).TYPE = FIX;
 								}
-								if (FindTransAppr >= 0) {
+								if (FindTransAppr) {
 									for (int ii = 0; ii < sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->size(); ii++) {
 										STAR.wayPoint->push_back(sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->at(ii));
 										STAR.wayPoint->at(STAR.wayPoint->size() - 1).TYPE = WAYPOINT;
@@ -4336,7 +2562,7 @@ std::vector<TSTARS>* MainLogic::AddSTAR(SIDSTAR* sidstar, DATA_RUNWAY* runway, Q
 												STAR.wayPoint->push_back(sidstar->STARS->at(i).WayPoints->at(ii));
 												STAR.wayPoint->at(STAR.wayPoint->size() - 1).TYPE = FIX;
 											}
-											if (FindTransAppr >= 0) {
+											if (FindTransAppr) {
 												for (int ii = 0; ii < sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->size(); ii++) {
 													STAR.wayPoint->push_back(sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->at(ii));
 													STAR.wayPoint->at(STAR.wayPoint->size() - 1).TYPE = WAYPOINT;
@@ -4694,7 +2920,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	if ((CurrentPos.Type == "HEADINGUNTILALT")) {
 		if ((GetData(PLANE_ALTITUDE) > CurrentPos.EAltitude)) {
 			if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5)&&(GetData(AIRSPEED_INDICATED)>1)) { //TO DO
 					SendCommand(PULL_SPD, 1, 0);
 					SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 				}
@@ -4711,7 +2937,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if (CurrentPos.Type == "HEADINGUNTILFROMDIST") {
 		if (CurrentPos.Distance > CurrentPos.Dist) {
 			if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 					SendCommand(PULL_SPD, 1, 0);
 					SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 				}
@@ -4730,7 +2956,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if (abs(abs(CurrentPos.EndHeadingTrue) - abs(WayPoints->at(CurrentWay).Dist)) < fl) {
 			if (abs(abs(CurrentPos.EndHeadingTrue) - abs(WayPoints->at(CurrentWay).Dist)) < 1.0) {
 				if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-					if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 						SendCommand(PULL_SPD, 1, 0);
 						SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 					}
@@ -4746,7 +2972,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 			}
 			if ((CurrentPos.Distance < REangle)) {
 				if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-					if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 						SendCommand(PULL_SPD, 1, 0);
 						SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 					}
@@ -4763,7 +2989,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		}
 		else {
 			if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 					SendCommand(PULL_SPD, 1, 0);
 					SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 				}
@@ -4782,7 +3008,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if ((CurrentPos.Type == "FIX") || (CurrentPos.Type == "TURNLEFTDIRECTFIX") || (CurrentPos.Type == "TURNRIGHTDIRECTFIX")) {
 		if ((CurrentPos.Distance < REangle)) {
 			if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 					SendCommand(PULL_SPD, 1, 0);
 					SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 				}
@@ -4799,7 +3025,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if (changeWay) {
 		if ((EangleRel > 60) || (EangleRel < -60) || (CurrentPos.Distance < REangle)) {
 			if (WayPoints->at(CurrentWay+1).IndSpeed > 0) {
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE < 50) { //TO DO
+				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (GetData(AIRSPEED_INDICATED) > 1)) { //TO DO
 					SendCommand(PULL_SPD, 1, 0);
 					SendCommand(SPD_SEL, WayPoints->at(CurrentWay + 1).IndSpeed, 0);
 				}
