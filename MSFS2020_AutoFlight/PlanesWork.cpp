@@ -199,7 +199,9 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		}
 		rudder = _outRudder;
 		//_outThrottle = _inThrottle;
-		emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
+		if (GetData(INDICATED_ALTITUDE) < 1000) {
+			emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
+		}
 	}
 }
 void PlanesWork::TrustSet(double pos, DWORD speed) { // Transfer to mainlogic and logarifmic set

@@ -82,7 +82,7 @@ private slots:
   double GetDescentAngle(std::vector<sWayPoint>* Way);
   float GetAngleToDesc(float alt);
   double ManVSWithAngle(double GS);
-  double ManVSWithGlide(sWayPoint* Way, double GS, double TAlt);
+  double ManVSWithGlide(sWayPoint* Way, double GS, double TAlt, double BiasDist = 0);
   bool SetTimeOff(int IDREQ, int TimeOffset);
 private:
   bool abortLanding = false;
@@ -96,7 +96,8 @@ private:
   SPid* SelectedPid;
   bool SetDataBank = false;
   bool TOGA = false;
-  std::vector<sWayPoint> RunWaysPaths;
+  std::vector<sWayPoint> RunWaysPathsOrig;
+  std::vector<sWayPoint> RunWaysPathsDest;
   DWORD Taxiway = 0;
   double speed = 0;
   bool GetDataChanged = false;

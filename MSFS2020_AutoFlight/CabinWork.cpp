@@ -1286,10 +1286,10 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		//GetDataL(SAVE_VARS);
 		break;
 	}
-	/*case PUSH_ALT: {
-		SendEvent(A32NX_FCU_ALT_PUSH, 1);
+	case PUSH_ALT: {
+		AltMode = 5;
 		break;
-	}*/
+	}
 	case PULL_ALT: {
 		AltMode = 0;
 		break;
@@ -1393,5 +1393,9 @@ void CabinWork::TimerProc() {
 	}
 	else if (AltMode == 3) {
 		VSSel(VS);
+	}
+	else if (AltMode == 5) {
+		SendEvent(A32NX_FCU_ALT_PUSH, 1);
+		AltMode = -1;
 	}
 }
