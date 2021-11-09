@@ -305,8 +305,8 @@ void PlanesWork::setThrust(FLOAT thrust) {
 	if (throttle < 0) {
 		throttle = 0;
 	}
-	else if (throttle > 20) {
-		throttle = 20;
+	else if (throttle > 15) {
+		throttle = 15;
 	}
 	throttleLever(throttle);
 	thrustSet = TRUE;

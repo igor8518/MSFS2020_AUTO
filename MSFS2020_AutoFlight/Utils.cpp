@@ -142,11 +142,14 @@ void Utils::DOrtoKM(sWayPoint* dsheh) {
 	}
 }
 
-double Utils::DToType(DWORD currWay, std::vector<sWayPoint>* wayPoints, QString type, sWayPoint* currPos) {
+double Utils::DToType(DWORD currWay, std::vector<sWayPoint>* wayPoints, QString type, sWayPoint* currPos, double headingRel) {
 	double dist = currPos->Distance;
 	while ((wayPoints->at(currWay).Type != type) && (currWay < (wayPoints->size() - 1))) {
 		dist += wayPoints->at(currWay + 1).Distance;
 		currWay++;
+	}
+	if ((currPos->Type == "GATE") && (abs(headingRel) > 160)) {
+		dist = -dist;
 	}
 	return dist;
 }

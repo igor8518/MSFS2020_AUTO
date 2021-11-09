@@ -23,10 +23,12 @@ public:
   HANDLE HSimConnect;
   DWORD Mode = 0;
   DWORD CurrentWay = 0;
+  DWORD FlightPhase;
   bool STAR = false;
   BOOL Quit = FALSE;
   QString PLNFile;
   std::string* ParkN = NULL;
+  double AddRadius = 0;
   std::string ParkType[14] = { "", "RAMP_GA", "RAMP_GA_SMALL", "RAMP_GA_MEDIUM", "RAMP_GA_LARGE", "RAMP_CARGO", "RAMP_MIL_CARGO", "RAMP_MIL_COMBAT", "GATE_SMALL", "GATE_MEDIUM", "GATE_HEAVY", "DOCK_GA", "FUEL", "VEHICLES" };
   std::string ParkName[38] = { "NONE", "PARKING", "N_PARKING", "NE_PARKING", "E_PARKING", "SE_PARKING", "S_PARKING", "SW_PARKING", "W_PARKING", "NW_PARKING", "GATE", "DOCK",
     "GATE_A", "GATE_B", "GATE_C", "GATE_D", "GATE_E", "GATE_F", "GATE_G", "GATE_H", "GATE_I", "GATE_J", "GATE_K", "GATE_L", "GATE_M", "GATE_N", "GATE_O", "GATE_P", "GATE_Q", "GATE_R", "GATE_S", "GATE_T",
@@ -49,6 +51,12 @@ signals:
   void AfterStart(int* Status);
   void BeforeTaxi(int flightLevel, int heading, int* Status);
   void BeforeTakeoff(int* Status);
+  void AfterTakeoff(int* Status);
+  void Landing(int* Status);
+  void AfterLanding(int* Status);
+  void Parking(int* Status);
+  void CabinReport();
+  
   
 
   void RegisterVar(DWORD DefaultParameter, char* unit = "");
@@ -56,6 +64,7 @@ signals:
   void GetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
   void GetDataStringSignal(DWORD sender, DWORD var, std::string* val);
   void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
   void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
 
@@ -100,6 +109,10 @@ private:
   std::vector<sWayPoint> RunWaysPathsDest;
   DWORD Taxiway = 0;
   double speed = 0;
+  double NPitchWork = 0;
+  double AvgCounter = 0;
+  double AvgMax = 0;
+  double AvgPitch = 0;
   bool GetDataChanged = false;
   bool SetDataChanged = false;
   bool SetGetDataChanged = false;
@@ -108,6 +121,7 @@ private:
   double GetData(DWORD DefaultParameter, char* unit = "");
   double GetDataL(DWORD DefaultParameter, char* unit = "");
   double SetData(DWORD var, double val, char* unit = "");
+  double SetDataL(DWORD var, double val, char* unit = "");
   std::string GetDataString(DWORD var);
   DWORD SendEvent(DWORD EventID, DWORD dwData);
   Ui::MSFS2020_AutoFlightClass* ui;
@@ -138,7 +152,7 @@ private:
   std::string AtcRwy = "";
 
   void AddWayPoint(double lon, double lat, double alt, QString pointType, QString PointName, double heading, int fixAlt, double speed, double radial, QJsonObject* fix = NULL);
-
+  
 
   QString SimBriefSID = "";
   QString SimBriefSTAR = "";
@@ -156,6 +170,10 @@ private:
   int afterStart = 0;
   int beforeTaxi = 0;
   int beforeTakeoff = 0;
+  int afterTakeoff = 0;
+  int landing = 0;
+  int afterLanding = 0;
+  int parking = 0;
   bool SetDataPitch; //?
 
   int RoutePoint = 0;

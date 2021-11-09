@@ -13,6 +13,7 @@ public:
   SimData(HANDLE hSimConnect);
 	~SimData();
 	static void FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* data);
+	int AddData(HANDLE hSimConnect, DWORD simData, const char* unitName);
 	QTimer* Timer;
 	struct sExportData
 	{
@@ -953,7 +954,8 @@ public:
 		double A32NX_ADIRS_ADIRU_1_STATE;
 		double A32NX_ADIRS_ADIRU_2_STATE;
 		double A32NX_ADIRS_ADIRU_3_STATE;
-		double RES[1000 - 928];
+		double A32NX_INITFLIGHT_STATE;
+		double RES[1000 - 929];
 		INT64 version = 0;
 	} AllData;
 	struct sGData {
@@ -1000,12 +1002,18 @@ public:
 		double GENERAL_ENG_STARTER2;
 		double AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1;
 		double AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE2;
-		double AUTOPILOT_ALTITUDE_LOCK_VAR;
+		double AUTOPILOT_ALTITUDE_LOCK_VAR3;
 		double AUTOPILOT_HEADING_LOCK_DIR;
 		double AUTOPILOT_AIRSPEED_HOLD_VAR;
 		double AUTOPILOT_VERTICAL_HOLD_VAR;
 		double ANTISKID_BRAKES_ACTIVE;
 		double KOHLSMAN_SETTING_HG;
+		double CIRCUIT_SWITCH_ON17;
+		double CIRCUIT_SWITCH_ON18;
+		double CIRCUIT_SWITCH_ON19;
+		double CIRCUIT_SWITCH_ON20;
+		double CIRCUIT_SWITCH_ON21;
+		double CIRCUIT_SWITCH_ON22;
 		double CIRCUIT_SWITCH_ON77;
 		double CIRCUIT_SWITCH_ON80;
 		double EXTERNAL_POWER_AVAILABLE1;
@@ -1047,8 +1055,8 @@ public:
 		double ATC_CLEARED_LANDING;
 		double ATC_CLEARED_IFR;
 		double ATC_AIRPORT_IS_TOWERED;
-		double ATC_RUNWAY_SELECTED;
-		char ATC_RUNWAY_AIRPORT_NAME[256];
+		double CABIN_SEATBELTS_ALERT_SWITCH;
+		//double ATC_RUNWAY_AIRPORT_NAME[256];
 		INT64 version = 0;
 	} GData;
 
@@ -4019,6 +4027,12 @@ private:
 			"ATC CLEARED LANDING",
 			"ATC CLEARED IFR",
 			"ATC AIRPORT IS TOWERED",
+		"CIRCUIT SWITCH ON:21",
+		"CIRCUIT SWITCH ON:22",
+		"CIRCUIT SWITCH ON:17",
+		"CIRCUIT SWITCH ON:20",
+		"CIRCUIT SWITCH ON:18",
+		"CIRCUIT SWITCH ON:19",
 	};
 	char* SimUnitsText[CVars] = {
 			"Bool",
@@ -5482,6 +5496,13 @@ private:
 			"Bool",
 			"Bool",
 			"Bool",
+
+			"Bool",
+			"Bool",
+			"Bool",
+			"Bool",
+			"bool",
+			"bool",
 	};
 	unsigned short SimVarsSettable[CVars] = {
 			0,
@@ -6944,6 +6965,13 @@ private:
 			0,
 			0,
 			0,
+
+			1,
+			1,
+			1,
+			1,
+			1,
+			1,
 	};
 	
 	std::vector<bool> RegEvent = std::vector<bool>(1600, false);
@@ -8061,14 +8089,14 @@ private:
 			
 			"Autoflight.A32NX_TRK_FPA_MODE_ACTIVE",
 			"Autoflight.XMLVAR_Baro_Selector_HPA_1",
-			/*"Autoflight.A32NX_EFIS_L_ND_MODE",
+			"Autoflight.A32NX_EFIS_L_ND_MODE",
 			"Autoflight.A32NX_EFIS_R_ND_MODE",
 			"Autoflight.A32NX_EFIS_L_ND_RANGE",
-			"Autoflight.A32NX_EFIS_R_ND_RANGE",*/
-			"Autoflight.A320_Neo_MFD_Range_1",
+			"Autoflight.A32NX_EFIS_R_ND_RANGE",
+			/*"Autoflight.A320_Neo_MFD_Range_1",
 		  "Autoflight.A320_Neo_MFD_Range_2",
 		  "Autoflight.A320_Neo_MFD_NAV_MODE_1",
-		  "Autoflight.A320_Neo_MFD_NAV_MODE_2",
+		  "Autoflight.A320_Neo_MFD_NAV_MODE_2",*/
 			"Autoflight.A320_FCU_SHOW_SELECTED_SPEED",
 			"Autoflight.A320_FCU_SHOW_SELECTED_HEADING",
 			"Autoflight.AP_MANAGED_AIRSPEED",
@@ -8789,6 +8817,7 @@ private:
 					"Autoflight.A32NX_SPEEDS_GD",
 					"Autoflight.A32NX_AUTOBRAKES_ARMED_MODE",
 					"Autoflight.A32NX_PARK_BRAKE_LEVER_POS",
+					"AutoFlight.A32NX_INITFLIGHT_STATE",
 
 
 					"LVarsWrapper.SAVE_VARS",
@@ -8957,6 +8986,18 @@ private:
 						"Autoflight.A32NX_ADIRS_ADIRU_3_STATE",
 						"Autoflight.A32NX_3D_THROTTLE_LEVER_POSITION_1",
 						"Autoflight.A32NX_3D_THROTTLE_LEVER_POSITION_2",
+
+						"Autoflight.LIGHTING_STROBE_0",
+						"Autoflight.LIGHTING_LANDING_2",
+						"Autoflight.LIGHTING_LANDING_3",
+						"Autoflight.LIGHTING_LANDING_1",
+						"Autoflight.LIGHTING_BEACON_0",
+						"Autoflight.LIGHTING_TAXI_2",
+						"Autoflight.LIGHTING_WING_0",
+						"Autoflight.LIGHTING_NAV_0",
+
+						"Autoflight.LANDING_2_RETRACTED",
+						"Autoflight.LANDING_3_RETRACTED",
 	};
 
 	unsigned int GetRegisteredVarsGetCount();

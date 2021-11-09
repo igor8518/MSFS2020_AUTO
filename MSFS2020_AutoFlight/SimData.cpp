@@ -249,6 +249,22 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 	}
 }
 
+int SimData::AddData(HANDLE hSimConnect, DWORD simData, const char* unitName = "") {
+	HRESULT hr;
+	if (std::string(unitName) == "") {
+		hr = SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[simData], SimUnitsText[simData]);
+	}
+	else {
+		hr = SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[simData], unitName);
+	}
+	if (hr != 0) {
+		return hr;
+	}
+	SimVarsGet[simData] = new double(0.0);
+	RegVarsGet->push_back(simData);
+	return 0;
+}
+
 SimData::SimData(HANDLE hSimConnect) {
 	HSimConnect = hSimConnect;
 	//DataT = this;
@@ -257,101 +273,109 @@ SimData::SimData(HANDLE hSimConnect) {
 	RegVarsSet = new std::vector<DWORD>();
 	RegVarsSetGet = new std::vector<DWORD>();
 	Timer = new QTimer(this);
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[MAGVAR], SimUnitsText[MAGVAR]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AMBIENT_WIND_DIRECTION], "degree"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AMBIENT_WIND_VELOCITY], SimUnitsText[AMBIENT_WIND_VELOCITY]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AMBIENT_PRESSURE], "inHG"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[SEA_LEVEL_PRESSURE], "inHG"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_PITCH_DEGREES], "Degrees"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_BANK_DEGREES], "Degrees"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ELEVATOR_POSITION], SimUnitsText[ELEVATOR_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AILERON_POSITION], SimUnitsText[AILERON_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[RUDDER_PEDAL_POSITION], SimUnitsText[RUDDER_PEDAL_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[RUDDER_TRIM], "degree"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ELEVATOR_TRIM_POSITION], "degree"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[BRAKE_PARKING_POSITION], SimUnitsText[BRAKE_PARKING_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FLAPS_HANDLE_INDEX], SimUnitsText[FLAPS_HANDLE_INDEX]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[SPOILERS_ARMED], SimUnitsText[SPOILERS_ARMED]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[SPOILERS_HANDLE_POSITION], SimUnitsText[SPOILERS_HANDLE_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[GEAR_HANDLE_POSITION], SimUnitsText[GEAR_HANDLE_POSITION]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[SIM_ON_GROUND], SimUnitsText[SIM_ON_GROUND]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[GROUND_VELOCITY], "Knots"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[VELOCITY_BODY_Z], SimUnitsText[VELOCITY_BODY_Z]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AIRSPEED_TRUE], SimUnitsText[AIRSPEED_TRUE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AIRSPEED_INDICATED], SimUnitsText[AIRSPEED_INDICATED]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[VERTICAL_SPEED], SimUnitsText[VERTICAL_SPEED]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ROTATION_VELOCITY_BODY_Y], "degrees per second"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[DELTA_HEADING_RATE], "degrees per second"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ACCELERATION_BODY_Z], SimUnitsText[ACCELERATION_BODY_Z]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_LONGITUDE], "degree"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_LATITUDE], "degree"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_ALTITUDE], SimUnitsText[PLANE_ALTITUDE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_ALT_ABOVE_GROUND], SimUnitsText[PLANE_ALT_ABOVE_GROUND]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[INDICATED_ALTITUDE], SimUnitsText[INDICATED_ALTITUDE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PLANE_HEADING_DEGREES_TRUE], "Degrees"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[PUSHBACK_AVAILABLE], SimUnitsText[PUSHBACK_AVAILABLE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ENG_N1_RPM1], "percent over 100"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ENG_N1_RPM2], "percent over 100"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[TURB_ENG_N11], "percent"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[TURB_ENG_N12], "percent"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[TURB_ENG_IGNITION_SWITCH_EX11], SimUnitsText[TURB_ENG_IGNITION_SWITCH_EX11]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[TURB_ENG_IGNITION_SWITCH_EX12], SimUnitsText[TURB_ENG_IGNITION_SWITCH_EX12]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[GENERAL_ENG_STARTER1], SimUnitsText[GENERAL_ENG_STARTER1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[GENERAL_ENG_STARTER2], SimUnitsText[GENERAL_ENG_STARTER2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1], SimUnitsText[AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE2], SimUnitsText[AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_ALTITUDE_LOCK_VAR], SimUnitsText[AUTOPILOT_ALTITUDE_LOCK_VAR]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_HEADING_LOCK_DIR], SimUnitsText[AUTOPILOT_HEADING_LOCK_DIR]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_AIRSPEED_HOLD_VAR], SimUnitsText[AUTOPILOT_AIRSPEED_HOLD_VAR]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[AUTOPILOT_VERTICAL_HOLD_VAR], "feet per minute"));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ANTISKID_BRAKES_ACTIVE], SimUnitsText[ANTISKID_BRAKES_ACTIVE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[KOHLSMAN_SETTING_HG], SimUnitsText[KOHLSMAN_SETTING_HG]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[CIRCUIT_SWITCH_ON77], SimUnitsText[CIRCUIT_SWITCH_ON77]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[CIRCUIT_SWITCH_ON80], SimUnitsText[CIRCUIT_SWITCH_ON80]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[EXTERNAL_POWER_AVAILABLE1], SimUnitsText[EXTERNAL_POWER_AVAILABLE1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[EXTERNAL_POWER_ON1], SimUnitsText[EXTERNAL_POWER_ON1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH1], SimUnitsText[FUELSYSTEM_PUMP_SWITCH1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH2], SimUnitsText[FUELSYSTEM_PUMP_SWITCH2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH3], SimUnitsText[FUELSYSTEM_PUMP_SWITCH3]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH4], SimUnitsText[FUELSYSTEM_PUMP_SWITCH4]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH5], SimUnitsText[FUELSYSTEM_PUMP_SWITCH5]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[FUELSYSTEM_PUMP_SWITCH6], SimUnitsText[FUELSYSTEM_PUMP_SWITCH6]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_POTENTIOMETER7], SimUnitsText[LIGHT_POTENTIOMETER7]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_CABIN], SimUnitsText[LIGHT_CABIN]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_NAV], SimUnitsText[LIGHT_NAV]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LOGO], SimUnitsText[LIGHT_LOGO]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_BEACON], SimUnitsText[LIGHT_LOGO]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_PANEL4], SimUnitsText[LIGHT_PANEL4]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_POTENTIOMETER86], SimUnitsText[LIGHT_POTENTIOMETER86]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LANDING], SimUnitsText[LIGHT_LANDING]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LANDING1], SimUnitsText[LIGHT_LANDING1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LANDING2], SimUnitsText[LIGHT_LANDING2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LANDING3], SimUnitsText[LIGHT_LANDING3]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_LANDING4], SimUnitsText[LIGHT_LANDING4]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_TAXI], SimUnitsText[LIGHT_TAXI]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_TAXI1], SimUnitsText[LIGHT_TAXI1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_TAXI2], SimUnitsText[LIGHT_TAXI2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_TAXI3], SimUnitsText[LIGHT_TAXI3]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_TAXI4], SimUnitsText[LIGHT_TAXI4]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[LIGHT_STROBE], SimUnitsText[LIGHT_STROBE]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN0], SimUnitsText[NEW_EXIT_OPEN0]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN1], SimUnitsText[NEW_EXIT_OPEN1]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN2], SimUnitsText[NEW_EXIT_OPEN2]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN3], SimUnitsText[NEW_EXIT_OPEN3]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN4], SimUnitsText[NEW_EXIT_OPEN4]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN5], SimUnitsText[NEW_EXIT_OPEN5]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN6], SimUnitsText[NEW_EXIT_OPEN6]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[NEW_EXIT_OPEN7], SimUnitsText[NEW_EXIT_OPEN7]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_CLEARED_TAXI], SimUnitsText[ATC_CLEARED_TAXI]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_CLEARED_TAKEOF], SimUnitsText[ATC_CLEARED_TAKEOF]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_CLEARED_LANDING], SimUnitsText[ATC_CLEARED_LANDING]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_CLEARED_IFR], SimUnitsText[ATC_CLEARED_IFR]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_AIRPORT_IS_TOWERED], SimUnitsText[ATC_AIRPORT_IS_TOWERED]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_RUNWAY_SELECTED], SimUnitsText[ATC_RUNWAY_SELECTED]));
-	SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_DATA, SimVarsText[ATC_RUNWAY_AIRPORT_NAME], NULL, SIMCONNECT_DATATYPE_STRING256));
+
+	AddData(HSimConnect, MAGVAR);
+	AddData(HSimConnect, AMBIENT_WIND_DIRECTION, "degree");
+	AddData(HSimConnect, AMBIENT_WIND_VELOCITY);
+	AddData(HSimConnect, AMBIENT_PRESSURE, "inHG");
+	AddData(HSimConnect, SEA_LEVEL_PRESSURE, "inHG");
+	AddData(HSimConnect, PLANE_PITCH_DEGREES, "Degrees");
+	AddData(HSimConnect, PLANE_BANK_DEGREES, "Degrees");
+	AddData(HSimConnect, ELEVATOR_POSITION);
+	AddData(HSimConnect, AILERON_POSITION);
+	AddData(HSimConnect, RUDDER_PEDAL_POSITION);
+	AddData(HSimConnect, RUDDER_TRIM, "degree");
+	AddData(HSimConnect, ELEVATOR_TRIM_POSITION, "degree");
+	AddData(HSimConnect, BRAKE_PARKING_POSITION);
+	AddData(HSimConnect, FLAPS_HANDLE_INDEX);
+	AddData(HSimConnect, SPOILERS_ARMED);
+	AddData(HSimConnect, SPOILERS_HANDLE_POSITION);
+	AddData(HSimConnect, GEAR_HANDLE_POSITION);
+	AddData(HSimConnect, SIM_ON_GROUND);
+	AddData(HSimConnect, GROUND_VELOCITY, "Knots");
+	AddData(HSimConnect, VELOCITY_BODY_Z);
+	AddData(HSimConnect, AIRSPEED_TRUE);
+	AddData(HSimConnect, AIRSPEED_INDICATED);
+	AddData(HSimConnect, VERTICAL_SPEED);
+	AddData(HSimConnect, ROTATION_VELOCITY_BODY_Y, "degrees per second");
+	AddData(HSimConnect, DELTA_HEADING_RATE, "degrees per second");
+	AddData(HSimConnect, ACCELERATION_BODY_Z);
+	AddData(HSimConnect, PLANE_LONGITUDE, "degree");
+	AddData(HSimConnect, PLANE_LATITUDE, "degree");
+	AddData(HSimConnect, PLANE_ALTITUDE);
+	AddData(HSimConnect, PLANE_ALT_ABOVE_GROUND);
+	AddData(HSimConnect, INDICATED_ALTITUDE);
+	AddData(HSimConnect, PLANE_HEADING_DEGREES_TRUE, "Degrees");
+	AddData(HSimConnect, PUSHBACK_AVAILABLE);
+	AddData(HSimConnect, ENG_N1_RPM1, "percent over 100");
+	AddData(HSimConnect, ENG_N1_RPM2, "percent over 100");
+	AddData(HSimConnect, TURB_ENG_N11, "percent");
+	AddData(HSimConnect, TURB_ENG_N12, "percent");
+	AddData(HSimConnect, TURB_ENG_IGNITION_SWITCH_EX11);
+	AddData(HSimConnect, TURB_ENG_IGNITION_SWITCH_EX12);
+	AddData(HSimConnect, GENERAL_ENG_STARTER1);
+	AddData(HSimConnect, GENERAL_ENG_STARTER2);
+	AddData(HSimConnect, AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1);
+	AddData(HSimConnect, AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE2);
+	AddData(HSimConnect, AUTOPILOT_ALTITUDE_LOCK_VAR);
+	AddData(HSimConnect, AUTOPILOT_HEADING_LOCK_DIR);
+	AddData(HSimConnect, AUTOPILOT_AIRSPEED_HOLD_VAR);
+	AddData(HSimConnect, AUTOPILOT_VERTICAL_HOLD_VAR, "feet per minute");
+	AddData(HSimConnect, ANTISKID_BRAKES_ACTIVE);
+	AddData(HSimConnect, KOHLSMAN_SETTING_HG);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON17);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON18);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON19);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON20);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON21);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON22);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON77);
+	AddData(HSimConnect, CIRCUIT_SWITCH_ON80);
+	AddData(HSimConnect, EXTERNAL_POWER_AVAILABLE1);
+	AddData(HSimConnect, EXTERNAL_POWER_ON1);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH1);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH4);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH5);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH6);
+	AddData(HSimConnect, LIGHT_POTENTIOMETER7);
+	AddData(HSimConnect, LIGHT_CABIN);
+	AddData(HSimConnect, LIGHT_NAV);
+	AddData(HSimConnect, LIGHT_LOGO);
+	AddData(HSimConnect, LIGHT_BEACON);
+	AddData(HSimConnect, LIGHT_PANEL4);
+	AddData(HSimConnect, LIGHT_POTENTIOMETER86);
+	AddData(HSimConnect, LIGHT_LANDING);
+	AddData(HSimConnect, LIGHT_LANDING1);
+	AddData(HSimConnect, LIGHT_LANDING2);
+	AddData(HSimConnect, LIGHT_LANDING3);
+	AddData(HSimConnect, LIGHT_LANDING4);
+	AddData(HSimConnect, LIGHT_TAXI);
+	AddData(HSimConnect, LIGHT_TAXI1);
+	AddData(HSimConnect, LIGHT_TAXI2);
+	AddData(HSimConnect, LIGHT_TAXI3);
+	AddData(HSimConnect, LIGHT_TAXI4);
+	AddData(HSimConnect, LIGHT_STROBE);
+	AddData(HSimConnect, NEW_EXIT_OPEN0);
+	AddData(HSimConnect, NEW_EXIT_OPEN1);
+	AddData(HSimConnect, NEW_EXIT_OPEN2);
+	AddData(HSimConnect, NEW_EXIT_OPEN3);
+	AddData(HSimConnect, NEW_EXIT_OPEN4);
+	AddData(HSimConnect, NEW_EXIT_OPEN5);
+	AddData(HSimConnect, NEW_EXIT_OPEN6);
+	AddData(HSimConnect, NEW_EXIT_OPEN7);
+	AddData(HSimConnect, ATC_CLEARED_TAXI);
+	AddData(HSimConnect, ATC_CLEARED_TAKEOF);
+	AddData(HSimConnect, ATC_CLEARED_LANDING);
+	AddData(HSimConnect, ATC_CLEARED_IFR);
+	AddData(HSimConnect, ATC_AIRPORT_IS_TOWERED);
+	AddData(HSimConnect, CABIN_SEATBELTS_ALERT_SWITCH);
+	//AddData(HSimConnect, ATC_RUNWAY_SELECTED], SimUnitsText[ATC_RUNWAY_SELECTED]));
+	//AddData(HSimConnect, ATC_RUNWAY_AIRPORT_NAME], NULL, SIMCONNECT_DATATYPE_STRING256));
 	
 
-	SimVarsGet[MAGVAR] = new double(0.0);
+	/*SimVarsGet[MAGVAR] = new double(0.0);
 	SimVarsGet[AMBIENT_WIND_DIRECTION] = new double(0.0);
 	SimVarsGet[AMBIENT_WIND_VELOCITY] = new double(0.0);
 	SimVarsGet[AMBIENT_PRESSURE] = new double(0.0);
@@ -400,6 +424,8 @@ SimData::SimData(HANDLE hSimConnect) {
 	SimVarsGet[AUTOPILOT_VERTICAL_HOLD_VAR] = new double(0.0);
 	SimVarsGet[ANTISKID_BRAKES_ACTIVE] = new double(0.0);
 	SimVarsGet[KOHLSMAN_SETTING_HG] = new double(0.0);
+	//SimVarsGet[CIRCUIT_SWITCH_ON21] = new double(0.0);
+	//SimVarsGet[CIRCUIT_SWITCH_ON22] = new double(0.0);
 	SimVarsGet[CIRCUIT_SWITCH_ON77] = new double(0.0);
 	SimVarsGet[CIRCUIT_SWITCH_ON80] = new double(0.0);
 	SimVarsGet[EXTERNAL_POWER_AVAILABLE1] = new double(0.0);
@@ -441,6 +467,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	SimVarsGet[ATC_CLEARED_LANDING] = new double(0.0);
 	SimVarsGet[ATC_CLEARED_IFR] = new double(0.0);
 	SimVarsGet[ATC_AIRPORT_IS_TOWERED] = new double(0.0);
+	SimVarsGet[CABIN_SEATBELTS_ALERT_SWITCH] = new double(0.0);
 	/*SimVarsGet[ATC_RUNWAY_AIRPORT_NAME] = new double(0.0);
 	SimVarsGet[ATC_RUNWAY_AIRPORT_NAME2] = new double(0.0);
 	SimVarsGet[ATC_RUNWAY_AIRPORT_NAME3] = new double(0.0);
@@ -451,7 +478,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	SimVarsGet[ATC_RUNWAY_AIRPORT_NAME8] = new double(0.0);*/
 	
 
-	RegVarsGet->push_back(MAGVAR);
+	/*RegVarsGet->push_back(MAGVAR);
 	RegVarsGet->push_back(AMBIENT_WIND_DIRECTION);
 	RegVarsGet->push_back(AMBIENT_WIND_VELOCITY);
 	RegVarsGet->push_back(AMBIENT_PRESSURE);
@@ -500,6 +527,8 @@ SimData::SimData(HANDLE hSimConnect) {
 	RegVarsGet->push_back(AUTOPILOT_VERTICAL_HOLD_VAR);
 	RegVarsGet->push_back(ANTISKID_BRAKES_ACTIVE);
 	RegVarsGet->push_back(KOHLSMAN_SETTING_HG);
+	//RegVarsGet->push_back(CIRCUIT_SWITCH_ON21);
+	//RegVarsGet->push_back(CIRCUIT_SWITCH_ON22);
 	RegVarsGet->push_back(CIRCUIT_SWITCH_ON77);
 	RegVarsGet->push_back(CIRCUIT_SWITCH_ON80);
 	RegVarsGet->push_back(EXTERNAL_POWER_AVAILABLE1);
@@ -541,6 +570,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	RegVarsGet->push_back(ATC_CLEARED_LANDING);
 	RegVarsGet->push_back(ATC_CLEARED_IFR);
 	RegVarsGet->push_back(ATC_AIRPORT_IS_TOWERED);
+	RegVarsGet->push_back(CABIN_SEATBELTS_ALERT_SWITCH);*/
 	/*RegVarsGet->push_back(ATC_RUNWAY_AIRPORT_NAME);
 	RegVarsGet->push_back(ATC_RUNWAY_AIRPORT_NAME2);
 	RegVarsGet->push_back(ATC_RUNWAY_AIRPORT_NAME3);

@@ -20,7 +20,7 @@ public slots:
   static double GetRWLength(std::vector<TPath>* p);
   static SIMCONNECT_DATA_LATLONALT GetDALatLon(double lat, double lon, double ang, double dist);
   static void DOrtoKM(sWayPoint* dsheh);
-  static double DToType(DWORD currWay, std::vector<sWayPoint>* wayPoints, QString type, sWayPoint* currPos);
+  static double DToType(DWORD currWay, std::vector<sWayPoint>* wayPoints, QString type, sWayPoint* currPos, double headingRel);
   static double DToRunway(DWORD currWay, std::vector<sWayPoint>* wayPoints, sWayPoint* currPos);
   static double Constrain180(double angle);
   static double Constrain(double val, double min, double max);

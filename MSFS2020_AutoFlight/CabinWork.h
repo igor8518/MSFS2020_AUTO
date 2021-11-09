@@ -134,6 +134,11 @@ public slots:
   void BeforeStart(int* Status);
   
   void EngineStart(int* Status);
+  void AfterTakeoff(int* Status);
+  void Landing(int* Status);
+  void AfterLanding(int* Status);
+  void Parking(int* Status);
+  
   void EngineAntiIce(DWORD num, DWORD onoff);
   void WingAntiIce(DWORD onoff);
   void AfterStart(int* Status);
