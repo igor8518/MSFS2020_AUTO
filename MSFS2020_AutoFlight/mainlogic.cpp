@@ -1648,7 +1648,7 @@ VOID MainLogic::TimerProc()
 					TaxiwayParks* Park = new TaxiwayParks();
 					std::vector<TPath> Path = AirportData->GetPathGate(indexPath, Hed, 15.0, Park);
 					DWORD PI = Park->TaxiParkInfo;
-					AddRadius = (Park->Radius - 12.5) / 1000;
+					AddRadius = (Park->Radius - 13) / 1000;
 					DWORD PIi = (PI >> 12) & 0xfff;
 					DWORD PIt = (PI >> 8) & 0xf;
 					DWORD PIn = PI & 0x1f;
