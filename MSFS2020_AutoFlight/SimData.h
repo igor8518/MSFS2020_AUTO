@@ -1056,6 +1056,8 @@ public:
 		double ATC_CLEARED_IFR;
 		double ATC_AIRPORT_IS_TOWERED;
 		double CABIN_SEATBELTS_ALERT_SWITCH;
+		double TOTAL_WEIGHT;
+		double YOKE_Y_POSITION;
 		//double ATC_RUNWAY_AIRPORT_NAME[256];
 		INT64 version = 0;
 	} GData;
@@ -8998,6 +9000,9 @@ private:
 
 						"Autoflight.LANDING_2_RETRACTED",
 						"Autoflight.LANDING_3_RETRACTED",
+						"AutoFlight.A32NX_APPROACH_STATE",
+						"AutoFlight.A32NX_SIDESTICK_POSITION_X",
+						"AutoFlight.A32NX_SIDESTICK_POSITION_Y",
 	};
 
 	unsigned int GetRegisteredVarsGetCount();

@@ -1398,6 +1398,7 @@ void CabinWork::SetATHR(DWORD onoff)
 }
 
 void CabinWork::ReceiveCommand(DWORD command, double parameter1, double parameter2) {
+	//if ((command != AUTOBRAKES_SET) || (command != SET_ATHR) || (DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
 	switch (command) {
 	case LIGHTSTROBE_SET: {
 		LightStrobe = parameter1;
@@ -1420,7 +1421,7 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	case SPD_SEL: {
-		Speed = parameter1;
+		//Speed = parameter1;
 		break;
 	}
 	case SET_ATHR: {
@@ -1448,11 +1449,19 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	case PUSH_ALT: {
-		AltMode = 5;
+		if (AltMode != 7) {
+			AltMode = 5;
+		}
+		break;
+	}
+	case PUSH_ALT_TEST: {
+		AltMode = 7;
 		break;
 	}
 	case PULL_ALT: {
-		AltMode = 0;
+		if (AltMode != 7) {
+			AltMode = 0;
+		}
 		break;
 	}
 	case ALT_SEL: {
@@ -1460,14 +1469,17 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	case PUSH_VS: {
-		AltMode = 2;
-		
+		if (AltMode != 7) {
+			AltMode = 2;
+		}
 		break;
 	}
 	case VS_SEL: {
 		//VSSel(parameter1);
-		AltMode = 3;
-		VS = parameter1;
+		if (AltMode != 7) {
+			AltMode = 3;
+			VS = parameter1;
+		}
 		break;
 	}
 	case PUSH_HDG: {
@@ -1479,11 +1491,11 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	case PUSH_SPD: {
-		SpeedMode = 1;
+		//SpeedMode = 1;
 		break;
 	}
 	case PULL_SPD: {
-		SpeedMode = 0;
+		//SpeedMode = 0;
 		break;
 	}
 	case SPOILER_SET: {
@@ -1495,6 +1507,7 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	}
+	//}
 }
 	
 	
@@ -1502,6 +1515,7 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 
 
 void CabinWork::TimerProc() {
+
 	StrobeLight(LightStrobe);
 	LandingLight(LightLanding);
 	RunwayLight(LightRunway);
@@ -1520,42 +1534,47 @@ void CabinWork::TimerProc() {
 		BarometricRef();
 	}
 	SpoilersSet(Spoilers);
-	
-	if (SpeedMode == 1) {
-		SendEvent(A32NX_FCU_SPD_PUSH, 1);
+	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		/*if (SpeedMode == 1) {
+			SendEvent(A32NX_FCU_SPD_PUSH, 1);
+		}
+		else if (SpeedMode == 0) {
+			SendEvent(A32NX_FCU_SPD_PULL, 1);
+			SpeedMode = -1;
+			SpeedSel(Speed);
+		}*/
+		if (HeadingMode == 1) {
+			SendEvent(A32NX_FCU_HDG_PUSH, 1);
+			HeadingMode = -1;
+		}
+		else if (HeadingMode == 0) {
+			SendEvent(A32NX_FCU_HDG_PULL, 1);
+			HeadingMode = -1;
+			//HdgSel(Heading);
+		}
+		if (Alt < 100) {
+			AltSet(100);
+		}
+		else {
+			AltSet(Alt);
+		}
+		if (AltMode == 0) {
+			SendEvent(A32NX_FCU_ALT_PULL, 1);
+			AltMode = -1;
+		}
+		else if (AltMode == 2) {
+			SendEvent(A32NX_FCU_VS_PUSH, 1);
+			AltMode = -1;
+		}
+		else if (AltMode == 3) {
+			VSSel(VS);
+		}
+		else if (AltMode == 5) {
+			SendEvent(A32NX_FCU_ALT_PUSH, 1);
+			AltMode = -1;
+		}
 	}
-	else if (SpeedMode == 0) {
-		SendEvent(A32NX_FCU_SPD_PULL, 1);
-		SpeedMode = -1;
-		SpeedSel(Speed);
-	}
-	if (HeadingMode == 1) {
-		SendEvent(A32NX_FCU_HDG_PUSH, 1);
-		HeadingMode = -1;
-	}
-	else if (HeadingMode == 0){
-		SendEvent(A32NX_FCU_HDG_PULL, 1);
-		HeadingMode = -1;
-		//HdgSel(Heading);
-	}
-	if (Alt < 100) {
-		AltSet(100);
-	}
-	else {
-		AltSet(Alt);
-	}
-	if (AltMode == 0) {
-		SendEvent(A32NX_FCU_ALT_PULL, 1);
-		AltMode = -1;
-	}
-	else if (AltMode == 2) {
-		SendEvent(A32NX_FCU_VS_PUSH, 1);
-		AltMode = -1;
-	}
-	else if (AltMode == 3) {
-		VSSel(VS);
-	}
-	else if (AltMode == 5) {
+	if (AltMode == 7) {
 		SendEvent(A32NX_FCU_ALT_PUSH, 1);
 		AltMode = -1;
 	}

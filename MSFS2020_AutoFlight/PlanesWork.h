@@ -1,6 +1,7 @@
 #pragma once
 #include <qobject.h>
 #include "headers.h"
+class SimData;
 class PlanesWork : public QObject {
   Q_OBJECT
 
@@ -91,6 +92,7 @@ class PlanesWork : public QObject {
     Q_PROPERTY(double DGSpeedTrust READ DGSpeedTrust WRITE setDGSpeedTrust)
     Q_PROPERTY(double DGSpeedTrust READ DGSpeedTrust WRITE setDGSpeedTrust)
 public:
+    SimData* DataT;
   QTimer* Timer;
   PlanesWork(HANDLE hSimConnect);
   double inThrottle() { return _inThrottle; };
@@ -229,6 +231,7 @@ public:
   double NGSpeedTrust() { return _NGSpeedTrust; };
 
 private:
+    
   int dTh = -13130;
   int TTAS = 3;
   int ABVH = 13;
@@ -292,6 +295,7 @@ private:
   double _DGSpeedAccseleration = 0.5;
 
   HANDLE HSimConnect;
+  
   bool GetDataChanged = false;
   bool SetDataChanged = false;
   bool SetGetDataChanged = false;

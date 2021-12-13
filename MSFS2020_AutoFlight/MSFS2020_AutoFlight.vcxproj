@@ -14,16 +14,16 @@
     <ProjectGuid>{680CDF96-BADE-4752-8773-2690B1F50D9A}</ProjectGuid>
     <Keyword>QtVS_v303</Keyword>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -106,6 +106,7 @@
     <ClCompile Include="Route.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="WayLoader.cpp" />
+    <ClCompile Include="WriteStream.cpp" />
     <QtRcc Include="msfs2020_autoflight.qrc" />
     <QtUic Include="msfs2020_autoflight.ui" />
     <QtMoc Include="msfs2020_autoflight.h" />
@@ -116,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AlternatePilot.h" />
+    <ClInclude Include="WriteStream.h" />
     <QtMoc Include="SimData.h" />
     <QtMoc Include="ExQThread.h" />
     <QtMoc Include="CabinWork.h" />

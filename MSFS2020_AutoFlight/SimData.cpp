@@ -296,7 +296,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	AddData(HSimConnect, VELOCITY_BODY_Z);
 	AddData(HSimConnect, AIRSPEED_TRUE);
 	AddData(HSimConnect, AIRSPEED_INDICATED);
-	AddData(HSimConnect, VERTICAL_SPEED);
+	AddData(HSimConnect, VERTICAL_SPEED, "feet per minute");
 	AddData(HSimConnect, ROTATION_VELOCITY_BODY_Y, "degrees per second");
 	AddData(HSimConnect, DELTA_HEADING_RATE, "degrees per second");
 	AddData(HSimConnect, ACCELERATION_BODY_Z);
@@ -371,6 +371,8 @@ SimData::SimData(HANDLE hSimConnect) {
 	AddData(HSimConnect, ATC_CLEARED_IFR);
 	AddData(HSimConnect, ATC_AIRPORT_IS_TOWERED);
 	AddData(HSimConnect, CABIN_SEATBELTS_ALERT_SWITCH);
+	AddData(HSimConnect, TOTAL_WEIGHT, "kg");
+	AddData(HSimConnect, YOKE_Y_POSITION);
 	//AddData(HSimConnect, ATC_RUNWAY_SELECTED], SimUnitsText[ATC_RUNWAY_SELECTED]));
 	//AddData(HSimConnect, ATC_RUNWAY_AIRPORT_NAME], NULL, SIMCONNECT_DATATYPE_STRING256));
 	

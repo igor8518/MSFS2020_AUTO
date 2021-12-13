@@ -13,10 +13,12 @@
 #include <QUrl>
 #include <QFile>
 #include <cmath>
+#include "WriteStream.h"
 class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    SimData* data = NULL;
   MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
   Utils* utils;
@@ -94,6 +96,15 @@ private slots:
   double ManVSWithGlide(sWayPoint* Way, double GS, double TAlt, double BiasDist = 0);
   bool SetTimeOff(int IDREQ, int TimeOffset);
 private:
+    bool Approach = FALSE;
+    double flyPoint;
+    WriteStream* Flight;
+    double CommonDistance = 0;
+    double ElepsedDistance = 0;
+    double LeaveDistance = 0;
+    double lastlat;
+    double lastalt;
+    double lastlon;
   bool abortLanding = false;
   bool abortLanding2 = false;
   bool flare = false;
@@ -125,7 +136,7 @@ private:
   std::string GetDataString(DWORD var);
   DWORD SendEvent(DWORD EventID, DWORD dwData);
   Ui::MSFS2020_AutoFlightClass* ui;
-  SimData* data;
+  
   QTimer* MainTimer;
   double MaximumAltitude;
   CabinWork* cabinWork;

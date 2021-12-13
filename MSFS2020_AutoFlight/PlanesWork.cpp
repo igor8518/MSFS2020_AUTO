@@ -3,10 +3,12 @@
 PlanesWork::PlanesWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 	Timer = new QTimer(this);
 	connect(Timer, SIGNAL(timeout()), this, SLOT(TimerProc()));
+	DataT = NULL;
 	//Timer->start(60);
 }
 
 void PlanesWork::TimerProc() {
+
 	_CurrTrust = GetData(ENG_N1_RPM1, "percent over 100");
 	_CurrAccseleration = GetData(ACCELERATION_BODY_Z) * 1.6878098571011956838728492271799;
 	_CurrGSpeed = GetData(GROUND_VELOCITY);
@@ -16,80 +18,84 @@ void PlanesWork::TimerProc() {
 	if (GetData(INDICATED_ALTITUDE) < 3000) {
 		ThrottleSet(0, 10);
 	}
-	AileronSet(0, 10);
-	ElevatorSet(0, 10);
-	RudderSet(0, 10);
-	
+	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		AileronSet(0, 10);
+		ElevatorSet(0, 10);
+		RudderSet(0, 10);
+	}
 }
 
 void PlanesWork::ReceiveCommand(DWORD command, double parameter1, double parameter2) {
-	switch (command) {
-	case SET_THROTTLE: {
-		if (_sourceThrottle) {
-			_inThrottle = parameter1;
-			TTAS = SET_THROTTLE;
+	//if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		switch (command) {
+		case SET_THROTTLE: {
+			if (_sourceThrottle) {
+				_inThrottle = parameter1;
+				TTAS = SET_THROTTLE;
+			}
+			break;
 		}
-		break;
-	}
-	case SET_TRUST: {
-		if (_sourceTrust) {
-			_Trust= parameter1;
-			TTAS = SET_TRUST;
+		case SET_TRUST: {
+			if (_sourceTrust) {
+				_Trust = parameter1;
+				TTAS = SET_TRUST;
+			}
+			break;
 		}
-		break;
-	}
-	case SET_ACCSELERATION: {
-		if (_sourceAccseleration) {
-			_Accseleration = parameter1;
-			TTAS = SET_ACCSELERATION;
+		case SET_ACCSELERATION: {
+			if (_sourceAccseleration) {
+				_Accseleration = parameter1;
+				TTAS = SET_ACCSELERATION;
+			}
+			break;
 		}
-		break;
-	}
-	case SET_GSPEED: {
-		if (_sourceGSpeed) {
-			_GSpeed = parameter1;
-			TTAS = SET_GSPEED;
+		case SET_GSPEED: {
+			if (_sourceGSpeed) {
+				_GSpeed = parameter1;
+				TTAS = SET_GSPEED;
+			}
+			break;
 		}
-		break;
-	}
-	case SET_RUDDER_TRIM: {
-		RudderTrimSet(parameter1, parameter2);
-		break;
-	}
-	case SET_PITCH_TRIM: {
-		PitchTrimSet(parameter1, parameter2);
-		break;
-	}
-	case SET_PUSHBACK_SPEED: {
-		PushbackSpeedSet(-parameter1, parameter2);
-		break;
-	}
-	case START_TIMER: {
-		Timer->start(60);
-		break;
-	}
-	case SET_AILERON: {
-		if (_sourceAileron) {
-			_inAileron = parameter1;
-			ABVH = SET_AILERON;
+					   //if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		case SET_RUDDER_TRIM: {
+			RudderTrimSet(parameter1, parameter2);
+			break;
 		}
-		break;
-	}
-	case SET_ELEVATOR: {
-		if (_sourceElevator) {
-			_inElevator = parameter1;
-			EPVA = SET_ELEVATOR;
+		case SET_PITCH_TRIM: {
+			PitchTrimSet(parameter1, parameter2);
+			break;
 		}
-		break;
-	}
-	case SET_RUDDER: {
-		if (_sourceRudder) {
-			_inRudder= parameter1;
-			RVH = SET_RUDDER;
+		case SET_PUSHBACK_SPEED: {
+			PushbackSpeedSet(-parameter1, parameter2);
+			break;
 		}
-		break;
-	}
-	}
+		case START_TIMER: {
+			Timer->start(60);
+			break;
+		}
+		case SET_AILERON: {
+			if (_sourceAileron) {
+				_inAileron = parameter1;
+				ABVH = SET_AILERON;
+			}
+			break;
+		}
+		case SET_ELEVATOR: {
+			if (_sourceElevator) {
+				_inElevator = parameter1;
+				EPVA = SET_ELEVATOR;
+			}
+			break;
+		}
+		case SET_RUDDER: {
+			if (_sourceRudder) {
+				_inRudder = parameter1;
+				RVH = SET_RUDDER;
+			}
+			break;
+		}
+		}
+	
 }
 
 void PlanesWork::PushbackSpeedSet(double setSpeed, DWORD speed) { // Transfer to mainlogic and logarifmic set
@@ -155,6 +161,7 @@ void PlanesWork::AileronSet(double pos, DWORD speed) { // Transfer to mainlogic 
 		aileron = _outAileron;
 		//_outThrottle = _inThrottle;
 		emit SendEvent(KEY_AXIS_AILERONS_SET, int(_outAileron));
+		//SetDataL(A32NX_SIDESTICK_POSITION_X, _outAileron / 16383);
 	}
 }
 void PlanesWork::ElevatorSet(double pos, DWORD speed) { // Transfer to mainlogic and logarifmic set
@@ -175,6 +182,7 @@ void PlanesWork::ElevatorSet(double pos, DWORD speed) { // Transfer to mainlogic
 		elevator = _outElevator;
 		//_outThrottle = _inThrottle;
 		emit SendEvent(KEY_AXIS_ELEVATOR_SET, int(_outElevator));
+		//SetDataL(A32NX_SIDESTICK_POSITION_Y, _outElevator / 16383);
 	}
 }
 void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic and logarifmic set

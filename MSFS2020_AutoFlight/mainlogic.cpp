@@ -341,8 +341,49 @@ void MainLogic::AddWayPoint(double lon, double lat, double alt, QString pointTyp
 
 VOID MainLogic::TimerProc()
 {
-
 	
+	static double lastFlyPoint = 0;
+	if ((Mode == TAKEOFF || Mode == CRUISE) /*&& (!data->GData.SIM_ON_GROUND)*/) {
+		sWayPoint currDis;
+		currDis.Lat = lastlat;
+		currDis.Lon = lastlon;
+		currDis.ELat = data->GData.PLANE_LATITUDE;
+		currDis.ELon = data->GData.PLANE_LONGITUDE;
+		currDis.EAltitude = data->GData.PLANE_ALTITUDE;
+		Utils::DOrtoKM(&currDis);
+		CommonDistance = ElepsedDistance + LeaveDistance;
+		if (currDis.Distance > 0.1) { // at most add point every 100 m
+			ElepsedDistance = ElepsedDistance + currDis.Distance;
+			lastlat = currDis.ELat;
+			lastlon = currDis.ELon;
+			double ang = atan((currDis.EAltitude - lastalt) / 3280.84 /currDis.Distance) * 180.0 / M_PI;
+			lastalt = currDis.EAltitude;
+			flyPoint = ElepsedDistance;
+			ui->Graph2->graph(0)->addData(flyPoint, data->GData.PLANE_ALTITUDE);
+			ui->Graph2->graph(1)->addData(flyPoint, data->AllData.A32NX_AP_CSTN_ALT);
+			//ui->Graph2->graph(2)->addData(flyPoint, CurrentPos.EAltitude);
+			if (Flight != NULL) {
+				Flight->WriteLn(std::to_string(ElepsedDistance) + ";" 
+					+ std::to_string(data->GData.PLANE_ALTITUDE) + ";" 
+					+ std::to_string(data->GData.VERTICAL_SPEED) + ";" 
+					+ std::to_string(data->GData.TOTAL_WEIGHT) + ";"
+					+ std::to_string(data->AllData.A32NX_SPEEDS_MANAGED_PFD) + ";"
+					+ std::to_string(data->GData.AIRSPEED_INDICATED) + ";"
+					+ std::to_string(data->AllData.XMLVAR_AirSpeedIsInMach) + ";"
+					+ std::to_string(data->AllData.A32NX_FMGC_FLIGHT_PHASE) + ";"
+					+ std::to_string(data->GData.TURB_ENG_N11) + ";"
+					+ std::to_string(ang) + ";"
+					+ "\n");
+			}
+		}
+	}
+	/*if (flyPoint > 0) {
+		ui->Graph2->xAxis->setRange(flyPoint, CommonDistance, Qt::AlignLeft);
+
+	}*/
+	if (CommonDistance > 0) {
+		ui->Graph2->xAxis->setRange(0, CommonDistance);
+	}
 	
 	//emit SendLog("Tick");
 //std::string OrigICAO = GetDataString(GPS_WP_NEXT_ID);
@@ -1098,7 +1139,11 @@ VOID MainLogic::TimerProc()
 						SendCommand(SET_TRUST, 40, 0);
 						while ((GetData(ENG_N1_RPM1) < 0.4) && (GetData(ENG_N1_RPM2) < 0.4));
 						//speed = 180;
+						Flight = new WriteStream(AirportData->RootSim + "\\Flight.csv");
+						lastlon = CurrentPos.Lon;
+						lastlat = CurrentPos.Lat;
 						Mode = TAKEOFF;
+						
 						//CurrentWay = Taxiway;
 
 					}
@@ -1240,6 +1285,8 @@ VOID MainLogic::TimerProc()
 
 		double RT = data->AllData.AIRLINER_THR_RED_ALT;
 
+		
+
 		if (GetData(ENG_N1_RPM1, "percent over 100") > 0.40) {
 			if (!TOGA) {
 				//setThrust(100);
@@ -1284,7 +1331,7 @@ VOID MainLogic::TimerProc()
 		if (ISpeed > VR) {
 			
 				if (SOG == 1) {
-					ManPitchWithFD(-7.5);
+					ManPitchWithFD(-15);
 				}
 				if (GetData(AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1)) {
 					if ((GAlt < 500) && (SOG == 0)) {
@@ -1295,9 +1342,9 @@ VOID MainLogic::TimerProc()
 					}
 				}
 				else if (SOG == 0) {
-					ManPitchWithFD(-15);
+					ManPitchWithFD(-10);
 				}
-			if ((VSpeed > 10) && (SOG == FALSE)) {
+			if ((VSpeed > 1000) && (SOG == FALSE)) {
 				double intpParameter = 0.0;
 				if (ISpeed > 140) {
 					SendCommand(GEAR_SET, 0.0, 0);
@@ -1308,9 +1355,17 @@ VOID MainLogic::TimerProc()
 				//PPID.FT = true;
 				//Mode = CLIMB;
 			}
+			if (GAlt > 60) {
+				if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+					//SendEvent(A32NX_FCU_AP_1_PUSH, 1);
+				}
+			}
 
 			if (TOGA) {
-				if (Alt > RT) {
+				if (data->AllData.A32NX_AUTOTHRUST_MODE_MESSAGE) {
+					SendCommand(SET_THROTTLE, 3900, 0);
+				}
+				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE == 2) {
 					
 					SendCommand(SET_THROTTLE, 3900, 0);
 					TOGA = false;
@@ -1347,6 +1402,7 @@ VOID MainLogic::TimerProc()
 		CurrentPos.Lon = Lon;
 		Utils::DOrtoKM(&CurrentPos);
 		double DCommon = Utils::DToType(CurrentWay, WayPoints, "GSWAY", &CurrentPos, 0);
+		LeaveDistance = DCommon;
 
 		double DToChange = CalcToNewWay(true);
 		CHAR s[512];
@@ -1407,7 +1463,11 @@ VOID MainLogic::TimerProc()
 			DCommon += WayPoints->at(icw + 1).Distance;
 			icw++;
 		}
-
+		if ((DCommon < 30) && (!Approach) && (data->AllData.A32NX_FMGC_FLIGHT_PHASE != 5)) {
+			SetDataL(A32NX_APPROACH_STATE, 1);
+			SendCommand(PUSH_SPD, 1, 0);
+		}
+		LeaveDistance = DCommon;
 		if (DCommon < 20) {
 			CurrentWay = icw;
 		}
@@ -1423,6 +1483,7 @@ VOID MainLogic::TimerProc()
 		else if (DCommon < 30) {
 			
 		}
+		
 
 		//if (ISpeed > data->AllData.A32NX_SPEEDS_MANAGED_PFD) {
 		if ((DCommon < 100)) {
@@ -1475,7 +1536,7 @@ VOID MainLogic::TimerProc()
 			}
 		}
 
-		if (VSpeed > 500) {
+		if (VSpeed > 1000) {
 			SendCommand(GEAR_SET, 0.0, 0);
 		}
 
@@ -1519,6 +1580,11 @@ VOID MainLogic::TimerProc()
 		double AngleToDesc = GetDescentAngle(WayPoints);
 		//double VSD = ManVSWithAngle(AngleToDesc);
 		
+		//test 
+		if (DCommon < 215) {
+			//SendCommand(PUSH_ALT_TEST, 1, 0);
+		}
+		///////
 
 		if (FlightCruise < 1000) {
 			FlightCruise = 1000;
@@ -1661,7 +1727,10 @@ VOID MainLogic::TimerProc()
 					}
 					AddWayPoint(Path.at(Path.size() - 1).Lon, Path.at(Path.size() - 1).Lat, 0, "GATE", QString(Path.at(Path.size() - 1).name.c_str()),0, 0, 0, 0);
 					CurrentWay = CurrentWay + 2;
-
+					if (Flight) {
+						delete Flight;
+						Flight = NULL;
+					}
 					Mode = TAXIIN;
 				}
 				else if (ISpeed > 60) {
@@ -1717,7 +1786,8 @@ VOID MainLogic::TimerProc()
 
 		}
 		else {
-			ManPitchWithFD(0);
+			//ManPitchWithFD(0);
+			SendCommand(SET_ELEVATOR, 0, 0);
 			//AltPitchWithPos(0);
 			//AltPitchWithPos(-15);
 			HeadingRel = ManHeadWithWay(&WayPoints->at(CurrentWay));
@@ -2045,6 +2115,7 @@ void MainLogic::Connect() {
 	
 	
 	if ((!Connected)) {	
+		
 		emit ButtonModify(ui->ConnectButton, "Try connected...", "background: lightblue; color: darkblue; border: 1px solid darkblue");
 		if (SUCCEEDED(SimConnect_Open(&HSimConnect, "MSFS 2020 AutoFlight", NULL, 0, 0, 0))) {
 			
@@ -2083,6 +2154,8 @@ void MainLogic::Connect() {
 
 			data = new SimData(HSimConnect);
 			
+			planesWork->DataT = data;
+
 			TData = new ExQThread("data", utils);
 			cabinWork = new CabinWork(HSimConnect);
 			TCabinWork = new ExQThread("cabinWork", utils);
@@ -3017,142 +3090,152 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 }
 
 void MainLogic::ManPitchWithFD(double NPitch) {
-	static double NewPitch = GetData(ELEVATOR_POSITION);
-	static int countFails = 0;
-	if (countFails >= 5) {
-		countFails = 0;
-		SetDataPitch = true;
-	}
-	if (round(NewPitch * 1000000) == round(NewPitch * 1000000)) {
-		SetDataPitch = true;
-	}
-	if (SetDataPitch) {
-		static clock_t sTime = 0; //Начальное время
-		clock_t eTime = clock();
-		static double sPitch;
-		static double sHorBar;
-		double ePitch = GetData(PLANE_PITCH_DEGREES, "Degrees");
-		double eHorBar = NPitch;
-		double timeOff = eTime - sTime;
-		if (timeOff == 0) {
-			timeOff = 0.000001;
+	if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+		//static double ElevPos = GetData(YOKE_Y_POSITION);
+		static double ElevPos = data->AllData.A32NX_SIDESTICK_POSITION_Y * 16383;
+		static int countFails = 0;
+		if (countFails >= 5) {
+			countFails = 0;
+			SetDataPitch = true;
 		}
-		double pitchOff = ePitch - sPitch;
-		double HorBarOff = eHorBar - sHorBar;
-		double pitchA = (1000 / timeOff) * pitchOff;
-		double HorBarA = (1000 / timeOff) * HorBarOff;
-		double PitchRel = NPitch - ePitch;
-		if (PitchRel > 180) {
-			PitchRel = PitchRel - 360;
+		if (round(ElevPos * 1000000) == round(ElevPos * 1000000)) {
+			SetDataPitch = true;
 		}
-		else if (PitchRel < -180) {
-			PitchRel = PitchRel + 360;
+		if (SetDataPitch) {
+			static clock_t sTime = 0; //Начальное время
+			clock_t eTime = clock();
+			static double sPitch;
+			static double sHorBar;
+			double ePitch = GetData(PLANE_PITCH_DEGREES, "Degrees");
+			double eHorBar = NPitch;
+			double timeOff = eTime - sTime;
+			if (timeOff == 0) {
+				timeOff = 0.000001;
+			}
+			double pitchOff = ePitch - sPitch;
+			double HorBarOff = eHorBar - sHorBar;
+			double pitchA = (1000 / timeOff) * pitchOff;
+			double HorBarA = (1000 / timeOff) * HorBarOff;
+			double PitchRel = NPitch - ePitch;
+			if (PitchRel > 180) {
+				PitchRel = PitchRel - 360;
+			}
+			else if (PitchRel < -180) {
+				PitchRel = PitchRel + 360;
+			}
+			double pparameter = (PitchRel / 10) + HorBarA * 1;
+			double elev = ElevPos * 16383;
+			double rel = ((pparameter - pitchA) * 500);
+			if (rel < -500) {
+				rel = -500;
+			}
+			else if (rel > 500) {
+				rel = 500;
+			}
+			elev = elev + rel;
+			if (elev > 16383) {
+				elev = 16383;
+			}
+			else if (elev < -16383) {
+				elev = -16383;
+			}
+			double intpParameter = elev / 16383;
+			/*if ((intpParameter < -1.0) && (intpParameter > 1.0)) {
+				intpParameter = 0.0;
+			}*/
+			/*SendText("elev: " + QString::number(elev, 'f', 3) + "\n" +
+				"NewPitch: " + QString::number(NPitch, 'f', 3) + "\n" +
+				"Pitch: " + QString::number(ePitch, 'f', 3) + "\n"
+				, false);*/
+			SendCommand(SET_ELEVATOR, intpParameter * 16383, 0);
+			sTime = clock();
+			sPitch = ePitch;
+			sHorBar = NPitch;
+			ElevPos = intpParameter;
+			SetDataPitch = false;
 		}
-		double pparameter = (PitchRel / 10) + HorBarA * 1;
-		double elev = NewPitch * 16383;
-		double rel = ((pparameter - pitchA) * 500);
-		if (rel < -500) {
-			rel = -500;
+		else {
+			countFails++;
 		}
-		else if (rel > 500) {
-			rel = 500;
-		}
-		elev = elev + rel;
-		if (elev > 16383) {
-			elev = 16383;
-		}
-		else if (elev < -16383) {
-			elev = -16383;
-		}
-		double intpParameter = elev / 16383;
-		/*if ((intpParameter < -1.0) && (intpParameter > 1.0)) {
-			intpParameter = 0.0;
-		}*/
-		/*SendText("elev: " + QString::number(elev, 'f', 3) + "\n" + 
-			"NewPitch: " + QString::number(NPitch, 'f', 3) + "\n" +
-			"Pitch: " + QString::number(ePitch, 'f', 3) + "\n"
-			, false);*/
-		SendCommand(SET_ELEVATOR, intpParameter * 16383, 0);
-		sTime = clock();
-		sPitch = ePitch;
-		sHorBar = NPitch;
-		NewPitch = intpParameter;
-		SetDataPitch = false;
 	}
 	else {
-		countFails++;
+		SendCommand(SET_ELEVATOR, 0, 0);
 	}
 }
 
 void MainLogic::ManBankWithFD(double NNBank) {
-
-	double NBank = NNBank;
-	if (NBank > 30) {
-		NBank = 30;
+	if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+		double NBank = NNBank;
+		if (NBank > 30) {
+			NBank = 30;
+		}
+		else if (NBank < -30) {
+			NBank = -30;
+		}
+		static double NewBank = data->AllData.A32NX_SIDESTICK_POSITION_X * 16383;
+		static int countFails = 0;
+		//SendText("ailer: " + QString::number(GetData(YOKE_X_POSITION), 'f', 3) + "\n" + "NewBank: " + QString::number(NewBank, 'f', 3) + "\n", false);
+		if (countFails >= 5) {
+			countFails = 0; //AILERON_POSITION
+			SetDataBank = true;
+		}
+		if (round(10000 * NewBank) == round(10000 * NewBank)) {
+			SetDataBank = true;
+		}
+		if (SetDataBank) {
+			static clock_t sTime = 0; //Начальное время
+			clock_t eTime = clock();
+			static double sBank;
+			static double sVertBar; //BAR
+			double eBank = GetData(PLANE_BANK_DEGREES, "Degrees");
+			double eVertBar = NNBank; //BAR
+			double timeOff = eTime - sTime;
+			double bankOff = eBank - sBank;
+			double VertBarOff = eVertBar - sVertBar; //BAR
+			double bankA = (1000 / timeOff) * bankOff;
+			double VertBarA = (1000 / timeOff) * VertBarOff; //BAR		
+			double BankRel = NBank - /*(NBank / 15) - */eBank;
+			if (BankRel > 180) {
+				BankRel = BankRel - 360;
+			}
+			else if (BankRel < -180) {
+				BankRel = BankRel + 360;
+			}
+			double pparameter = -(BankRel / 1);// -VertBarA;
+			double ailer = NewBank * 16383;
+			/*SendText("ailer: " + QString::number(ailer, 'f', 3) + "\n" +
+				"NewBank: " + QString::number(NBank, 'f', 3) + "\n" +
+				"Bank: " + QString::number(eBank, 'f', 3) + "\n"
+				, false);*/
+			double rel = ((pparameter - bankA) * 500);
+			if (rel < -500) {
+				rel = -500;
+			}
+			else if (rel > 500) {
+				rel = 500;
+			}
+			ailer = ailer + rel;
+			if (ailer > (16383 / 4.16666666666666667)) {
+				ailer = 16383 / 4.16666666666666667;
+			}
+			else if (ailer < (-16383 / 4.16666666666666667)) {
+				ailer = -16383 / 4.16666666666666667;
+			}
+			double intpParameter = ailer / 16383;// / 0.40000001;
+			SendCommand(SET_AILERON, intpParameter * 16383, 0);
+			sTime = clock();
+			sBank = eBank;
+			sVertBar = NNBank;
+			NewBank = intpParameter;
+			SetDataBank = false;
+		}
+		else
+		{
+			countFails++;
+		}
 	}
-	else if (NBank < -30) {
-		NBank = -30;
-	}
-	static double NewBank = GetData(AILERON_POSITION);
-	static int countFails = 0;
-	//SendText("ailer: " + QString::number(GetData(YOKE_X_POSITION), 'f', 3) + "\n" + "NewBank: " + QString::number(NewBank, 'f', 3) + "\n", false);
-	if (countFails >= 5) {
-		countFails = 0; //AILERON_POSITION
-		SetDataBank = true;
-	}
-	if (round(10000 * NewBank) == round(10000 * NewBank)) {
-		SetDataBank = true;
-	}
-	if (SetDataBank) {
-		static clock_t sTime = 0; //Начальное время
-		clock_t eTime = clock();
-		static double sBank;
-		static double sVertBar; //BAR
-		double eBank = GetData(PLANE_BANK_DEGREES, "Degrees");
-		double eVertBar = NNBank; //BAR
-		double timeOff = eTime - sTime;
-		double bankOff = eBank - sBank;
-		double VertBarOff = eVertBar - sVertBar; //BAR
-		double bankA = (1000 / timeOff) * bankOff;
-		double VertBarA = (1000 / timeOff) * VertBarOff; //BAR		
-		double BankRel = NBank - /*(NBank / 15) - */eBank;
-		if (BankRel > 180) {
-			BankRel = BankRel - 360;
-		}
-		else if (BankRel < -180) {
-			BankRel = BankRel + 360;
-		}
-		double pparameter = -(BankRel / 1);// -VertBarA;
-		double ailer = NewBank * 16383;
-		/*SendText("ailer: " + QString::number(ailer, 'f', 3) + "\n" +
-			"NewBank: " + QString::number(NBank, 'f', 3) + "\n" +
-			"Bank: " + QString::number(eBank, 'f', 3) + "\n"
-			, false);*/
-		double rel = ((pparameter - bankA) * 500);
-		if (rel < -500) {
-			rel = -500;
-		}
-		else if (rel > 500) {
-			rel = 500;
-		}
-		ailer = ailer + rel;
-		if (ailer > (16383 / 4.16666666666666667)) {
-			ailer = 16383 / 4.16666666666666667;
-		}
-		else if (ailer < (-16383 / 4.16666666666666667)) {
-			ailer = -16383 / 4.16666666666666667;
-		}
-		double intpParameter = ailer / 16383;// / 0.40000001;
-		SendCommand(SET_AILERON, intpParameter * 16383, 0);
-		sTime = clock();
-		sBank = eBank;
-		sVertBar = NNBank;
-		NewBank = intpParameter;
-		SetDataBank = false;
-	}
-	else
-	{
-		countFails++;
+	else {
+		SendCommand(SET_AILERON, 0, 0);
 	}
 }
 

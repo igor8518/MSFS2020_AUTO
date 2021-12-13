@@ -7,11 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>1323</width>
-    <height>462</height>
+    <height>773</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MSFS2020_AutoFlight</string>
+   <string notr="true">MSFS2020 AutoFlight</string>
+  </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QPushButton" name="ConnectButton">
@@ -30,8 +36,8 @@
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>1190</x>
-      <y>360</y>
+      <x>780</x>
+      <y>300</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -241,6 +247,19 @@
     </property>
     <property name="singleStep">
      <double>0.010000000000000</double>
+    </property>
+   </widget>
+   <widget class="QCustomPlot" name="Graph2" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>410</y>
+      <width>1301</width>
+      <height>311</height>
+     </rect>
+    </property>
+    <property name="title" stdset="0">
+     <string>GroupBox</string>
     </property>
    </widget>
   </widget>

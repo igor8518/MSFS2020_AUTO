@@ -6,7 +6,7 @@
 #include <QTIME>
 #include <QTHREAD>
 #include "qcustomplot.h"
-
+//#include "mainlogic.h"
 
 class MSFS2020_AutoFlight : public QMainWindow
 {
@@ -14,7 +14,7 @@ class MSFS2020_AutoFlight : public QMainWindow
 public:
   explicit MSFS2020_AutoFlight(QObject* planesWork, QWidget *parent = Q_NULLPTR);
   //QObject* planes = NULL;
-
+  //MainLogic* mainLogic = NULL;
   ~MSFS2020_AutoFlight();
   Ui::MSFS2020_AutoFlightClass* GetUi();
   QThread* maimThread;
@@ -36,6 +36,7 @@ signals:
   void Connect();
 private:
   QObject* planesWork;
+  
   double AxisThrottle = 0;
   QCPGraph* Graphic;
   QTimer dataTimer;
