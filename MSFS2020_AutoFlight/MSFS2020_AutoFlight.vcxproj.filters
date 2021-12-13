@@ -38,18 +38,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AlternatePilot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ManPilot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Route.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WayLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mainlogic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -102,34 +90,10 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlternatePilot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="INITVARS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ManPilot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PMDG_NGX.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Route.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimAVars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SimEvents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Simmath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Structs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WayLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers.h">

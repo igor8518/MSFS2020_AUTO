@@ -17,6 +17,9 @@ std::vector<DWORD>* RegVarsSetGet;
 class SimData;
 //SimData* DataT;
 //sAllData AllData;
+
+
+
 int main(int argc, char *argv[])
 {
     

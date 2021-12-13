@@ -103,38 +103,26 @@
     <ClCompile Include="SimData.cpp" />
     <ClCompile Include="ExQThread.cpp" />
     <ClCompile Include="mainlogic.cpp" />
-    <ClCompile Include="Route.cpp" />
     <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="WayLoader.cpp" />
     <ClCompile Include="WriteStream.cpp" />
     <QtRcc Include="msfs2020_autoflight.qrc" />
     <QtUic Include="msfs2020_autoflight.ui" />
     <QtMoc Include="msfs2020_autoflight.h" />
-    <ClCompile Include="AlternatePilot.cpp" />
-    <ClCompile Include="ManPilot.cpp" />
     <ClCompile Include="msfs2020_autoflight.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlternatePilot.h" />
     <ClInclude Include="WriteStream.h" />
     <QtMoc Include="SimData.h" />
     <QtMoc Include="ExQThread.h" />
     <QtMoc Include="CabinWork.h" />
     <ClInclude Include="headers.h" />
-    <ClInclude Include="INITVARS.h" />
     <QtMoc Include="mainlogic.h" />
-    <ClInclude Include="ManPilot.h" />
     <QtMoc Include="PlanesWork.h" />
-    <ClInclude Include="PMDG_NGX.h" />
     <QtMoc Include="qcustomplot.h" />
-    <ClInclude Include="Route.h" />
-    <ClInclude Include="SimAVars.h" />
-    <ClInclude Include="SimEvents.h" />
     <ClInclude Include="Simmath.h" />
     <ClInclude Include="Structs.h" />
     <QtMoc Include="Utils.h" />
-    <ClInclude Include="WayLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
