@@ -22,8 +22,6 @@ class SimData;
 
 int main(int argc, char *argv[])
 {
-    
-  qDebug() << "lalalaa";
     QApplication a(argc, argv);
 
     PlanesWork* planesWork = new PlanesWork(0);
@@ -33,12 +31,9 @@ int main(int argc, char *argv[])
 
     MSFS2020_AutoFlight* w = new MSFS2020_AutoFlight(planesWork);
     MainLogic* m = new MainLogic(planesWork, w);
-    //w->mainLogic = m;
     w->maimThread = new ExQThread("mainThread", m->utils);
     m->moveToThread(w->maimThread);
     w->maimThread->start();
-
-    
 
     QObject::connect(w, SIGNAL(Connect()), m, SLOT(Connect()));
     w->setWindowTitle("MSFS 2020 AutoFlight");

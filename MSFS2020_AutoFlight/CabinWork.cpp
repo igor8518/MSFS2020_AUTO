@@ -327,7 +327,7 @@ void CabinWork::EvacCapt(DWORD mode) {
 	}
 }
 void CabinWork::ADIRS(DWORD num, DWORD mode) {
-	double var;
+	double var=0;
 	switch (num) {
 	case 0: {
 		var = DataT->AllData.A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB;
