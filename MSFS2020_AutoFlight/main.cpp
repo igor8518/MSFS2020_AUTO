@@ -3,8 +3,7 @@
 #include "mainlogic.h"
 #include "PlanesWork.h"
 #include "SimData.h"
-#include "QStyleFactory.h"
-#include <qdebug.h>
+
 
 double* SimVarsGet[CVars] = { NULL };
 std::string* SimStringsGet[CVars] = { NULL };

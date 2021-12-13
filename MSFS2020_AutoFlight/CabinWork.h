@@ -4,6 +4,7 @@
 
 class SimData;
 
+
 class CabinWork : public QObject {
   Q_OBJECT
 public:
