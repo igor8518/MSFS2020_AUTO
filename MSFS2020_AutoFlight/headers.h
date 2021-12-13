@@ -16,8 +16,6 @@
 
 #include "structs.h"
 #include "Utils.h"
-#include "SimEvents.h"
-#include "SimAVars.h"
 #include "SimData.h"
 #include "ExQThread.h"
 #include "CabinWork.h"
