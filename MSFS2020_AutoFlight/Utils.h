@@ -1,5 +1,7 @@
 #pragma once
-#include "headers.h"
+#include "Structs.h"
+
+#include "msfs2020_autoflight.h"
 //#include <qdatetime.h>
 //#include "msfs2020_autoflight.h"
 

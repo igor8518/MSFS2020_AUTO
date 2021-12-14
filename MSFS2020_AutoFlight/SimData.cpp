@@ -1,4 +1,5 @@
 #include "SimData.h"
+
 //#include "main.cpp"
 
 void SimData::TimerProc() {

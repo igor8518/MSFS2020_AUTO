@@ -1,6 +1,10 @@
 
 
-#include "headers.h"
+
+#include "PlanesWork.h"
+#include "ExQThread.h"
+#include "msfs2020_autoflight.h"
+#include "mainlogic.h"
 
 
 

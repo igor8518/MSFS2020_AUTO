@@ -2434,7 +2434,7 @@ std::vector<TSTARS>* MainLogic::AddSTAR(SIDSTAR* sidstar, DATA_RUNWAY* runway, Q
 			STAR.STAR = STAR.APPROACH;
 			
 			STAR.wayPoint = new std::vector<WayPointA>();
-			if (FindTransAppr >= 0) {
+			if (FindTransAppr) {
 				for (int ii = 0; ii < sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->size(); ii++) {
 					STAR.wayPoint->push_back(sidstar->APPROACHES->at(j).TRANSITIONS->at(t).WayPoints->at(ii));
 					STAR.wayPoint->at(STAR.wayPoint->size() - 1).TYPE = WAYPOINT;

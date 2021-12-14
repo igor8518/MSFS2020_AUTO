@@ -155,7 +155,6 @@
     <QtMoc Include="SimData.h" />
     <QtMoc Include="ExQThread.h" />
     <QtMoc Include="CabinWork.h" />
-    <ClInclude Include="headers.h" />
     <QtMoc Include="mainlogic.h" />
     <QtMoc Include="PlanesWork.h" />
     <ClInclude Include="Structs.h" />

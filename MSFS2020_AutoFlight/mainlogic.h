@@ -1,8 +1,15 @@
 #pragma once
 
-#include "headers.h"
 
-
+#include <ui_msfs2020_autoflight.h>
+#include "Structs.h"
+#include "WriteStream.h"
+#include "SimData.h"
+#include "msfs2020_autoflight.h"
+#include "ExQThread.h"
+#include "CabinWork.h"
+#include "PlanesWork.h"
+#include "Utils.h"
 
 //#include "WriteStream.h"
 class MainLogic : public QObject {
@@ -10,9 +17,9 @@ class MainLogic : public QObject {
   
 public:
     SimData* data = NULL;
-  MainLogic(class PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
+  MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
-  class Utils* utils;
+  Utils* utils;
   HANDLE HSimConnect;
   DWORD Mode = 0;
   DWORD CurrentWay = 0;
@@ -130,7 +137,7 @@ private:
   
   QTimer* MainTimer;
   double MaximumAltitude;
-  class CabinWork* cabinWork;
+  CabinWork* cabinWork;
   PlanesWork* planesWork = NULL;
   ExQThread* TUtils;
   ExQThread* TData;

@@ -1,6 +1,8 @@
 #pragma once
-#include "headers.h"
-class SimData;
+#include "Structs.h"
+
+#include "SimData.h"
+#include "SimData.h"
 class PlanesWork : public QObject {
   Q_OBJECT
 

@@ -1,9 +1,9 @@
 #pragma once
 #ifndef SIMDATA_H
 #define SIMDATA_H
+#include "Structs.h"
 
 
-#include "headers.h"
 
 class SimData : public QObject {
   Q_OBJECT

@@ -1,5 +1,6 @@
 #include "CabinWork.h"
 
+
 CabinWork::CabinWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 	Timer = new QTimer(this);
 	connect(Timer, SIGNAL(timeout()), this, SLOT(TimerProc()));

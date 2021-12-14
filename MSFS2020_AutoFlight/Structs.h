@@ -2,7 +2,7 @@
 #define CVars 1500
 #ifndef STRUCTS_H
 #define STRUCTS_H
-#include "headers.h"
+
 #define MHR(chr) if (chr == E_FAIL) hr = E_FAIL; else hr = S_OK;
 #define SUCC(chr) if (chr == E_FAIL) {MessageBox(0,L"A",L"B",MB_OK);/*TO DO Add error behavior*/};
 

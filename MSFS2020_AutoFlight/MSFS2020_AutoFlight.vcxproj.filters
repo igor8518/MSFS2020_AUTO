@@ -93,9 +93,6 @@
     <ClInclude Include="Structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WriteStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
