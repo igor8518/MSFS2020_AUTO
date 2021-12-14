@@ -1,27 +1,18 @@
 #pragma once
 
 #include "headers.h"
-#include "msfs2020_autoflight.h"
-#include <qtimer.h>
-#include <qeventloop.h>
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QUrlQuery>
-#include <QtNetwork/qnetworkreply>
-#include <QUrl>
-#include <QFile>
-#include <cmath>
-#include "WriteStream.h"
+
+
+//#include "WriteStream.h"
 class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
     SimData* data = NULL;
-  MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
+  MainLogic(class PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
-  Utils* utils;
+  class Utils* utils;
   HANDLE HSimConnect;
   DWORD Mode = 0;
   DWORD CurrentWay = 0;
@@ -139,7 +130,7 @@ private:
   
   QTimer* MainTimer;
   double MaximumAltitude;
-  CabinWork* cabinWork;
+  class CabinWork* cabinWork;
   PlanesWork* planesWork = NULL;
   ExQThread* TUtils;
   ExQThread* TData;

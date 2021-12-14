@@ -1,5 +1,4 @@
 #pragma once
-#include <qobject.h>
 #include "headers.h"
 class SimData;
 class PlanesWork : public QObject {
@@ -92,7 +91,7 @@ class PlanesWork : public QObject {
     Q_PROPERTY(double DGSpeedTrust READ DGSpeedTrust WRITE setDGSpeedTrust)
     Q_PROPERTY(double DGSpeedTrust READ DGSpeedTrust WRITE setDGSpeedTrust)
 public:
-    SimData* DataT;
+  SimData* DataT;
   QTimer* Timer;
   PlanesWork(HANDLE hSimConnect);
   double inThrottle() { return _inThrottle; };

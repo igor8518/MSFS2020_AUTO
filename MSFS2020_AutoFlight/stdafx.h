@@ -4,15 +4,38 @@
 #include <tchar.h>
 #include <stdio.h>
 #include <strsafe.h>
-
+#include "AirportData.h"
 #include <time.h>
 #include <sstream>
 #include <thread>
 #include <string>
 #include <math.h>
 #include <SimConnect.h>
-
-
+#include <qobject.h>
+#include "qcustomplot.h"
 #include <qdebug.h>
 #include <winerror.h>
+#include "QStyleFactory.h"
 
+#include <QMainWindow>
+#include <qeventloop.h>
+#include <qtimer.h>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QUrlQuery>
+#include <QtNetwork/qnetworkreply>
+#include <QUrl>
+#include <QFile>
+#include <cmath>
+#include <QTIMER>
+#include <QTIME>
+#include <QTHREAD>
+#include "qcustomplot.h"
+#include <cstdio>
+#include <fstream>
+#include <tchar.h>
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <Windows.h>

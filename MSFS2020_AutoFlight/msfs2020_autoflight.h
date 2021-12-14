@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QMainWindow>
+
 #include "ui_msfs2020_autoflight.h"
-#include <QTIMER>
-#include <QTIME>
-#include <QTHREAD>
-#include "qcustomplot.h"
+
 //#include "mainlogic.h"
 
 class MSFS2020_AutoFlight : public QMainWindow

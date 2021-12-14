@@ -1,19 +1,10 @@
 
-#include "msfs2020_autoflight.h"
-#include "mainlogic.h"
-#include "PlanesWork.h"
-#include "SimData.h"
+
+#include "headers.h"
 
 
-double* SimVarsGet[CVars] = { NULL };
-std::string* SimStringsGet[CVars] = { NULL };
-double* SimVarsSet[CVars] = { NULL };
-double* SimVarsSetGet[CVars] = { NULL };
-std::vector<DWORD>* RegVarsGet;
-std::vector<DWORD>* RegStringsGet;
-std::vector<DWORD>* RegVarsSet;
-std::vector<DWORD>* RegVarsSetGet;
-class SimData;
+
+
 //SimData* DataT;
 //sAllData AllData;
 

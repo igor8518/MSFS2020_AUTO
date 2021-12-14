@@ -1,11 +1,5 @@
 #pragma once
-#include <cstdio>
 #include <fstream>
-#include <tchar.h>
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <Windows.h>
 class WriteStream
 {
 private:

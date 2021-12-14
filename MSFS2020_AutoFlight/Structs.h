@@ -18,14 +18,14 @@
 #define A32NX_ALLDATA_ID			0x4E877783
 #define A32NX_ALLDATA_DEFINITION	0x4E877784
 
-#ifndef _MATH_DEFINES_DEFINED
-#define _MATH_DEFINES_DEFINED
+//#ifndef _MATH_DEFINES_DEFINED
+//#define _MATH_DEFINES_DEFINED
 // Definitions of useful mathematical constants
 //
 // Define _USE_MATH_DEFINES before including <math.h> to expose these macro
 // definitions for common math constants.  These are placed under an #ifdef
 // since these commonly-defined names are not part of the C or C++ standards
-#define M_E        2.71828182845904523536   // e
+/*#define M_E        2.71828182845904523536   // e
 #define M_LOG2E    1.44269504088896340736   // log2(e)
 #define M_LOG10E   0.434294481903251827651  // log10(e)
 #define M_LN2      0.693147180559945309417  // ln(2)
@@ -38,7 +38,7 @@
 #define M_2_SQRTPI 1.12837916709551257390   // 2/sqrt(pi)
 #define M_SQRT2    1.41421356237309504880   // sqrt(2)
 #define M_SQRT1_2  0.707106781186547524401  // 1/sqrt(2)
-#endif
+#endif*/
 
 struct TSIDS {
 	int t = -1;
@@ -1096,7 +1096,110 @@ struct sAllData {
 	double A32NX_ADIRS_ADIRU_3_STATE;
 	double A32NX_INITFLIGHT_STATE;
 	double RES[1000 - 929];
-	INT64 version = 0;
+	INT64 version;
+};
+struct sGData {
+	double MAGVAR;
+	double AMBIENT_WIND_DIRECTION;
+	double AMBIENT_WIND_VELOCITY;
+	double AMBIENT_PRESSURE;
+	double SEA_LEVEL_PRESSURE;
+	double PLANE_PITCH_DEGREES;
+	double PLANE_BANK_DEGREES;
+	double ELEVATOR_POSITION;
+	double AILERON_POSITION;
+	double RUDDER_PEDAL_POSITION;
+	double RUDDER_TRIM;
+	double ELEVATOR_TRIM_POSITION;
+	double BRAKE_PARKING_POSITION;
+	double FLAPS_HANDLE_INDEX;
+	double SPOILERS_ARMED;
+	double SPOILERS_HANDLE_POSITION;
+	double GEAR_HANDLE_POSITION;
+	double SIM_ON_GROUND;
+	double GROUND_VELOCITY;
+	double VELOCITY_BODY_Z;
+	double AIRSPEED_TRUE;
+	double AIRSPEED_INDICATED;
+	double VERTICAL_SPEED;
+	double ROTATION_VELOCITY_BODY_Y;
+	double DELTA_HEADING_RATE;
+	double ACCELERATION_BODY_Z;
+	double PLANE_LONGITUDE;
+	double PLANE_LATITUDE;
+	double PLANE_ALTITUDE;
+	double PLANE_ALT_ABOVE_GROUND;
+	double INDICATED_ALTITUDE;
+	double PLANE_HEADING_DEGREES_TRUE;
+	double PUSHBACK_AVAILABLE;
+	double ENG_N1_RPM1;
+	double ENG_N1_RPM2;
+	double TURB_ENG_N11;
+	double TURB_ENG_N12;
+	double TURB_ENG_IGNITION_SWITCH_EX11;
+	double TURB_ENG_IGNITION_SWITCH_EX12;
+	double GENERAL_ENG_STARTER1;
+	double GENERAL_ENG_STARTER2;
+	double AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1;
+	double AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE2;
+	double AUTOPILOT_ALTITUDE_LOCK_VAR3;
+	double AUTOPILOT_HEADING_LOCK_DIR;
+	double AUTOPILOT_AIRSPEED_HOLD_VAR;
+	double AUTOPILOT_VERTICAL_HOLD_VAR;
+	double ANTISKID_BRAKES_ACTIVE;
+	double KOHLSMAN_SETTING_HG;
+	double CIRCUIT_SWITCH_ON17;
+	double CIRCUIT_SWITCH_ON18;
+	double CIRCUIT_SWITCH_ON19;
+	double CIRCUIT_SWITCH_ON20;
+	double CIRCUIT_SWITCH_ON21;
+	double CIRCUIT_SWITCH_ON22;
+	double CIRCUIT_SWITCH_ON77;
+	double CIRCUIT_SWITCH_ON80;
+	double EXTERNAL_POWER_AVAILABLE1;
+	double EXTERNAL_POWER_ON1;
+	double FUELSYSTEM_PUMP_SWITCH1;
+	double FUELSYSTEM_PUMP_SWITCH2;
+	double FUELSYSTEM_PUMP_SWITCH3;
+	double FUELSYSTEM_PUMP_SWITCH4;
+	double FUELSYSTEM_PUMP_SWITCH5;
+	double FUELSYSTEM_PUMP_SWITCH6;
+	double LIGHT_POTENTIOMETER7;
+	double LIGHT_CABIN;
+	double LIGHT_NAV;
+	double LIGHT_LOGO;
+	double LIGHT_BEACON;
+	double LIGHT_PANEL4;
+	double LIGHT_POTENTIOMETER86;
+	double LIGHT_LANDING;
+	double LIGHT_LANDING1;
+	double LIGHT_LANDING2;
+	double LIGHT_LANDING3;
+	double LIGHT_LANDING4;
+	double LIGHT_TAXI;
+	double LIGHT_TAXI1;
+	double LIGHT_TAXI2;
+	double LIGHT_TAXI3;
+	double LIGHT_TAXI4;
+	double LIGHT_STROBE;
+	double NEW_EXIT_OPEN0;
+	double NEW_EXIT_OPEN1;
+	double NEW_EXIT_OPEN2;
+	double NEW_EXIT_OPEN3;
+	double NEW_EXIT_OPEN4;
+	double NEW_EXIT_OPEN5;
+	double NEW_EXIT_OPEN6;
+	double NEW_EXIT_OPEN7;
+	double ATC_CLEARED_TAXI;
+	double ATC_CLEARED_TAKEOF;
+	double ATC_CLEARED_LANDING;
+	double ATC_CLEARED_IFR;
+	double ATC_AIRPORT_IS_TOWERED;
+	double CABIN_SEATBELTS_ALERT_SWITCH;
+	double TOTAL_WEIGHT;
+	double YOKE_Y_POSITION;
+	//double ATC_RUNWAY_AIRPORT_NAME[256];
+	INT64 version;
 };
 
 enum COMMANDS_ID {
@@ -1257,14 +1360,18 @@ enum ALTOPT {
 		NORMAL,
 		IGN_START
 	};
-	extern double* SimVarsGet[CVars];
-	extern double* SimVarsSet[CVars];
-	extern double* SimVarsSetGet[CVars];
-	extern std::string* SimStringsGet[CVars];
-	extern std::vector<DWORD>* RegVarsGet;
-	extern std::vector<DWORD>* RegVarsSet;
-	extern std::vector<DWORD>* RegVarsSetGet;
-	extern std::vector<DWORD>* RegStringsGet;
+
+	static double* SimVarsGet[CVars] = { NULL };
+	static std::string* SimStringsGet[CVars] = { NULL };
+	static double* SimVarsSet[CVars] = { NULL };
+	static double* SimVarsSetGet[CVars] = { NULL };
+	static std::vector<DWORD>* RegVarsGet;
+	static std::vector<DWORD>* RegStringsGet;
+	static std::vector<DWORD>* RegVarsSet;
+	static std::vector<DWORD>* RegVarsSetGet;
+
+
+	
 	enum SIM_DATA {
 		AUTOPILOT_PITCH_HOLD,
 		STRUCT_AMBIENT_WIND,
@@ -4764,4 +4871,12 @@ LASTVAR
 					A32NX_SIDESTICK_POSITION_Y,
 
 	};
+
+	
+	
+	struct Context {
+		class SimData* data;
+		DWORD sender;
+	};
+	
 #endif

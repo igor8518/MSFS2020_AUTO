@@ -1865,7 +1865,7 @@ double MainLogic::GetDescentAngle(std::vector<sWayPoint>* Way) {
 	if (wi != Way->size()) {
 		MaximumAltitude = Way->at(wi).EAltitude;
 	}
-	double D;
+	double D = 0;;
 	if (wi != 0) {
 		CurrentPos.EAltitude = MaxAlt;
 		CurrentPos.DistToAlt = D;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "headers.h"
 class ExQThread : public QThread {
   Q_OBJECT
 public: 

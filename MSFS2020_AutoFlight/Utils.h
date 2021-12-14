@@ -1,9 +1,9 @@
 #pragma once
 #include "headers.h"
-#include <qdatetime.h>
-#include "msfs2020_autoflight.h"
+//#include <qdatetime.h>
+//#include "msfs2020_autoflight.h"
 
-struct sWayPoint;
+//struct sWayPoint;
 
 class Utils : public QObject
 {

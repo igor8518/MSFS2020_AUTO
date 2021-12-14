@@ -149,6 +149,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="qcustomplot.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WriteStream.h" />
     <QtMoc Include="SimData.h" />
@@ -157,8 +158,6 @@
     <ClInclude Include="headers.h" />
     <QtMoc Include="mainlogic.h" />
     <QtMoc Include="PlanesWork.h" />
-    <QtMoc Include="qcustomplot.h" />
-    <ClInclude Include="Simmath.h" />
     <ClInclude Include="Structs.h" />
     <QtMoc Include="Utils.h" />
   </ItemGroup>
