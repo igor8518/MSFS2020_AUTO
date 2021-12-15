@@ -329,7 +329,7 @@ private:
   void RudderTrimSet(double pos, DWORD speed = 10);
   void PitchTrimSet(double deg, DWORD speed = 10);
 
-  double GetData(DWORD var, char* unit = "");
+  //double GetData(DWORD var, char* unit = "");
   double GetDataL(DWORD var, char* unit = "");
   double SetData(DWORD var, double val, char* unit = "");
   double SetDataL(DWORD var, double val, char* unit = "");

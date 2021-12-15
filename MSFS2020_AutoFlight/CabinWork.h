@@ -95,11 +95,11 @@ private:
   void EngineIdleParameters(DWORD num);
   char* GetTitleCDU();
   void GearSet(DWORD pos);
-  double GetData(DWORD var, char* unit = "");
+  //double GetData(DWORD var, char* unit = "");
   double GetDataL(DWORD var, char* unit = "");
   double SetData(DWORD var, double val, char* unit = "");
   double SetDataL(DWORD var, double val, char* unit = "");
-  double SetGetData(DWORD varSet, DWORD varGet, double val, char* unit = "");
+  //double SetGetData(DWORD varSet, DWORD varGet, double val, char* unit = "");
   double SetSetData(DWORD var1, double val1, DWORD var2, double val2, char* unit1 = "", char* unit2 = "");
   DWORD SendEvent(DWORD EventID, long dwData);
 

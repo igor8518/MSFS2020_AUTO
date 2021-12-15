@@ -19,6 +19,8 @@ public:
     SimData* data = NULL;
   MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
+  std::vector<QString>* LogArray = new std::vector<QString>();
+  void Log(QString log);
   Utils* utils;
   HANDLE HSimConnect;
   DWORD Mode = 0;
@@ -127,7 +129,7 @@ private:
   bool SetGetDataChanged = false;
   IAirportData* AirportData = NULL;
   std::vector<bool> DataChanged = std::vector<bool>(CVars, true);
-  double GetData(DWORD DefaultParameter, char* unit = "");
+  //double GetData(DWORD DefaultParameter, char* unit = "");
   double GetDataL(DWORD DefaultParameter, char* unit = "");
   double SetData(DWORD var, double val, char* unit = "");
   double SetDataL(DWORD var, double val, char* unit = "");

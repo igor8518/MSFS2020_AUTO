@@ -90,7 +90,7 @@ void MSFS2020_AutoFlight::realtimeDataSlot() {
 	if (key - lastPointKey > 0.02) // at most add point every 20 ms
 	{
 		// add data to lines:
-		ui->vs1->setMinimum(-3277);
+		ui->vs1->setMinimum(-16383);
 		ui->vs1->setMaximum(16383);
 		if (!ui->cc1->checkState()) {
 			if (planesWork->property(cb1Text.c_str()).isValid()) {

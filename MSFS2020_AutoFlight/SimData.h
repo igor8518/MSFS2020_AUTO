@@ -6494,7 +6494,7 @@ signals:
 public slots:
 	void TimerProc();
 	void GetDataString(DWORD sender, DWORD var, std::string* val);
-	void GetData(DWORD sender, DWORD var, double* val, char* unit = "");
+	//void GetData(DWORD sender, DWORD var, double* val, char* unit = "");
 	//void GetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
 	void SetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
 	void SetData(DWORD sender, DWORD var, double* val, char* unit = "");

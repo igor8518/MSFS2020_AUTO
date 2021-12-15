@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     QObject::connect(w, SIGNAL(Connect()), m, SLOT(Connect()));
     w->setWindowTitle("MSFS 2020 AutoFlight");
-    w->setStyle(QStyleFactory::create("Fusion"));
+    qApp->setStyle(QStyleFactory::create("Fusion"));
     w->show();
     return a.exec();
 }

@@ -9,13 +9,13 @@ PlanesWork::PlanesWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 
 void PlanesWork::TimerProc() {
 
-	_CurrTrust = GetData(ENG_N1_RPM1, "percent over 100");
-	_CurrAccseleration = GetData(ACCELERATION_BODY_Z) * 1.6878098571011956838728492271799;
-	_CurrGSpeed = GetData(GROUND_VELOCITY);
+	_CurrTrust = DataT->GData.ENG_N1_RPM1;
+	_CurrAccseleration = DataT->GData.ACCELERATION_BODY_Z * 1.6878098571011956838728492271799;
+	_CurrGSpeed = DataT->GData.GROUND_VELOCITY;
 	GSpeedSet(0);
 	//AccselerationSet(0, 10);
 	TrustSet(0, 10);
-	if (GetData(INDICATED_ALTITUDE) < 3000) {
+	if (DataT->GData.INDICATED_ALTITUDE < 3000) {
 		ThrottleSet(0, 10);
 	}
 	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
@@ -100,7 +100,7 @@ void PlanesWork::ReceiveCommand(DWORD command, double parameter1, double paramet
 
 void PlanesWork::PushbackSpeedSet(double setSpeed, DWORD speed) { // Transfer to mainlogic and logarifmic set
 
-	double startSpeed = GetData(VELOCITY_BODY_Z);
+	double startSpeed = DataT->GData.VELOCITY_BODY_Z;
 	double adjustedSpeed = setSpeed;
 	double speeds;
 	for (int i = speed - 1; i > 0; i--)
@@ -195,7 +195,7 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		Start = QDateTime::currentDateTime();
 		static double rudder = _inRudder;
 		if (dt != 0) {
-			if (GetData(PLANE_ALT_ABOVE_GROUND) < 500) {
+			if (DataT->GData.PLANE_ALT_ABOVE_GROUND < 500) {
 				_outRudder = computePID(rudder, _inRudder, _PInRudderOutRudder, _IInRudderOutRudder, _DInRudderOutRudder, dt, -16383, 16383, &integral, &prevErr);
 			}
 			else {
@@ -207,7 +207,7 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		}
 		rudder = _outRudder;
 		//_outThrottle = _inThrottle;
-		if (GetData(INDICATED_ALTITUDE) < 1000) {
+		if (DataT->GData.INDICATED_ALTITUDE < 1000) {
 			emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
 		}
 	}
@@ -290,7 +290,7 @@ void PlanesWork::throttleLever(int position) {
 
 
 void PlanesWork::setThrust(FLOAT thrust) {
-	double N1L = GetData(TURB_ENG_N11);
+	double N1L = DataT->GData.TURB_ENG_N11;
 	static clock_t startTime;
 	static double throttle = 0;
 	static double startThrust = N1L;
@@ -332,8 +332,8 @@ void PlanesWork::GSpeedSet(double pos, double Tr) {
 	if (TTAS >= SET_GSPEED) {
 		double speed = _GSpeed;
 		double brakes;
-		double N1L = GetData(TURB_ENG_N11);
-		double GS = GetData(GROUND_VELOCITY);
+		double N1L = DataT->GData.TURB_ENG_N11;
+		double GS = DataT->GData.GROUND_VELOCITY;
 		static clock_t startTime;
 		static double thrust = N1L;
 		static double throttle = 0;
@@ -530,7 +530,7 @@ double PlanesWork::newPID(double value, double setpoint, double kp, double ki, d
 
 void PlanesWork::RudderTrimSet(double deg, DWORD speed) { // Transfer to mainlogic and logarifmic set
 
-	double startRudderTrim = GetData(RUDDER_TRIM, "degree");
+	double startRudderTrim = DataT->GData.RUDDER_TRIM;
 	double adjustedRudderTrim = deg;
 	double RudderTrim = startRudderTrim;
 	while (abs(RudderTrim - adjustedRudderTrim) > 0.1)
@@ -543,14 +543,14 @@ void PlanesWork::RudderTrimSet(double deg, DWORD speed) { // Transfer to mainlog
 			emit SendEvent(KEY_RUDDER_TRIM_RIGHT, 0);
 		}
 		Sleep(1000 / speed);
-		RudderTrim = GetData(RUDDER_TRIM, "degree");
+		RudderTrim = DataT->GData.RUDDER_TRIM;
 	}
 	RudderTrim = adjustedRudderTrim;
 	emit SendEvent(KEY_RUDDER_TRIM_SET, int((RudderTrim)/ 20 * 16383));
 }
 void PlanesWork::PitchTrimSet(double deg, DWORD speed) { // Transfer to mainlogic and logarifmic set
 
-	double startElevatorTrim = GetData(ELEVATOR_TRIM_POSITION, "degree");
+	double startElevatorTrim = DataT->GData.ELEVATOR_TRIM_POSITION;
 	double adjustedElevatorTrim = deg;
 	double ElevatorTrim = startElevatorTrim;
 	while (abs(ElevatorTrim - adjustedElevatorTrim) > 0.1)
@@ -563,19 +563,19 @@ void PlanesWork::PitchTrimSet(double deg, DWORD speed) { // Transfer to mainlogi
 			emit SendEvent(KEY_ELEV_TRIM_UP, 0);
 		}
 		Sleep(1000 / speed);
-		ElevatorTrim = GetData(ELEVATOR_TRIM_POSITION, "degree");
+		ElevatorTrim = DataT->GData.ELEVATOR_TRIM_POSITION;
 	}
 	ElevatorTrim = adjustedElevatorTrim;
 	emit SendEvent(KEY_ELEVATOR_TRIM_SET, int((ElevatorTrim + 4) / 17.5 * 16383));
 }
 
-double PlanesWork::GetData(DWORD var, char* unit) {
+/*double PlanesWork::GetData(DWORD var, char* unit) {
 	double lVar;
 	emit GetDataSignal(PLANESWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
 	GetDataChanged = false;
 	return lVar;
-}
+}*/
 double PlanesWork::GetDataL(DWORD var, char* unit) {
 	double lVar;
 	emit GetDataSignalL(PLANESWORK_ID, var, &lVar, unit);

@@ -236,7 +236,7 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 				break;
 			}*/
 		default: {
-			lContext->data->SendLog("***** EXCEPTION=" + QString::number(exc->dwException) + "  SendID=" + QString::number(exc->dwSendID) + "  uOffset=" + QString::number(exc->dwIndex) + "  cbData=" + QString::number(cbData));
+			//lContext->data->SendLog("***** EXCEPTION=" + QString::number(exc->dwException) + "  SendID=" + QString::number(exc->dwSendID) + "  uOffset=" + QString::number(exc->dwIndex) + "  cbData=" + QString::number(cbData));
 			break;
 		}
 					 break;
@@ -522,8 +522,8 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 }
 
 
-void SimData::GetData(DWORD sender, DWORD var, double* val, char* unit)
-{
+//void SimData::GetData(DWORD sender, DWORD var, double* val, char* unit)
+//{
 	/*Context c = { this, 50 };
 	if (RegisterVarGet(15, var, unit)) {
 		SUCC(SimConnect_RequestDataOnSimObject(HSimConnect, 15, 15, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE));
@@ -532,10 +532,10 @@ void SimData::GetData(DWORD sender, DWORD var, double* val, char* unit)
 			SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
 		};
 	}*/
-	*val = *SimVarsGet[var];
-	emit GetDataChange(var, sender);
+	//*val = *SimVarsGet[var];
+	//emit GetDataChange(var, sender);
 	//set50 = false;
-}
+//}
 
 
 /*void SimData::GetDataL(DWORD sender, DWORD var, double* val, char* unit)

@@ -9,7 +9,7 @@ CabinWork::CabinWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 
 void CabinWork::EngineModeSelector(DWORD mode) {
 	int i = 1000;
-	while ((GetData(TURB_ENG_IGNITION_SWITCH_EX11) != mode) && i) {
+	while ((DataT->GData.TURB_ENG_IGNITION_SWITCH_EX11 != mode) && i) {
 			if (mode == CRANK) {
 				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET, mode);
 			}
@@ -18,7 +18,7 @@ void CabinWork::EngineModeSelector(DWORD mode) {
 			}
 			i--;
 	}
-	while ((GetData(TURB_ENG_IGNITION_SWITCH_EX12) != mode) && i) {
+	while ((DataT->GData.TURB_ENG_IGNITION_SWITCH_EX12 != mode) && i) {
 			if (mode == CRANK) {
 				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET, mode);
 			}
@@ -32,7 +32,7 @@ void CabinWork::EngineModeSelector(DWORD mode) {
 void CabinWork::EngineMasterSwitches(DWORD num, DWORD onoff) {
 	int i = 1000;
 	if (num == 1) {
-		if (GetData(GENERAL_ENG_STARTER1) != onoff) {
+		if (DataT->GData.GENERAL_ENG_STARTER1 != onoff) {
 			if (onoff == 1) {
 				emit SendEvent(KEY_FUELSYSTEM_VALVE_OPEN, num);
 			}
@@ -42,7 +42,7 @@ void CabinWork::EngineMasterSwitches(DWORD num, DWORD onoff) {
 		}
 	}
 	else {
-		if (GetData(GENERAL_ENG_STARTER2) != onoff) {
+		if (DataT->GData.GENERAL_ENG_STARTER2 != onoff) {
 			if (onoff == 1) {
 				emit SendEvent(KEY_FUELSYSTEM_VALVE_OPEN, num);
 			}
@@ -55,12 +55,12 @@ void CabinWork::EngineMasterSwitches(DWORD num, DWORD onoff) {
 
 void CabinWork::Wiper(DWORD num, DWORD mode) {
 	if (num == 1) {
-		if ((GetData(CIRCUIT_SWITCH_ON77) != mode)) {
+		if ((DataT->GData.CIRCUIT_SWITCH_ON77 != mode)) {
 			emit SendEvent(KEY_ELECTRICAL_CIRCUIT_TOGGLE, 77);
 		}
 	}
 	else {
-		if ((GetData(CIRCUIT_SWITCH_ON80) != mode)) {
+		if ((DataT->GData.CIRCUIT_SWITCH_ON80 != mode)) {
 			emit SendEvent(KEY_ELECTRICAL_CIRCUIT_TOGGLE, 80);
 		}
 	}
@@ -71,14 +71,14 @@ void CabinWork::BatterySwitch(DWORD num, DWORD onoff) {
 	
 		/*if (num == 1) {
 			if (SetData(BUS_LOOKUP_INDEX, 10) == 10) {
-			if ((GetData(BUS_CONNECTION_ON6) != onoff)) {
+			if ((DataT->GData.BUS_CONNECTION_ON6 != onoff)) {
 				emit ExSimConnect_TransmitClientEvent(HSimConnect, SIMCONNECT_SIMOBJECT_TYPE_USER, KEY_ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE, 6, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
 				//emit ExSimConnect_TransmitClientEvent(HSimConnect, SIMCONNECT_SIMOBJECT_TYPE_USER, KEY_ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE, 10, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
 			}
 		}
 		else {
 				if (SetData(BUS_LOOKUP_INDEX, 11) == 11) {
-					if ((GetData(BUS_CONNECTION_ON6) != onoff)) {
+					if ((DataT->GData.BUS_CONNECTION_ON6 != onoff)) {
 						emit ExSimConnect_TransmitClientEvent(HSimConnect, SIMCONNECT_SIMOBJECT_TYPE_USER, KEY_ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE, 6, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
 						//emit ExSimConnect_TransmitClientEvent(HSimConnect, SIMCONNECT_SIMOBJECT_TYPE_USER, KEY_ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE, 11, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY);
 					}
@@ -99,14 +99,14 @@ void CabinWork::BatterySwitch(DWORD num, DWORD onoff) {
 }
 void CabinWork::ExternalPower(DWORD onoff) {
 	if (onoff == 1) {
-		if (GetData(EXTERNAL_POWER_AVAILABLE1) == 1) {
-			if (GetData(EXTERNAL_POWER_ON1) != onoff) {
+		if (DataT->GData.EXTERNAL_POWER_AVAILABLE1 == 1) {
+			if (DataT->GData.EXTERNAL_POWER_ON1 != onoff) {
 				emit SendEvent(KEY_TOGGLE_EXTERNAL_POWER, 1);
 			}
 		}
 	}
 	else {
-		if (GetData(EXTERNAL_POWER_ON1) != onoff) {
+		if (DataT->GData.EXTERNAL_POWER_ON1 != onoff) {
 			emit SendEvent(KEY_TOGGLE_EXTERNAL_POWER, 1);
 		}
 	}
@@ -114,7 +114,7 @@ void CabinWork::ExternalPower(DWORD onoff) {
 void CabinWork::APUSet(DWORD onoff) {
 	if (onoff == 1) {
 		if ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) != 1) {
-			if (GetData(FUELSYSTEM_PUMP_SWITCH5) == 1) {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH5 == 1) {
 				if (SetDataL(A32NX_OVHD_APU_MASTER_SW_PB_IS_ON, 1.0) == 1) {
 					while ((DataT->AllData.A32NX_APU_FLAP_OPEN_PERCENTAGE) != 100);
 						if (SetDataL(A32NX_OVHD_APU_START_PB_IS_ON, 1.0)) {
@@ -137,7 +137,7 @@ void CabinWork::APUOff() {
 void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
 	if (num < 7) {
-		if (GetData(FUELSYSTEM_PUMP_SWITCH1 - 1 + num) != onoff) {
+		if (DataT->GData.FUELSYSTEM_PUMP_SWITCH1 - 1 + num != onoff) {
 			emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num );
 		}
 	}
@@ -158,41 +158,41 @@ void CabinWork::APUBleedSet(DWORD onoff) {
 	SetDataL(A32NX_OVHD_PNEU_APU_BLEED_PB_IS_ON, onoff);
 }
 void CabinWork::CabinLight(DWORD mode) {
-	if (GetData(EXTERNAL_POWER_ON1) || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || mode == 0)
+	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || mode == 0)
 	{
 		switch (mode) {
 		case 0: {
-			if (GetData(LIGHT_POTENTIOMETER7) != 0) {
+			if (DataT->GData.LIGHT_POTENTIOMETER7 != 0) {
 				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 0);
 			}
-			if (GetData(LIGHT_CABIN) != 0) {
+			if (DataT->GData.LIGHT_CABIN != 0) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 0);
 			}
 			break;
 		}
 		case 1: {
-			if (GetData(LIGHT_POTENTIOMETER7) != 0.5) {
+			if (DataT->GData.LIGHT_POTENTIOMETER7 != 0.5) {
 				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 50);
 			}
-			if (GetData(LIGHT_CABIN) != 1) {
+			if (DataT->GData.LIGHT_CABIN != 1) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 1);
 			}
 			break;
 		}
 		case 2: {
-			if (GetData(LIGHT_POTENTIOMETER7) != 1) {
+			if (DataT->GData.LIGHT_POTENTIOMETER7 != 1) {
 				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 100);
 			}
-			if (GetData(LIGHT_CABIN) != 1) {
+			if (DataT->GData.LIGHT_CABIN != 1) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 1);
 			}
 			break;
 		}
 		default: {
-			if (GetData(LIGHT_POTENTIOMETER7) != 1) {
+			if (DataT->GData.LIGHT_POTENTIOMETER7 != 1) {
 				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 100);
 			}
-			if (GetData(LIGHT_CABIN) != 1) {
+			if (DataT->GData.LIGHT_CABIN != 1) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 1);
 			}
 			break;
@@ -208,7 +208,7 @@ void CabinWork::ParkingBrakeSet(DWORD onoff) {
 }
 void CabinWork::FlapsSet(DWORD pos) {
 	
-	for (int i = GetData(FLAPS_HANDLE_INDEX); i != pos; ) {
+	for (int i = DataT->GData.FLAPS_HANDLE_INDEX; i != pos; ) {
 		Sleep(60);
 		i = (DataT->AllData.A32NX_FLAPS_HANDLE_INDEX);
 		if (i < pos) {
@@ -265,7 +265,7 @@ char* CabinWork::GetTitleCDU() {
 	return "";
 }
 void CabinWork::GearSet(DWORD pos) {
-	if (GetData(GEAR_HANDLE_POSITION) != pos) {
+	if (DataT->GData.GEAR_HANDLE_POSITION != pos) {
 		SendEvent(KEY_GEAR_SET, pos);
 	}
 }
@@ -350,13 +350,13 @@ void CabinWork::ADIRS(DWORD num, DWORD mode) {
 	}
 }
 void CabinWork::NavLight(DWORD onoff) {
-	if (GetData(EXTERNAL_POWER_ON1) || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || onoff != 1)
+	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || onoff != 1)
 	{
-		if (GetData(LIGHT_NAV) != onoff) {
+		if (DataT->GData.LIGHT_NAV != onoff) {
 			//emit SendEvent(KEY_TOGGLE_NAV_LIGHTS, 0);
 			SetData(LIGHT_NAV, onoff);
 		}
-		if (GetData(LIGHT_LOGO) != onoff) {
+		if (DataT->GData.LIGHT_LOGO != onoff) {
 			//emit SendEvent(KEY_TOGGLE_LOGO_LIGHTS, 0);
 			SetData(LIGHT_NAV, onoff);
 		}
@@ -376,7 +376,7 @@ void CabinWork::SeatBeltSign(DWORD mode) {
 	/*if ((DataT->AllData.XMLVAR_SWITCH_OVHD_INTLT_SEATBELT_Position) != mode) {
 		SetDataL(XMLVAR_SWITCH_OVHD_INTLT_SEATBELT_Position, mode);
 	}*/
-	if (GetData(CABIN_SEATBELTS_ALERT_SWITCH) != mode) {
+	if (DataT->GData.CABIN_SEATBELTS_ALERT_SWITCH != mode) {
 		//SetDataL(XMLVAR_SWITCH_OVHD_INTLT_SEATBELT_Position, mode);
 		SendEvent(KEY_CABIN_SEATBELTS_ALERT_SWITCH_TOGGLE, 0);
 	}
@@ -423,20 +423,20 @@ void CabinWork::SetCruise(DWORD alt) {
 }
 void CabinWork::FloodLightOver(double flood) {
 	if (flood == 0.0) {
-		if (GetData(LIGHT_PANEL4) != 0) {
+		if (DataT->GData.LIGHT_PANEL4 != 0) {
 			SetData(LIGHT_PANEL4, 0);
 		}
-		if (GetData(LIGHT_POTENTIOMETER86) != flood) {
+		if (DataT->GData.LIGHT_POTENTIOMETER86 != flood) {
 			emit SendEvent(KEY_LIGHT_POTENTIOMETER_SET, 86);
 			emit SendEvent(KEY_LIGHT_POTENTIOMETER_SET, 0);
 			SetData(LIGHT_POTENTIOMETER86, flood);
 		}
 	}
 	else {
-		if (GetData(LIGHT_PANEL4) != 1) {
+		if (DataT->GData.LIGHT_PANEL4 != 1) {
 			SetData(LIGHT_PANEL4, 1);
 		}
-		if (GetData(LIGHT_POTENTIOMETER86) != flood) {
+		if (DataT->GData.LIGHT_POTENTIOMETER86 != flood) {
 			emit SendEvent(KEY_LIGHT_POTENTIOMETER_SET, 86);
 			emit SendEvent(KEY_LIGHT_POTENTIOMETER_SET, 10);
 			SetData(LIGHT_POTENTIOMETER86, flood);
@@ -454,9 +454,9 @@ void CabinWork::BarometricRef() {
 	//setA20NDataDouble(KEY_KOHLSMAN_INC, KEY_KOHLSMAN_DEC, *Vars.var_AMBIENT_PRESSURE, &Vars.var_KOHLSMAN_SETTING_HG, 0.01, "inHG");
 	long currpos;
 	double pog = 0.01;
-	double ambBaro = GetData(SEA_LEVEL_PRESSURE, "inHG");
+	double ambBaro = DataT->GData.SEA_LEVEL_PRESSURE;
 		//pos = 16384 / 100 * pos;7
-		double ppos = GetData(KOHLSMAN_SETTING_HG);
+		double ppos = DataT->GData.KOHLSMAN_SETTING_HG;
 		while (((ppos + pog) < ambBaro) || ((ppos - pog) > ambBaro)) {
 			if ((DataT->AllData.XMLVAR_Baro1_Mode) != 1) {
 				SetDataL(XMLVAR_Baro1_Mode, 1);
@@ -471,11 +471,11 @@ void CabinWork::BarometricRef() {
 				emit SendEvent(KEY_KOHLSMAN_DEC, 0);
 			}
 			Sleep(20);
-			ppos = GetData(KOHLSMAN_SETTING_HG);
+			ppos = DataT->GData.KOHLSMAN_SETTING_HG;
 		}
 }
 void CabinWork::FDSet(DWORD num, DWORD onoff) {
-	if (GetData(AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1 - 1 + num) != onoff) {
+	if (DataT->GData.AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1 - 1 + num != onoff) {
 		emit SendEvent(KEY_TOGGLE_FLIGHT_DIRECTOR, 0);
 	}
 }
@@ -564,10 +564,10 @@ void CabinWork::AltSet(DWORD alt) {
 	if (DataT->GData.AUTOPILOT_ALTITUDE_LOCK_VAR3 != alt) {
 		alt = int(alt / 100) * 100;
 		//bool change = false;
-		//if (alt != GetData(AUTOPILOT_ALTITUDE_LOCK_VAR)) {
+		//if (alt != DataT->GData.AUTOPILOT_ALTITUDE_LOCK_VAR) {
 	//		change = true;
 	//	}
-		DWORD currAlt;// = int(GetData(AUTOPILOT_ALTITUDE_LOCK_VAR) / 100) * 100;
+		DWORD currAlt;// = int(DataT->GData.AUTOPILOT_ALTITUDE_LOCK_VAR / 100) * 100;
 		SetAltitudeIncrement(1);
 		if ((int(DataT->GData.AUTOPILOT_ALTITUDE_LOCK_VAR3 / 1000) * 1000) != (int(alt / 1000) * 1000)) {
 			currAlt = int(DataT->GData.AUTOPILOT_ALTITUDE_LOCK_VAR3 / 1000) * 1000;
@@ -632,7 +632,7 @@ void CabinWork::CrewSupply(DWORD offon) {
 	}
 }
 void CabinWork::ASandNS(DWORD onoff) {
-	if (GetData(ANTISKID_BRAKES_ACTIVE) != onoff) {
+	if (DataT->GData.ANTISKID_BRAKES_ACTIVE != onoff) {
 		emit SendEvent(KEY_ANTISKID_BRAKES_TOGGLE, 0);
 	}
 }
@@ -725,7 +725,7 @@ void CabinWork::CocpitPreparation(int* Status)
 		//FlexToTempSet
 		SetCruise(36000);
 		//AltInitial((data->AllData.AIRLINER_CRUISE_ALTITUDE));
-		TrustRedAccAlt(1800, 1800);
+		//TrustRedAccAlt(1800, 1800);
 		////////////////////////////////////////FlapRem(2);
 		//GLARESHIELD
 		//FloodLightOver(0.1); // NOT WORK 787 A32NX UPDATE
@@ -805,13 +805,13 @@ void CabinWork::CocpitPreparation(int* Status)
 }
 void CabinWork::WindowsAndDoors(DWORD num, DWORD openclose) {
 
-	if (GetData(NEW_EXIT_OPEN0 + num) != openclose) {
+	if (DataT->GData.NEW_EXIT_OPEN0 + num != openclose) {
 		emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
-		while (GetData(NEW_EXIT_OPEN0 + num) != openclose);
+		while (DataT->GData.NEW_EXIT_OPEN0 + num != openclose);
 	}
 }
 void CabinWork::BeaconLigts(DWORD onoff) {
-		if (GetData(LIGHT_BEACON) != onoff) {
+		if (DataT->GData.LIGHT_BEACON != onoff) {
 			//emit SendEvent(KEY_TOGGLE_BEACON_LIGHTS, 0);
 			SetData(LIGHT_BEACON, onoff);
 		}
@@ -847,7 +847,7 @@ void CabinWork::BeforeStart(int* Status) {
 	*Status = 2;
 }
 void CabinWork::EngineIdleParameters(DWORD num) {
-	while (GetData(ENG_N1_RPM1 - 1 + num, "percent over 100") < 0.100); //0.195
+	while (DataT->GData.ENG_N1_RPM1 - 1 + num < 0.100); //0.195
 	while ((DataT->AllData.A32NX_ENGINE_STATE_1 - 1 + num) != 1);
 	Sleep(10000);
 }
@@ -988,13 +988,13 @@ void CabinWork::Parking(int* Status) {
 void CabinWork::NoseLight(DWORD pos) {
 	switch (pos) {
 	case 0: {
-		if (GetData(LIGHT_TAXI) != 0) {
+		if (DataT->GData.LIGHT_TAXI != 0) {
 			//emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 1);
 			//SetDataL(LIGHTING_LANDING_1, 2);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
 			SetData(CIRCUIT_SWITCH_ON20, 0);
 		}
-		if (GetData(LIGHT_LANDING) != 0) {
+		if (DataT->GData.LIGHT_LANDING != 0) {
 			//emit SendEvent(KEY_LANDING_LIGHTS_TOGGLE, 1);
 			//SetDataL(LIGHTING_LANDING_1, 2);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
@@ -1003,13 +1003,13 @@ void CabinWork::NoseLight(DWORD pos) {
 		break;
 	}
 	case 1: {
-		if (GetData(LIGHT_TAXI1) != 1) {
+		if (DataT->GData.LIGHT_TAXI1 != 1) {
 			//emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 1);
 			//SetDataL(LIGHTING_LANDING_1, 1);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
 			SetData(CIRCUIT_SWITCH_ON20, 1);
 		}
-		if (GetData(LIGHT_LANDING1) != 0) {
+		if (DataT->GData.LIGHT_LANDING1 != 0) {
 			//emit SendEvent(KEY_LANDING_LIGHTS_TOGGLE, 1);
 			//SetDataL(LIGHTING_LANDING_1, 1);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
@@ -1018,13 +1018,13 @@ void CabinWork::NoseLight(DWORD pos) {
 		break;
 	}
 	case 2: {
-		if (GetData(LIGHT_TAXI1) != 0) {
+		if (DataT->GData.LIGHT_TAXI1 != 0) {
 			//emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 1);
 			//SetDataL(LIGHTING_LANDING_1, 0);
 			SetData(CIRCUIT_SWITCH_ON17, 1);
 			SetData(CIRCUIT_SWITCH_ON20, 0);
 		}
-		if (GetData(LIGHT_LANDING1) != 1) {
+		if (DataT->GData.LIGHT_LANDING1 != 1) {
 			//emit SendEvent(KEY_LANDING_LIGHTS_TOGGLE, 1);
 			//SetDataL(LIGHTING_LANDING_1, 0);
 			SetData(CIRCUIT_SWITCH_ON17, 1);
@@ -1033,13 +1033,13 @@ void CabinWork::NoseLight(DWORD pos) {
 		break;
 	}
 	default: {
-		if (GetData(LIGHT_TAXI1) != 0) {
+		if (DataT->GData.LIGHT_TAXI1 != 0) {
 			//emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 1);
 			//SetDataL(LIGHTING_LANDING_1, 0);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
 			SetData(CIRCUIT_SWITCH_ON20, 1);
 		}
-		if (GetData(LIGHT_LANDING1) != 1) {
+		if (DataT->GData.LIGHT_LANDING1 != 1) {
 			//emit SendEvent(KEY_LANDING_LIGHTS_TOGGLE, 1);
 			//SetDataL(LIGHTING_LANDING_1, 0);
 			SetData(CIRCUIT_SWITCH_ON17, 0);
@@ -1051,19 +1051,19 @@ void CabinWork::NoseLight(DWORD pos) {
 
 }
 void CabinWork::RunwayLight(DWORD onoff) {
-	if (GetData(LIGHT_TAXI2) != onoff) {
+	if (DataT->GData.LIGHT_TAXI2 != onoff) {
 		//emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 2);
 		SetData(CIRCUIT_SWITCH_ON21, onoff);
 		SetData(CIRCUIT_SWITCH_ON22, onoff);
 	}
-	/*if (GetData(LIGHT_TAXI3) != onoff) {
+	/*if (DataT->GData.LIGHT_TAXI3 != onoff) {
 		emit SendEvent(KEY_TOGGLE_TAXI_LIGHTS, 3);
 	}*/
 }
 void CabinWork::LandingLight(DWORD onoff) {
 	if (onoff) {
-		if ((GetData(LIGHT_LANDING2) == 0) ||
-			(GetData(LIGHT_LANDING3) == 0)) {
+		if ((DataT->GData.LIGHT_LANDING2 == 0) ||
+			(DataT->GData.LIGHT_LANDING3 == 0)) {
 
 			
 
@@ -1082,8 +1082,8 @@ void CabinWork::LandingLight(DWORD onoff) {
 		}
 	}
 	else {
-		if ((GetData(LIGHT_LANDING3) != 0) ||
-			(GetData(LIGHT_LANDING2) != 0)) {
+		if ((DataT->GData.LIGHT_LANDING3 != 0) ||
+			(DataT->GData.LIGHT_LANDING2 != 0)) {
 
 			//emit SendEvent(KEY_LANDING_LIGHTS_TOGGLE, 2);
 			SetData(LIGHT_LANDING2, 0);
@@ -1100,8 +1100,8 @@ void CabinWork::LandingLight(DWORD onoff) {
 			
 		}
 	}
-	/*if ((GetData(LIGHT_LANDING2) != onoff) ||
-		(GetData(LIGHT_LANDING3) != onoff)) {
+	/*if ((DataT->GData.LIGHT_LANDING2 != onoff) ||
+		(DataT->GData.LIGHT_LANDING3 != onoff)) {
 		if (onoff) {
 			SetDataL(LIGHTING_LANDING_2, 0);
 			SetDataL(LIGHTING_LANDING_2, 0);
@@ -1113,7 +1113,7 @@ void CabinWork::LandingLight(DWORD onoff) {
 	}*/
 }
 void CabinWork::StrobeLight(DWORD onoff) {
-	if (GetData(LIGHT_STROBE) != onoff) {
+	if (DataT->GData.LIGHT_STROBE != onoff) {
 		emit SendEvent(KEY_STROBES_SET, onoff);
 		/*if (onoff) {
 			SetDataL(LIGHTING_STROBE_0, 0);
@@ -1129,12 +1129,12 @@ void CabinWork::SetAutoBrakes(DWORD num) {
 	}
 }
 void CabinWork::HdgSel(double heading) {
-	while (round(GetData(AUTOPILOT_HEADING_LOCK_DIR)) != Utils::Constrain360(heading)) {
-		if (round(Utils::Constrain180(GetData(AUTOPILOT_HEADING_LOCK_DIR) - Utils::Constrain360(heading))) < 0) {
-			SendEvent(KEY_HEADING_BUG_SET, abs(GetData(AUTOPILOT_HEADING_LOCK_DIR)) + 1);
+	while (round(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) != Utils::Constrain360(heading)) {
+		if (round(Utils::Constrain180(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR - Utils::Constrain360(heading))) < 0) {
+			SendEvent(KEY_HEADING_BUG_SET, abs(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) + 1);
 		}
 		else {
-			SendEvent(KEY_HEADING_BUG_SET, abs(GetData(AUTOPILOT_HEADING_LOCK_DIR)) - 1);
+			SendEvent(KEY_HEADING_BUG_SET, abs(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) - 1);
 		}
 		Sleep(60);
 	}
@@ -1306,13 +1306,13 @@ void CabinWork::BeforeTakeoff(int* Status) {
 		*Status = 2;
 	}
 }
-double CabinWork::GetData(DWORD var, char* unit) {
+/*double CabinWork::GetData(DWORD var, char* unit) {
 	double lVar;
 	emit GetDataSignal(CABINWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
 	GetDataChanged = false;
 	return lVar;
-}
+}*/
 double CabinWork::GetDataL(DWORD var, char* unit) {
 	double lVar;
 	emit GetDataSignalL(CABINWORK_ID, var, &lVar, unit);
@@ -1334,13 +1334,13 @@ double CabinWork::SetDataL(DWORD var, double val, char* unit) {
 	return  val;
 }
 
-double CabinWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
+/*double CabinWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
 	double lVar;
 	emit SetGetDataSignal(CABINWORK_ID, var1, var2, &lVar, unit);
 	while (!SetGetDataChanged);
 	SetGetDataChanged = false;
 	return  lVar;
-}
+}*/
 
 double CabinWork::SetSetData(DWORD var1, double val1, DWORD var2, double val2, char* unit1, char* unit2)
 {
