@@ -45,18 +45,18 @@ signals:
   void ButtonModify(QPushButton* button, QString text, QString style);
   void SetDataReg(unsigned int index, double data);
   void SetDataSetReg(unsigned int index, double data);
-  void PreliminaryCocpitPrep(int* Status);
+  void CLPreliminaryCocpitPrep(int* Status);
   void SetModeSignal(DWORD mode);
-  void CocpitPreparation(int* Status);
-  void BeforeStart(int* Status);
-  void EngineStart(int* Status);
-  void AfterStart(int* Status);
-  void BeforeTaxi(int flightLevel, int heading, int* Status);
-  void BeforeTakeoff(int* Status);
-  void AfterTakeoff(int* Status);
-  void Landing(int* Status);
-  void AfterLanding(int* Status);
-  void Parking(int* Status);
+  void CLCocpitPreparation(int* Status);
+  void CLBeforeStart(int* Status);
+  void CLEngineStart(int* Status);
+  void CLAfterStart(int* Status);
+  void CLBeforeTaxi(int flightLevel, int heading, int* Status);
+  void CLBeforeTakeoff(int* Status);
+  void CLAfterTakeoff(int* Status);
+  void CLLanding(int* Status);
+  void CLAfterLanding(int* Status);
+  void CLParking(int* Status);
   void CabinReport();
   
   

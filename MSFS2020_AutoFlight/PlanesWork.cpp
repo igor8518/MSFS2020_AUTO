@@ -597,7 +597,7 @@ double PlanesWork::SetDataL(DWORD var, double val, char* unit) {
 	return  val;
 }
 
-double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
+/*double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
 	double lVar;
 	emit SetGetDataSignal(PLANESWORK_ID, var1, var2, &lVar, unit);
 	while (!SetGetDataChanged);
@@ -611,7 +611,7 @@ double PlanesWork::SetSetData(DWORD var1, double val1, DWORD var2, double val2, 
 	while (!SetSetDataChanged);
 	SetSetDataChanged = false;
 	return  val1;
-}
+}*/
 
 DWORD PlanesWork::SendEvent(DWORD EventID, long dwData)
 {

@@ -6498,8 +6498,8 @@ public slots:
 	//void GetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
 	void SetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
 	void SetData(DWORD sender, DWORD var, double* val, char* unit = "");
-	void SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
-	void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+	//void SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
+	//void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
 	void SendEvent(DWORD sender, DWORD EventID, long dwData);
 	void SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
 };

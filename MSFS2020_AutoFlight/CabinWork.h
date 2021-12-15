@@ -2,15 +2,12 @@
 #include "Structs.h"
 #include "SimData.h"
 #include "Utils.h"
-//
-
-//class SimData;
 
 
 class CabinWork : public QObject {
   Q_OBJECT
 public:
-  CabinWork(HANDLE hSimConnect/*, cVars* vars*/);
+  CabinWork(HANDLE hSimConnect);
   SimData* DataT;
   
 private:
@@ -24,22 +21,16 @@ private:
   double LightRunway = 0;
   double ParkBrake = 1;
   double BaroM = 1;
-  double BaroS;
 
   double SpeedMode = 1;
   double Speed = 100;
   double HeadingMode = 1;
   double Heading = 0;
-
-  double PrevAlt;
   double AltMode = 0;
   double Alt = 100;
   double VS = 0;
   
-  bool GetDataChanged = false;
   bool SetDataChanged = false;
-  bool SetGetDataChanged = false;
-  bool SetSetDataChanged = false;
 
   QTimer* Timer;
 
@@ -70,9 +61,7 @@ private:
   void LandingElevation(double pos);
   void PackFlow(DWORD mode);
   void EngFireTest(DWORD num);
-  void TrustRedAccAlt(double red, double acc);
   void FlapRem(DWORD pos);
-  void SetCruise(DWORD alt);
   void FloodLightOver(double flood);
   void BaroMode(DWORD mode);
   void BarometricRef();
@@ -93,58 +82,11 @@ private:
   void WxrMode(DWORD mode);
   void IrsAligned();
   void EngineIdleParameters(DWORD num);
-  char* GetTitleCDU();
   void GearSet(DWORD pos);
-  //double GetData(DWORD var, char* unit = "");
-  double GetDataL(DWORD var, char* unit = "");
-  double SetData(DWORD var, double val, char* unit = "");
-  double SetDataL(DWORD var, double val, char* unit = "");
-  //double SetGetData(DWORD varSet, DWORD varGet, double val, char* unit = "");
-  double SetSetData(DWORD var1, double val1, DWORD var2, double val2, char* unit1 = "", char* unit2 = "");
-  DWORD SendEvent(DWORD EventID, long dwData);
-
-  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
-
-signals:
-  void SendText(QString s, bool sendSim);
-  void SendLog(QString s);
-  void GetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void GetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
-  void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
-  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
-  void SetSetDataSignal(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
-
-  void SendCommand(DWORD command, double parameter1, double parameter2);
-
-public slots:
-  void TimerProc();
-  void SetDataChange(DWORD var, DWORD sender); //Direct
-  void GetDataChange(DWORD var, DWORD sender); //Direct
-  void SetGetDataChange(DWORD var1, DWORD var2, DWORD sender); //Direct
-  void SetSetDataChange(DWORD var1, DWORD var2, DWORD sender); //Direct
-  void ReceiveCommand(DWORD command, double parameter1, double parameter2);
-  
-  void PreliminaryCocpitPrep(int* Status);
- 
-  
-
-  void CocpitPreparation(int* Status);
   void WindowsAndDoors(DWORD num, DWORD openclose);
   void BeaconLigts(DWORD onoff);
-  void BeforeStart(int* Status);
-  
-  void EngineStart(int* Status);
-  void AfterTakeoff(int* Status);
-  void Landing(int* Status);
-  void AfterLanding(int* Status);
-  void Parking(int* Status);
-  
   void EngineAntiIce(DWORD num, DWORD onoff);
   void WingAntiIce(DWORD onoff);
-  void AfterStart(int* Status);
   void NoseLight(DWORD pos);
   void RunwayLight(DWORD onoff);
   void LandingLight(DWORD mode);
@@ -153,12 +95,40 @@ public slots:
   void HdgSel(double heading);
   void SpeedSel(DWORD speed);
   void VSSel(double VS);
-  void BeforeTaxi(int flightLevel, int heading, int* Status);
   void CabinReport();
   void TOConfig();
   void TcasMode(DWORD mode);
   void TcasTraffic(DWORD mode);
   void Pack(DWORD num, DWORD onoff);
-  void BeforeTakeoff(int* Status);
+
+  double SetData(DWORD var, double val, char* unit = "");
+  double SetDataL(DWORD var, double val, char* unit = "");
+  DWORD SendEvent(DWORD EventID, long dwData);
+  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+
+signals:
+  void SendText(QString s, bool sendSim);
+  void SendLog(QString s);
+  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
+  void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
+  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+  void SendCommand(DWORD command, double parameter1, double parameter2);
+
+public slots:
+  void TimerProc();
+  void SetDataChange(DWORD var, DWORD sender); //Direct
+  void ReceiveCommand(DWORD command, double parameter1, double parameter2);
+  void CLPreliminaryCocpitPrep(int* Status);
+  void CLCocpitPreparation(int* Status);
+  void CLBeforeStart(int* Status);
+  void CLEngineStart(int* Status);
+  void CLAfterTakeoff(int* Status);
+  void CLLanding(int* Status);
+  void CLAfterLanding(int* Status);
+  void CLParking(int* Status); 
+  void CLAfterStart(int* Status);
+  void CLBeforeTaxi(int flightLevel, int heading, int* Status);
+  void CLBeforeTakeoff(int* Status);
 };
 

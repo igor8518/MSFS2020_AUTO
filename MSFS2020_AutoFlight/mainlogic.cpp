@@ -717,6 +717,9 @@ VOID MainLogic::TimerProc()
 									AddSidStarTrack(&OrigSids->at(i).wayPoint->at(j), &RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1), &fixx);
 								}
 								WayPoints->at(SIDPoint).Name = QString(OrigSids->at(i).SID.c_str());
+								Log("Start runway "+ QString(OrigSids->at(i).RUNWAY.c_str()));
+								Log("SID " + QString(OrigSids->at(i).SID.c_str()));
+								Log("Transition SID " + QString(OrigSids->at(i).TRANSITION.c_str()));
 								break;
 							}
 						}
@@ -828,6 +831,12 @@ VOID MainLogic::TimerProc()
 			}
 			if (OrigStars->size() > 0) {
 				WayPoints->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
+				Log("Transition STAR " + QString((OrigStars->at(Star).STARTRANS).c_str()));
+				Log("STAR " + QString((OrigStars->at(Star).STAR).c_str()));
+				Log("Transition approach " + QString((OrigStars->at(Star).APPTRANS).c_str()));
+				Log("Approach " + QString((OrigStars->at(Star).APPROACH).c_str()));
+				Log("Stop runway " + QString((OrigStars->at(Star).RUNWAY).c_str()));
+
 				for (int i = 0; i < OrigStars->at(Star).wayPoint->size(); i++) {
 					FIXX fixx = {};
 					bool FindFIX = false;
@@ -891,20 +900,29 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	if (Mode == PREPARE) {
-		
+		if (data->AllData.A32NX_INITFLIGHT_STATE >= 8) {
+			Log("Start boarding");
+		}
+		if (data->AllData.A32NX_INITFLIGHT_STATE > 8) {
+			Log("Boarding completed");
+		}
+		Log("Prepare");
 		if (preliminaryCocpitPrep == 0) {
+			Log("Start preliminary");
 			if (PLNFile != "") {
 				QByteArray ba = (getenv("TEMP") + QString("\\") + PLNFile).toLocal8Bit();
 				const char* PLNChar = ba.data();
 				
-				emit PreliminaryCocpitPrep(&preliminaryCocpitPrep);
+				emit CLPreliminaryCocpitPrep(&preliminaryCocpitPrep);
 				//emit SetModeSignal(PREPARE);
 				SimConnect_FlightPlanLoad(HSimConnect, PLNChar);
 			}
 		}
 			if (preliminaryCocpitPrep == 2) {
+				Log("End preliminary");
 			if (cocpitPreparation == 0) {
-				emit CocpitPreparation(&cocpitPreparation);
+				Log("Start cocpit prepare");
+				emit CLCocpitPreparation(&cocpitPreparation);
 				//while (data->GData.ATC_RUNWAY_SELECTED != 1);
 				//AtcRwy = std::string(data->GData.ATC_RUNWAY_AIRPORT_NAME);
 				
@@ -915,8 +933,10 @@ VOID MainLogic::TimerProc()
 			}
 			else {
 				if (cocpitPreparation == 2) {
+					Log("End cocpit prepare");
 					if (beforeStart == 0) {
-						emit BeforeStart(&beforeStart);
+						Log("Start before start");
+						emit CLBeforeStart(&beforeStart);
 							Mode = STARTPUSHBACK;
 							//Mode = CRUISE;
 					}
@@ -930,7 +950,10 @@ VOID MainLogic::TimerProc()
 	if (Mode == PUSHBACK || Mode == STARTPUSHBACK) {
 
 		//DrawAirport(PAirportData, PaircraftData->lat, PaircraftData->lon, PaircraftData->hed);
-		
+		Log("Start pushback");
+		if (beforeStart == 2) {
+			Log("End before start");
+		}
 			CurrentPos = WayPoints->at(CurrentWay);
 			if (CurrentPos.Type == TYPE_PATHS[11]) {
 				if (Mode == STARTPUSHBACK) {
@@ -991,6 +1014,7 @@ VOID MainLogic::TimerProc()
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					//SendEvent(KEY_PUSHBACK_SET, 1);
 				}
+				Log("End pushback");
 				Mode = ENGINESTART;
 				Sleep(30000);
 				//brakes = { 0.0,0.0 };
@@ -1000,27 +1024,35 @@ VOID MainLogic::TimerProc()
 	if (Mode == ENGINESTART) {
 		
 		if (beforeStart == 2) {
+			Log("End before start");
 			if (engineStart == 0) {
-				emit EngineStart(&engineStart);
+				Log("Starting engines");
+				emit CLEngineStart(&engineStart);
 			}
 
 		}
 		if (engineStart == 2) {
+			Log("Engines started");
 			if (afterStart == 0) {
-				emit AfterStart(&afterStart);
+				Log("Start afterstart");
+				emit CLAfterStart(&afterStart);
 			}
 		}
 		if (afterStart == 2) {
+			Log("End afterstart");
 			if (beforeTaxi == 0) {
-				emit BeforeTaxi(FlightCruise, RunwayHeading, &beforeTaxi);
+				Log("Start before taxi");
+				emit CLBeforeTaxi(FlightCruise, RunwayHeading, &beforeTaxi);
 			}
 		}
 		double V2 = data->AllData.AIRLINER_V2_SPEED;
 		
 		if ((beforeTaxi == 2)&&(V2 != 0)) {
+			Log("End before taxi");
 			SendCommand(SET_GSPEED, -1, 0);
 			Sleep(5000);
 			Mode = TAXIOUT;
+			Log("Taxiout");
 			Taxiway = CurrentWay;
 			SendCommand(PARKBRAKE_SET, 0, 0);
 		}
@@ -1073,7 +1105,7 @@ VOID MainLogic::TimerProc()
 				SendCommand(LIGHTSTROBE_SET, 1, 0);
 				if (DToRunway < 0.15) {
 					if (beforeTakeoff == 0) {
-						emit BeforeTakeoff(&beforeTakeoff);
+						emit CLBeforeTakeoff(&beforeTakeoff);
 					}
 				}
 			}
@@ -1083,7 +1115,7 @@ VOID MainLogic::TimerProc()
 		}
 		else {
 			if (afterLanding == 0) {
-				emit AfterLanding(&afterLanding);
+				emit CLAfterLanding(&afterLanding);
 			}
 			double RWDist = Utils::RunwayDictCalc(&RunWaysPathsDest, &CurrentPos);
 			if (RWDist < 0.1) {
@@ -1266,7 +1298,7 @@ VOID MainLogic::TimerProc()
 			SendCommand(SET_GSPEED, 0, 0);
 			if (data->GData.GROUND_VELOCITY < 1) {
 				if (parking == 0) {
-					emit Parking(&parking);
+					emit CLParking(&parking);
 				}
 				SendCommand(PARKBRAKE_SET, 1, 0);
 				SendCommand(SET_THROTTLE, 0, 0);
@@ -1384,7 +1416,7 @@ VOID MainLogic::TimerProc()
 					TOGA = false;
 					Mode = CRUISE;
 					if (afterTakeoff == 0) {
-						emit AfterTakeoff(&afterTakeoff);
+						emit CLAfterTakeoff(&afterTakeoff);
 					}
 				}
 			}
@@ -1707,7 +1739,7 @@ VOID MainLogic::TimerProc()
 		}
 		else {
 		if (landing == 0) {
-			emit Landing(&landing);
+			emit CLLanding(&landing);
 		}
 			//LANDING
 			SendCommand(AUTOBRAKES_SET, 1, 0);
@@ -2185,15 +2217,15 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(this, SIGNAL(GetDataStringSignal(DWORD, DWORD, std::string*)), data, SLOT(GetDataString(DWORD, DWORD, std::string*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(SetDataSignal(DWORD, DWORD, double*, char*)), data, SLOT(SetData(DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
+			//ConnectConnectors->push_back(connect(this, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
 
 			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(GetDataSignal(DWORD, DWORD, double*, char*)), data, SLOT(GetData(DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, char*))));
+			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetDataSignal(DWORD, DWORD, double*, char*)), data, SLOT(SetData(DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, char*, char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, char*, char*))));
+			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
+			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, char*, char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, char*, char*))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SendEventSignal2(DWORD, DWORD, long, DWORD, double, char*)), data, SLOT(SendEvent2(DWORD, DWORD, long, DWORD, double, char*))));
 
@@ -2201,8 +2233,8 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetDataSignal(DWORD, DWORD, double*, char*)), data, SLOT(SetData(DWORD, DWORD, double*, char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
-			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, char*, char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, char*, char*))));
+			//ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, char*))));
+			//ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, char*, char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, char*, char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SendEventSignal2(DWORD, DWORD, long, DWORD, double, char*)), data, SLOT(SendEvent2(DWORD, DWORD, long, DWORD, double, char*))));
 
@@ -2212,9 +2244,9 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(data, SIGNAL(SetGetDataChange(DWORD, DWORD)), this, SLOT(SetGetDataChange(DWORD, DWORD)), Qt::DirectConnection));
 
 			ConnectConnectors->push_back(connect(data, SIGNAL(GetDataChange(DWORD, DWORD)), cabinWork, SLOT(SetDataChange(DWORD, DWORD)), Qt::DirectConnection));
-			ConnectConnectors->push_back(connect(data, SIGNAL(SetDataChange(DWORD, DWORD)), cabinWork, SLOT(GetDataChange(DWORD, DWORD)), Qt::DirectConnection));
-			ConnectConnectors->push_back(connect(data, SIGNAL(SetGetDataChange(DWORD, DWORD, DWORD)), cabinWork, SLOT(SetGetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
-			ConnectConnectors->push_back(connect(data, SIGNAL(SetSetDataChange(DWORD, DWORD, DWORD)), cabinWork, SLOT(SetSetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
+			//ConnectConnectors->push_back(connect(data, SIGNAL(SetDataChange(DWORD, DWORD)), cabinWork, SLOT(GetDataChange(DWORD, DWORD)), Qt::DirectConnection));
+			//ConnectConnectors->push_back(connect(data, SIGNAL(SetGetDataChange(DWORD, DWORD, DWORD)), cabinWork, SLOT(SetGetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
+			//ConnectConnectors->push_back(connect(data, SIGNAL(SetSetDataChange(DWORD, DWORD, DWORD)), cabinWork, SLOT(SetSetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
 
 			ConnectConnectors->push_back(connect(data, SIGNAL(GetDataChange(DWORD, DWORD)), planesWork, SLOT(SetDataChange(DWORD, DWORD)), Qt::DirectConnection));
 			ConnectConnectors->push_back(connect(data, SIGNAL(SetDataChange(DWORD, DWORD)), planesWork, SLOT(GetDataChange(DWORD, DWORD)), Qt::DirectConnection));
@@ -2237,17 +2269,17 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(this, SIGNAL(SendCommand(DWORD, double, double)), cabinWork, SLOT(ReceiveCommand(DWORD, double, double))));
 
 			
-			ConnectConnectors->push_back(connect(this, SIGNAL(PreliminaryCocpitPrep(int*)), cabinWork, SLOT(PreliminaryCocpitPrep(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(CocpitPreparation(int*)), cabinWork, SLOT(CocpitPreparation(int*)))); 
-			ConnectConnectors->push_back(connect(this, SIGNAL(BeforeStart(int*)), cabinWork, SLOT(BeforeStart(int*)))); 
-			ConnectConnectors->push_back(connect(this, SIGNAL(EngineStart(int*)), cabinWork, SLOT(EngineStart(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(AfterStart(int*)), cabinWork, SLOT(AfterStart(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(BeforeTaxi(int, int, int*)), cabinWork, SLOT(BeforeTaxi(int, int, int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(BeforeTakeoff(int*)), cabinWork, SLOT(BeforeTakeoff(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(AfterTakeoff(int*)), cabinWork, SLOT(AfterTakeoff(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(Landing(int*)), cabinWork, SLOT(Landing(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(AfterLanding(int*)), cabinWork, SLOT(AfterLanding(int*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(Parking(int*)), cabinWork, SLOT(Parking(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLPreliminaryCocpitPrep(int*)), cabinWork, SLOT(CLPreliminaryCocpitPrep(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLCocpitPreparation(int*)), cabinWork, SLOT(CLCocpitPreparation(int*)))); 
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLBeforeStart(int*)), cabinWork, SLOT(CLBeforeStart(int*)))); 
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLEngineStart(int*)), cabinWork, SLOT(CLEngineStart(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLAfterStart(int*)), cabinWork, SLOT(CLAfterStart(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLBeforeTaxi(int, int, int*)), cabinWork, SLOT(CLBeforeTaxi(int, int, int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLBeforeTakeoff(int*)), cabinWork, SLOT(CLBeforeTakeoff(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLAfterTakeoff(int*)), cabinWork, SLOT(CLAfterTakeoff(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLLanding(int*)), cabinWork, SLOT(CLLanding(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLAfterLanding(int*)), cabinWork, SLOT(CLAfterLanding(int*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(CLParking(int*)), cabinWork, SLOT(CLParking(int*))));
 
 			ConnectConnectors->push_back(connect(this, SIGNAL(CabinReport()), cabinWork, SLOT(CabinReport())));
 			TCabinWork->start();

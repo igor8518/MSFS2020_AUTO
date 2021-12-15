@@ -630,7 +630,7 @@ void SimData::SetData(DWORD sender, DWORD var, double* val, char* unit)
 }
 
 
-void SimData::SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1, char* unit2)
+/*void SimData::SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1, char* unit2)
 {
 	Context c;
 	if (RegVarsSet->size() > 0) {
@@ -656,9 +656,9 @@ void SimData::SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, dou
 	*val2 = *SimVarsSet[var2];
 	emit SetSetDataChange(var1, var2, sender);
 	set51 = false;
-}
+}*/
 
 
-void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit)
+/*void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit)
 {
-}
+}*/

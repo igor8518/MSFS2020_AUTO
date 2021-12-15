@@ -150,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="qcustomplot.h" />
+    <ClInclude Include="globaldata.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WriteStream.h" />
     <QtMoc Include="SimData.h" />
