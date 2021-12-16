@@ -509,14 +509,14 @@ void CabinWork::ExternalPower(DWORD onoff) {
 void CabinWork::APUSet(DWORD onoff) {
 	if (onoff == 1) {
 		if ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) != 1) {
-			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH5 == 1) {
+			
 				if (SetDataL(A32NX_OVHD_APU_MASTER_SW_PB_IS_ON, 1.0) == 1) {
 					while ((DataT->AllData.A32NX_APU_FLAP_OPEN_PERCENTAGE) != 100);
 						if (SetDataL(A32NX_OVHD_APU_START_PB_IS_ON, 1.0)) {
 							while ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) != 1);
 						}
 				}
-			}
+			
 		}
 	}
 	else {
@@ -1034,10 +1034,50 @@ void CabinWork::IrsAligned() {
 
 
 void CabinWork::WindowsAndDoors(DWORD num, DWORD openclose) {
-
-	if (DataT->GData.NEW_EXIT_OPEN0 + num != openclose) {
-		emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
-		while (DataT->GData.NEW_EXIT_OPEN0 + num != openclose);
+	switch (num) {
+	case 0: {
+		if (DataT->GData.NEW_EXIT_OPEN0 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN0 != openclose);
+		}
+		break;
+	}
+	case 1: {
+		if (DataT->GData.NEW_EXIT_OPEN1 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN1 != openclose);
+		}
+		break;
+	}
+	case 2: {
+		if (DataT->GData.NEW_EXIT_OPEN2 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN2 != openclose);
+		}
+		break;
+	}
+	case 3: {
+		if (DataT->GData.NEW_EXIT_OPEN3 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN3 != openclose);
+		}
+		break;
+	}
+	case 4: {
+		if (DataT->GData.NEW_EXIT_OPEN4 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN4 != openclose);
+		}
+		break;
+	}
+	case 5: {
+		if (DataT->GData.NEW_EXIT_OPEN5 != openclose) {
+			emit SendEvent(KEY_TOGGLE_AIRCRAFT_EXIT, num + 1);
+			while (DataT->GData.NEW_EXIT_OPEN5 != openclose);
+		}
+		break;
+	}
+		 
 	}
 }
 
