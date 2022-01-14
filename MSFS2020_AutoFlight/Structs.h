@@ -93,8 +93,9 @@ struct alterPid
 	bool FT;
 	double Unm1;
 };
-struct sWayPoint
+class sWayPoint
 {
+public:
 	QString Ident;
 	QString Name;
 	QString Type;
@@ -107,13 +108,18 @@ struct sWayPoint
 	QString AirWay;
 	bool SidStar;
 	double Distance;
+	double RealDistance;
+	double TraveledDistance;
+	double CommonDistance;
 	double TrackTrue;
 	double TrackMag;
 	double HeadingTrue;
 	double EndHeadingTrue;
 	double HeadingMag;
-	double Altitude;
-	double EAltitude;
+	double SAltitudeHi;
+	double EAltitudeHi;
+	double SAltitudeLo;
+	double EAltitudeLo;
 	double IndSpeed;
 	double TrueSpeed;
 	double Mach;

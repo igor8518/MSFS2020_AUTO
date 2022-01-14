@@ -303,14 +303,14 @@ class WayPointA {
 class TRANSITION {
 	public:
 		std::string					Name;
-		std::vector<WayPointA>*		WayPoints;
+		std::vector<WayPointA>*		Legs;
 };
 
 class Points {
 	public:
 		std::string					Name;
 		std::vector<std::string>*	Runways;
-		std::vector<WayPointA>*		WayPoints;
+		std::vector<WayPointA>*		Legs;
 		std::vector<TRANSITION>*	TRANSITIONS;
 };
 

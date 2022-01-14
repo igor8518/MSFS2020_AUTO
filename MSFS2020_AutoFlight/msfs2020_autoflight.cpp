@@ -1,4 +1,5 @@
 #include "msfs2020_autoflight.h"
+#include "Structs.h"
 
 
 MSFS2020_AutoFlight::MSFS2020_AutoFlight(QObject* planesWork, QWidget* parent) : QMainWindow(parent), ui(new Ui::MSFS2020_AutoFlightClass)
@@ -54,23 +55,24 @@ MSFS2020_AutoFlight::MSFS2020_AutoFlight(QObject* planesWork, QWidget* parent) :
   connect(ui->Graph->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->Graph->xAxis2, SLOT(setRange(QCPRange)));
   connect(ui->Graph->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->Graph->yAxis2, SLOT(setRange(QCPRange)));
 
-
+  ui->Graph2->xAxis->setRange(0, 400);
+  ui->Graph2->axisRect()->setupFullAxesBox();
+  ui->Graph2->yAxis->setRange(0, 40000);
+  pos = new QCPItemEllipse(ui->Graph2);
   
   //ui->Graph->graph(0)->adaptiveSampling();
   //ui->Graph->graph(1)->adaptiveSampling();
 
   //Profile draw
-  ui->Graph2->addGraph(); // blue line
+  /*ui->Graph2->addGraph(); // blue line
   ui->Graph2->graph(0)->setPen(QPen(QColor(40, 110, 255)));
   ui->Graph2->addGraph(); // red line
   ui->Graph2->graph(1)->setPen(QPen(QColor(255, 110, 40)));
   ui->Graph2->addGraph(); // green line
-  ui->Graph2->graph(2)->setPen(QPen(QColor(110, 255, 40)));
+  ui->Graph2->graph(2)->setPen(QPen(QColor(110, 255, 40)));*/
 
   //ui->Graph2->xAxis->setTicker(timeTicker);
-  ui->Graph2->xAxis->setRange(0, 400);
-  ui->Graph2->axisRect()->setupFullAxesBox();
-  ui->Graph2->yAxis->setRange(0, 40000);
+  
 
   // make left and bottom axes transfer their ranges to right and top axes:
   connect(ui->Graph2->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->Graph2->xAxis2, SLOT(setRange(QCPRange)));
@@ -80,6 +82,7 @@ MSFS2020_AutoFlight::MSFS2020_AutoFlight(QObject* planesWork, QWidget* parent) :
   // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
   connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
   dataTimer.start(0); // Interval 0 means to refresh as fast as possible
+  //connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(on_ChangeRow(QItemSelection, QItemSelection)));
 }
 void MSFS2020_AutoFlight::realtimeDataSlot() {
 	static QTime time(QTime::currentTime());
@@ -111,7 +114,7 @@ void MSFS2020_AutoFlight::realtimeDataSlot() {
 		}
 		//ui->Graph->graph(0)->addData(key, qSin(key) + qrand() / (double)RAND_MAX * 16383 * qSin(key / 0.3843));
 		//ui->Graph->graph(1)->addData(key, qCos(key) + qrand() / (double)RAND_MAX * 8191 * qSin(key / 0.4364));
-
+		//QItemSelectionModel* st = ui->tableView->selectionModel();
 
 		// rescale value (vertical) axis to fit the current data:
 		//ui->customPlot->graph(0)->rescaleValueAxis();
@@ -122,6 +125,7 @@ void MSFS2020_AutoFlight::realtimeDataSlot() {
 	ui->Graph->xAxis->setRange(key, 80, Qt::AlignRight);
 	ui->Graph->replot();
 	ui->Graph2->replot();
+	ui->tableView->repaint();
 	/*if (mainLogic && mainLogic->data) {
 		double flyPoint = mainLogic->data->GData.FLAPS_HANDLE_INDEX;
 		static double lastFlyPoint = 0;
@@ -145,6 +149,106 @@ void MSFS2020_AutoFlight::realtimeDataSlot() {
 		frameCount = 0;
 	}
 }
+
+void MSFS2020_AutoFlight::PlotCircle(double dist, double alt, double common) {
+	pos->topLeft->setCoords({ dist - 1, alt + 300 });
+	pos->bottomRight->setCoords({ dist + 1, alt - 300 });
+	if (common > 0) {
+		ui->Graph2->xAxis->setRange(0, common);
+	}
+	
+}
+
+void MSFS2020_AutoFlight::PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex) {
+	double CommonDistance = 0;
+	for (int i = startIndex; i <= endIndex; i++) {
+		/*if ((i - startIndex) >= dnArrow->size()) {
+			dnArrow->push_back(new QCPItemLine(ui->Graph2));
+		}
+		if ((i - startIndex) >= upArrow->size()) {
+			upArrow->push_back(new QCPItemLine(ui->Graph2));
+		}
+		if (Legs->at(i).EAltitudeHi > 0) {
+			dnArrow->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, Legs->at(i).EAltitudeHi + 500);
+			dnArrow->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, Legs->at(i).EAltitudeHi);
+			dnArrow->at(i - startIndex)->setHead(QCPLineEnding::esSpikeArrow);
+		}
+		if (Legs->at(i).EAltitudeLo > 0) {
+			upArrow->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, Legs->at(i).EAltitudeLo - 500);
+			upArrow->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, Legs->at(i).EAltitudeLo);
+			upArrow->at(i - startIndex)->setHead(QCPLineEnding::esSpikeArrow);
+		}
+		if ((i - startIndex) >= flightPoints->size()) {
+			flightPoints->push_back(new QCPItemLine(ui->Graph2));
+		}
+		flightPoints->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, 0);
+		flightPoints->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, 40000);
+		CommonDistance = CommonDistance + Legs->at(i).Distance + Legs->at(i).RealDistance;*/
+		if ((i - startIndex) >= dnArrow->size()) {
+			dnArrow->push_back(new QCPItemLine(ui->Graph2));
+		}
+		if ((i - startIndex) >= upArrow->size()) {
+			upArrow->push_back(new QCPItemLine(ui->Graph2));
+		}
+		if (Legs->at(i).EAltitudeHi > 0) {
+			dnArrow->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance, Legs->at(i).EAltitudeHi + 500);
+			dnArrow->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance, Legs->at(i).EAltitudeHi);
+			dnArrow->at(i - startIndex)->setHead(QCPLineEnding::esSpikeArrow);
+		}
+		if (Legs->at(i).EAltitudeLo > 0) {
+			upArrow->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance, Legs->at(i).EAltitudeLo - 500);
+			upArrow->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance, Legs->at(i).EAltitudeLo);
+			upArrow->at(i - startIndex)->setHead(QCPLineEnding::esSpikeArrow);
+		}
+		if ((i - startIndex) >= flightPoints->size()) {
+			flightPoints->push_back(new QCPItemLine(ui->Graph2));
+		}
+		flightPoints->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance, 0);
+		flightPoints->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance, 40000);
+	}
+	//ui->Graph2->xAxis->setRange(0, CommonDistance);
+	//ui->Graph2->replot();
+}
+
+void MSFS2020_AutoFlight::PlotPoints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex) {
+	int CommonDistance = 0;
+	for (int i = startIndex; i <= endIndex; i++) {
+		if ((i - startIndex) >= flightPoints->size()) {
+			flightPoints->push_back(new QCPItemLine(ui->Graph2));
+		}
+		flightPoints->at(i - startIndex)->start->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, 0);
+		flightPoints->at(i - startIndex)->end->setCoords(Legs->at(i).CommonDistance + Legs->at(i).RealDistance, 40000);
+	}
+	
+	//ui->Graph2->replot();
+}
+
+/*void MSFS2020_AutoFlight::PlotProbePath() {
+
+}*/
+
+void MSFS2020_AutoFlight::PlotRealPath(double flyPoint, double planeAlt, double commonDistance) {
+	if (ui->Graph2->graphCount() == 0) {
+		ui->Graph2->addGraph();
+		ui->Graph->graph(0)->setPen(QPen(QColor(40, 110, 255)));
+	}
+	ui->Graph2->graph(0)->addData(flyPoint, planeAlt);
+	pos->topLeft->setCoords({ flyPoint - 1, planeAlt + 300 });
+	pos->bottomRight->setCoords({ flyPoint + 1, planeAlt - 300 });
+	if (commonDistance > 0) {
+		ui->Graph2->xAxis->setRange(0, commonDistance);
+	}
+	//ui->Graph2->replot();
+}
+
+void MSFS2020_AutoFlight::SelectRow(int Row) {
+	ui->tableView->selectRow(Row);
+}
+
+void MSFS2020_AutoFlight::on_ChangeRow(QItemSelection Row, QItemSelection prev) {
+	emit ChangeCurrentLegIndex(Row.indexes().at(0).row() - 1);	
+}
+
 void MSFS2020_AutoFlight::on_sb1P(double val) {
   if (planesWork->property(("P" + cb1Text + cb2Text).c_str()).isValid()) {
     planesWork->setProperty(("P" + cb1Text + cb2Text).c_str(), val);
@@ -220,6 +324,7 @@ void MSFS2020_AutoFlight::on_ButtonConnect()
 void MSFS2020_AutoFlight::AppendListView(QString s) {
   
   ui->listWidget->addItem(s);
+  ui->listWidget->scrollToBottom();
 }
 void MSFS2020_AutoFlight::ButtonModify(QPushButton* button, QString text, QString style) {
   if (text != "") {

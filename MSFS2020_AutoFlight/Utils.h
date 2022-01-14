@@ -29,7 +29,7 @@ public slots:
   static double Constrain360(double angle);
   static double GetFixDA(double da, double angle);
   static double AngleLimitS(double angle, double limit);
-  static double RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentPos);
+  static double RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentLeg);
   //static double CalcToNewWay(bool changeWay, std::vector<sWayPoint>* wayPoints, sWayPoint* currentPos, int currentWay);
   //void DrawAirport(IAirportData* PAirportData, double Lat, double Lon, double Hed);
 private:

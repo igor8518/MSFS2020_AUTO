@@ -536,9 +536,45 @@ void CabinWork::APUOff() {
 void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
 	if (num < 7) {
-		if (DataT->GData.FUELSYSTEM_PUMP_SWITCH1 - 1 + num != onoff) {
-			emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num );
+		switch (num) {
+		case 1: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH1 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
 		}
+		case 2: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH2 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
+		}
+		case 3: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH3 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
+		}
+		case 4: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH4 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
+		}
+		case 5: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH5 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
+		}
+		case 6: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH6 != onoff) {
+				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+			}
+			break;
+		}
+		}
+		
 	}
 }
 
@@ -1091,9 +1127,20 @@ void CabinWork::BeaconLigts(DWORD onoff) {
 
 
 void CabinWork::EngineIdleParameters(DWORD num) {
-	while (DataT->GData.ENG_N1_RPM1 - 1 + num < 0.100); //0.195
-	while ((DataT->AllData.A32NX_ENGINE_STATE_1 - 1 + num) != 1);
-	Sleep(50000);
+	switch(num) {
+	case 1: {
+		while (DataT->GData.ENG_N1_RPM1 < 0.150); //0.195
+		while ((DataT->AllData.A32NX_ENGINE_STATE_1) != 1);
+		Sleep(15000);
+		break;
+	}
+	case 2: {
+		while (DataT->GData.ENG_N1_RPM2 < 0.150); //0.195
+		while ((DataT->AllData.A32NX_ENGINE_STATE_2) != 1);
+		Sleep(15000);
+		break;
+	}
+	}
 }
 
 
@@ -1222,14 +1269,15 @@ void CabinWork::SetAutoBrakes(DWORD num) {
 
 
 void CabinWork::HdgSel(double heading) {
-	while (round(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) != Utils::Constrain360(heading)) {
-		if (round(Utils::Constrain180(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR - Utils::Constrain360(heading))) < 0) {
-			SendEvent(KEY_HEADING_BUG_SET, abs(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) + 1);
+	while (round(DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED) != Utils::Constrain360(heading)) {
+		double prev = DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED;
+		if (round(Utils::Constrain180(DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED - Utils::Constrain360(heading))) < 0) {
+			SendEvent(A32NX_FCU_HDG_INC, 1);
 		}
 		else {
-			SendEvent(KEY_HEADING_BUG_SET, abs(DataT->GData.AUTOPILOT_HEADING_LOCK_DIR) - 1);
+			SendEvent(A32NX_FCU_HDG_DEC, 1);
 		}
-		Sleep(60);
+		while (DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED == prev);
 	}
 }
 
@@ -1390,6 +1438,7 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		break;
 	}
 	case HDG_SEL: {
+		HeadingMode = 0;
 		Heading = parameter1;
 		break;
 	}
@@ -1502,14 +1551,14 @@ void CabinWork::TimerProc() {
 		BarometricRef();
 	}
 	SpoilersSet(Spoilers);
-	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+	//if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
 		if (SpeedMode == 1) {
 			SendEvent(A32NX_FCU_SPD_PUSH, 1);
 		}
 		else if (SpeedMode == 0) {
-			SendEvent(A32NX_FCU_SPD_PULL, 1);
+			//SendEvent(A32NX_FCU_SPD_PULL, 1);
 			SpeedMode = -1;
-			SpeedSel(Speed);
+			//SpeedSel(Speed);
 		}
 		if (HeadingMode == 1) {
 			SendEvent(A32NX_FCU_HDG_PUSH, 1);
@@ -1517,8 +1566,9 @@ void CabinWork::TimerProc() {
 		}
 		else if (HeadingMode == 0) {
 			SendEvent(A32NX_FCU_HDG_PULL, 1);
+			SendEvent(A32NX_FCU_HDG_SET, Heading);
 			HeadingMode = -1;
-			HdgSel(Heading);
+			//HdgSel(Heading);
 		}
 		if (Alt < 100) {
 			AltSet(100);
@@ -1541,7 +1591,7 @@ void CabinWork::TimerProc() {
 			SendEvent(A32NX_FCU_ALT_PUSH, 1);
 			AltMode = -1;
 		}
-	}
+	//}
 	if (AltMode == 7) {
 		SendEvent(A32NX_FCU_ALT_PUSH, 1);
 		AltMode = -1;

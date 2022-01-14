@@ -42,10 +42,10 @@ double Utils::GetPathLength(std::vector<TPath>* p) {
 		sWayPoint dsheh = { 0 };
 		dsheh.Lat = p->at(i - 1).Lat;
 		dsheh.Lon = p->at(i - 1).Lon;
-		dsheh.Altitude = 0;
+		dsheh.SAltitudeHi = 0;
 		dsheh.ELat = p->at(i).Lat;
 		dsheh.ELon = p->at(i).Lon;
-		dsheh.EAltitude = 0;
+		dsheh.EAltitudeHi = 0;
 		DOrtoKM(&dsheh);
 		D = D + dsheh.Distance;
 	}
@@ -59,10 +59,10 @@ double Utils::GetRWAngle(std::vector<TPath>* p) {
 	sWayPoint dsheh = { 0 };
 	dsheh.Lat = p->at(p->size() - 2).Lat;
 	dsheh.Lon = p->at(p->size() - 2).Lon;
-	dsheh.Altitude = 0;
+	dsheh.SAltitudeHi = 0;
 	dsheh.ELat = p->at(p->size() - 1).Lat;
 	dsheh.ELon = p->at(p->size() - 1).Lon;
-	dsheh.EAltitude = 0;
+	dsheh.EAltitudeHi = 0;
 	DOrtoKM(&dsheh);
 	D = dsheh.HeadingTrue;
 
@@ -73,10 +73,10 @@ double Utils::GetRWLength(std::vector<TPath>* p) {
 	sWayPoint dsheh = { 0 };
 	dsheh.Lat = p->at(p->size() - 2).Lat;
 	dsheh.Lon = p->at(p->size() - 2).Lon;
-	dsheh.Altitude = 0;
+	dsheh.SAltitudeHi = 0;
 	dsheh.ELat = p->at(p->size() - 1).Lat;
 	dsheh.ELon = p->at(p->size() - 1).Lon;
-	dsheh.EAltitude = 0;
+	dsheh.EAltitudeHi = 0;
 	DOrtoKM(&dsheh);
 	D = dsheh.Distance;
 	return D;
@@ -202,11 +202,11 @@ double Utils::AngleLimitS(double angle, double limit) {
 	}
 	return angle;
 }
-double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentPos) {
+double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentLeg) {
 	sWayPoint Runway;
 	double Dist = 99;
-	Runway.Lat = CurrentPos->Lat;
-	Runway.Lon = CurrentPos->Lon;
+	Runway.Lat = CurrentLeg->Lat;
+	Runway.Lon = CurrentLeg->Lon;
 	for (int i = 0; i < runwayPaths->size(); i++) {
 		Runway.ELat = runwayPaths->at(i).ELat;
 		Runway.ELon = runwayPaths->at(i).ELon;

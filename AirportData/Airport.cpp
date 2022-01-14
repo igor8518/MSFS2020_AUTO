@@ -565,14 +565,14 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						{
 							sidstar->STARS->at(sidstar->STARS->size() - 1).Runways = new std::vector<std::string>();
 						}
-						//if (sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints == NULL)
+						//if (sidstar->STARS->at(sidstar->STARS->size() - 1).Legs == NULL)
 						//{
-						//	sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints = new std::vector<WayPointA>();
+						//	sidstar->STARS->at(sidstar->STARS->size() - 1).Legs = new std::vector<WayPointA>();
 						//}
 						SIDSTARFile->Read(str, 0);
 						wayPoint.FIXName = "RNW";
 
-						//sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints->push_back(wayPoint);
+						//sidstar->STARS->at(sidstar->STARS->size() - 1).Legs->push_back(wayPoint);
 						sidstar->STARS->at(sidstar->STARS->size() - 1).Runways->push_back(*str);
 						SIDSTARFile->Read(str, 0);
 					}
@@ -583,14 +583,14 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						{
 							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Runways = new std::vector<std::string>();
 						}
-						//if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints == NULL)
+						//if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs == NULL)
 						//{
-						//	sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints = new std::vector<WayPointA>();
+						//	sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs = new std::vector<WayPointA>();
 						//}
 
 						SIDSTARFile->Read(str, 0);
 						wayPoint.FIXName = *str;
-						//sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints->push_back(wayPoint);
+						//sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs->push_back(wayPoint);
 						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Runways->push_back(*str);
 						SIDSTARFile->Read(str, 0);
 					}
@@ -621,17 +621,17 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 				{
 					if (typeSC == 0)
 					{
-						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints == NULL)
+						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs == NULL)
 						{
-							sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 1)
 					{
-						if (sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints == NULL)
+						if (sidstar->STARS->at(sidstar->STARS->size() - 1).Legs == NULL)
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->STARS->at(sidstar->STARS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
 						if (wayPoint.FIXName == "RNW")
 						{
@@ -640,16 +640,16 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						}
 						else
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints->push_back(wayPoint);
+							sidstar->STARS->at(sidstar->STARS->size() - 1).Legs->push_back(wayPoint);
 						}
 					}
 					else if (typeSC == 2)
 					{
-						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints == NULL)
+						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs == NULL)
 						{
-							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs->push_back(wayPoint);
 					}
 					
 				}
@@ -657,27 +657,27 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 				{
 					if (typeSC == 0)
 					{
-						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 1)
 					{
-						if (sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 2)
 					{
-						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					
 				}
@@ -970,7 +970,7 @@ HRESULT Airport::GetSIDSTAR() {
 						TRANSITION ttransition;
 						tpoints.Name = sidstar2.esids->at(i).name;
 						tpoints.Runways->push_back(sidstar2.esids->at(i).ernws->at(k).name);
-						tpoints.WayPoints = new std::vector<WayPointA>();
+						tpoints.Legs = new std::vector<WayPointA>();
 						for (int m = 0; m < sidstar2.esids->at(i).ernws->at(k).eroute->size(); m++)
 						{
 							twaypointa.ALT = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).alt;
@@ -982,7 +982,7 @@ HRESULT Airport::GetSIDSTAR() {
 							twaypointa.SPEED = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).speed;
 							twaypointa.TRK = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.esids->at(i).ernws->at(k).eroute->at(m).trk;
 							twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.esids->at(i).ernws->at(k).eroute->at(m));
-							tpoints.WayPoints->push_back(twaypointa);
+							tpoints.Legs->push_back(twaypointa);
 						}
 						if (sidstar2.esids->at(i).etrans)
 						{
@@ -990,7 +990,7 @@ HRESULT Airport::GetSIDSTAR() {
 							for (int m = 0; m < sidstar2.esids->at(i).etrans->size(); m++)
 							{
 								ttransition.Name = sidstar2.esids->at(i).etrans->at(m).name;
-								ttransition.WayPoints = new std::vector<WayPointA>();
+								ttransition.Legs = new std::vector<WayPointA>();
 								for (int n = 0; n < sidstar2.esids->at(i).etrans->at(m).eroute->size(); n++)
 								{
 									twaypointa.ALT = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1002,7 +1002,7 @@ HRESULT Airport::GetSIDSTAR() {
 									twaypointa.SPEED = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).speed;
 									twaypointa.TRK = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.esids->at(i).etrans->at(m).eroute->at(n).trk;
 									twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.esids->at(i).etrans->at(m).eroute->at(n));
-									ttransition.WayPoints->push_back(twaypointa);
+									ttransition.Legs->push_back(twaypointa);
 								}
 								tpoints.TRANSITIONS->push_back(ttransition);
 							}
@@ -1033,7 +1033,7 @@ HRESULT Airport::GetSIDSTAR() {
 					{
 						tpoints.Runways->push_back(sidstar2.estars->at(i).ernw->at(s));
 					}
-					tpoints.WayPoints = new std::vector<WayPointA>();
+					tpoints.Legs = new std::vector<WayPointA>();
 					for (int m = 0; m < sidstar2.estars->at(i).ernws->at(k).eroute->size(); m++)
 					{
 						twaypointa.ALT = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).alt;
@@ -1045,7 +1045,7 @@ HRESULT Airport::GetSIDSTAR() {
 						twaypointa.SPEED = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).speed;
 						twaypointa.TRK = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.estars->at(i).ernws->at(k).eroute->at(m).trk;
 						twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.estars->at(i).ernws->at(k).eroute->at(m));
-						tpoints.WayPoints->push_back(twaypointa);
+						tpoints.Legs->push_back(twaypointa);
 					}
 					if (sidstar2.estars->at(i).etrans)
 					{
@@ -1053,7 +1053,7 @@ HRESULT Airport::GetSIDSTAR() {
 						for (int m = 0; m < sidstar2.estars->at(i).etrans->size(); m++)
 						{
 							ttransition.Name = sidstar2.estars->at(i).etrans->at(m).name;
-							ttransition.WayPoints = new std::vector<WayPointA>();
+							ttransition.Legs = new std::vector<WayPointA>();
 							for (int n = 0; n < sidstar2.estars->at(i).etrans->at(m).eroute->size(); n++)
 							{
 								twaypointa.ALT = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1065,7 +1065,7 @@ HRESULT Airport::GetSIDSTAR() {
 								twaypointa.SPEED = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).speed;
 								twaypointa.TRK = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.estars->at(i).etrans->at(m).eroute->at(n).trk;
 								twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.estars->at(i).etrans->at(m).eroute->at(n));
-								ttransition.WayPoints->push_back(twaypointa);
+								ttransition.Legs->push_back(twaypointa);
 							}
 							tpoints.TRANSITIONS->push_back(ttransition);
 						}
@@ -1095,7 +1095,7 @@ HRESULT Airport::GetSIDSTAR() {
 					{
 						tpoints.Runways->push_back(sidstar2.eapproaches->at(i).ernw->at(s));
 					}
-					tpoints.WayPoints = new std::vector<WayPointA>();
+					tpoints.Legs = new std::vector<WayPointA>();
 					for (int m = 0; m < sidstar2.eapproaches->at(i).ernws->at(k).eroute->size(); m++)
 					{
 						twaypointa.ALT = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).alt;
@@ -1107,7 +1107,7 @@ HRESULT Airport::GetSIDSTAR() {
 						twaypointa.SPEED = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).speed;
 						twaypointa.TRK = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).trk;
 						twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m));
-						tpoints.WayPoints->push_back(twaypointa);
+						tpoints.Legs->push_back(twaypointa);
 					}
 					if (sidstar2.eapproaches->at(i).etrans)
 					{
@@ -1115,7 +1115,7 @@ HRESULT Airport::GetSIDSTAR() {
 						for (int m = 0; m < sidstar2.eapproaches->at(i).etrans->size(); m++)
 						{
 							ttransition.Name = sidstar2.eapproaches->at(i).etrans->at(m).name;
-							ttransition.WayPoints = new std::vector<WayPointA>();
+							ttransition.Legs = new std::vector<WayPointA>();
 							for (int n = 0; n < sidstar2.eapproaches->at(i).etrans->at(m).eroute->size(); n++)
 							{
 								twaypointa.ALT = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1127,7 +1127,7 @@ HRESULT Airport::GetSIDSTAR() {
 								twaypointa.SPEED = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).speed;
 								twaypointa.TRK = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).trk;
 								twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n));
-								ttransition.WayPoints->push_back(twaypointa);
+								ttransition.Legs->push_back(twaypointa);
 							}
 							tpoints.TRANSITIONS->push_back(ttransition);
 						}
@@ -1144,7 +1144,7 @@ HRESULT Airport::GetSIDSTAR() {
 			{
 			std::string Name;
 			std::vector<std::string>* Runways;
-			std::vector<WayPointA>* WayPoints;
+			std::vector<WayPointA>* Legs;
 			std::vector<TRANSITION>* TRANSITIONS;
 			};*/
 			
