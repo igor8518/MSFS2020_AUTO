@@ -207,7 +207,7 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		}
 		rudder = _outRudder;
 		//_outThrottle = _inThrottle;
-		if (DataT->GData.INDICATED_ALTITUDE < 1000) {
+		if (DataT->GData.INDICATED_ALTITUDE < 3000) {
 			emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
 		}
 	}
@@ -569,14 +569,14 @@ void PlanesWork::PitchTrimSet(double deg, DWORD speed) { // Transfer to mainlogi
 	emit SendEvent(KEY_ELEVATOR_TRIM_SET, int((ElevatorTrim + 4) / 17.5 * 16383));
 }
 
-/*double PlanesWork::GetData(DWORD var, char* unit) {
+/*double PlanesWork::GetData(DWORD var, const char* unit) {
 	double lVar;
 	emit GetDataSignal(PLANESWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
 	GetDataChanged = false;
 	return lVar;
 }*/
-double PlanesWork::GetDataL(DWORD var, char* unit) {
+double PlanesWork::GetDataL(DWORD var, const char* unit) {
 	double lVar;
 	emit GetDataSignalL(PLANESWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
@@ -584,20 +584,20 @@ double PlanesWork::GetDataL(DWORD var, char* unit) {
 	return lVar;
 }
 
-double PlanesWork::SetData(DWORD var, double val, char* unit) {
+double PlanesWork::SetData(DWORD var, double val, const char* unit) {
 	emit SetDataSignal(PLANESWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
 	return  val;
 }
-double PlanesWork::SetDataL(DWORD var, double val, char* unit) {
+double PlanesWork::SetDataL(DWORD var, double val, const char* unit) {
 	emit SetDataSignalL(PLANESWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
 	return  val;
 }
 
-/*double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
+/*double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, const char* unit) {
 	double lVar;
 	emit SetGetDataSignal(PLANESWORK_ID, var1, var2, &lVar, unit);
 	while (!SetGetDataChanged);
@@ -618,7 +618,7 @@ DWORD PlanesWork::SendEvent(DWORD EventID, long dwData)
 	SendEventSignal(PLANESWORK_ID, EventID, dwData);
 	return 0;
 }
-DWORD PlanesWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit)
+DWORD PlanesWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, const char* unit)
 {
 	SendEventSignal2(PLANESWORK_ID, EventID, dwData, var, val, unit);
 	return 0;

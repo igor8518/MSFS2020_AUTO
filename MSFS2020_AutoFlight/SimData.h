@@ -5512,6 +5512,16 @@ private:
 			"TOGGLE_EXTERNAL_POWER",
 			"FUELSYSTEM_PUMP_TOGGLE",
 			"LIGHT_POTENTIOMETER_7_SET",
+			"LIGHT_POTENTIOMETER_10_SET",
+			"LIGHT_POTENTIOMETER_84_SET",
+			"LIGHT_POTENTIOMETER_87_SET",
+			"LIGHT_POTENTIOMETER_11_SET",
+			"LIGHT_POTENTIOMETER_83_SET",
+			"LIGHT_POTENTIOMETER_85_SET",
+			"LIGHT_POTENTIOMETER_76_SET",
+			"LIGHT_POTENTIOMETER_86_SET",
+			"LIGHT_POTENTIOMETER_8_SET",
+			"LIGHT_POTENTIOMETER_9_SET",
 			"REQUEST_CATERING",
 			"TOGGLE_RAMPTRUCK",
 			"REQUEST_LUGGAGE",
@@ -6290,7 +6300,7 @@ private:
 					"AutoFlight.A32NX_INITFLIGHT_STATE",
 
 
-					"LVarsWrapper.SAVE_VARS",
+					"AutoFlight.SAVE_VARS",
 
 
 					//From FBW
@@ -6471,15 +6481,18 @@ private:
 						"AutoFlight.A32NX_APPROACH_STATE",
 						"AutoFlight.A32NX_SIDESTICK_POSITION_X",
 						"AutoFlight.A32NX_SIDESTICK_POSITION_Y",
+
+						"AutoFlight.A32NX_CHRONO_ET_SWITCH_POS ",
+						"AutoFlight.A32NX_SWITCH_ATC_ALT",
 	};
 	std::vector<bool> RegEvent;
 	unsigned int GetRegisteredVarsGetCount();
 	unsigned int GetRegisteredVarsSetCount();
 	unsigned int GetRegisteredStringsGetCount();
 	unsigned int GetRegisteredVarsSetGetCount();
-	bool RegisterVarGet(DWORD sender, DWORD var, char* unit = "");
+	bool RegisterVarGet(DWORD sender, DWORD var, const char* unit = "");
 	void RegisterStringGet(DWORD sender, DWORD data);
-	void RegisterVarSet(DWORD sender, DWORD var, double val, char* unit = "");
+	void RegisterVarSet(DWORD sender, DWORD var, double val, const char* unit = "");
 	void RegisterEvent(DWORD clientEvent);
 	HRESULT GetAllData();
 	
@@ -6494,14 +6507,14 @@ signals:
 public slots:
 	void TimerProc();
 	void GetDataString(DWORD sender, DWORD var, std::string* val);
-	//void GetData(DWORD sender, DWORD var, double* val, char* unit = "");
-	//void GetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
-	void SetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
-	void SetData(DWORD sender, DWORD var, double* val, char* unit = "");
+	//void GetData(DWORD sender, DWORD var, double* val, const char* unit = "");
+	//void GetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");
+	void SetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");
+	void SetData(DWORD sender, DWORD var, double* val, const char* unit = "");
 	//void SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
-	//void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+	//void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit = "");
 	void SendEvent(DWORD sender, DWORD EventID, long dwData);
-	void SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+	void SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
 };
 
 #endif

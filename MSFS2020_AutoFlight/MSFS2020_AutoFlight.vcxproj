@@ -43,22 +43,24 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <IncludePath>..\AirportData\Extern;C:\MSFS SDK\SimConnect SDK\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>X:\Qt\Qt5.9.1\5.9.1\msvc2017_64\lib;..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <AdditionalDependencies>SimConnect.lib;Qt5Networkd.lib;AirportData.lib;Qt5PrintSupportd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SimConnect.lib;AirportData.lib;Qt5PrintSupportd.lib;Qt5Networkd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ClCompile>
       <SuppressStartupBanner>false</SuppressStartupBanner>
       <ForcedIncludeFiles>stdafx.h;%(ForsedIncludedFiles) </ForcedIncludeFiles>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <ForcedIncludeFiles>stdafx.h;%(ForsedIncludedFiles) </ForcedIncludeFiles>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">

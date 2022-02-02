@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29519.87
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSFS2020_AutoFlight", "MSFS2020_AutoFlight\MSFS2020_AutoFlight.vcxproj", "{680CDF96-BADE-4752-8773-2690B1F50D9A}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -27,7 +27,6 @@ Global
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|MSFS.ActiveCfg = Release|x64
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|Win32.ActiveCfg = Release|x64
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|x64.ActiveCfg = Release|x64
-		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|x64.Build.0 = Release|x64
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|MSFS.ActiveCfg = Debug|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|Win32.ActiveCfg = Debug|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|Win32.Build.0 = Debug|Win32
@@ -37,7 +36,6 @@ Global
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|Win32.ActiveCfg = Release|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|Win32.Build.0 = Release|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|x64.ActiveCfg = Release|x64
-		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -435,7 +435,7 @@ void SimData::SendEvent(DWORD sender, DWORD EventID, long dwData) {
 	// Test
 	return;
 }
-void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit) {
+void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit) {
 	RegisterEvent((CLIENTEVENTS)EventID);
 	RegisterVarSet(sender, var, val, unit);
 	for (int i = 0; i < RegVarsSet->size(); i++) {
@@ -446,7 +446,7 @@ void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, do
 	return;
 }
 
-bool SimData::RegisterVarGet(DWORD sender, DWORD data, char* unit) {
+bool SimData::RegisterVarGet(DWORD sender, DWORD data, const char* unit) {
 	if (SimVarsGet[data] == NULL) {
 		int i = 0;
 			
@@ -473,7 +473,7 @@ void SimData::RegisterStringGet(DWORD sender, DWORD data) {
 	}
 	return;
 }
-void SimData::RegisterVarSet(DWORD sender, DWORD data, double var, char* unit) {
+void SimData::RegisterVarSet(DWORD sender, DWORD data, double var, const char* unit) {
 	
 	if (SimVarsSet[data] == NULL) {
 		int i = 0;
@@ -522,7 +522,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 }
 
 
-//void SimData::GetData(DWORD sender, DWORD var, double* val, char* unit)
+//void SimData::GetData(DWORD sender, DWORD var, double* val, const char* unit)
 //{
 	/*Context c = { this, 50 };
 	if (RegisterVarGet(15, var, unit)) {
@@ -538,7 +538,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 //}
 
 
-/*void SimData::GetDataL(DWORD sender, DWORD var, double* val, char* unit)
+/*void SimData::GetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	int f = 100000;
 	SendEvent(sender, var, Version);
@@ -555,7 +555,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 
 
 
-void SimData::SetDataL(DWORD sender, DWORD var, double* val, char* unit)
+void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	int f = 100000;
 	//RegisterVarGet(sender, var, unit);
@@ -603,7 +603,7 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, char* unit)
 }
 
 
-void SimData::SetData(DWORD sender, DWORD var, double* val, char* unit)
+void SimData::SetData(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	Context c;
 	if (RegVarsSet->size() > 0) {
@@ -659,6 +659,6 @@ void SimData::SetData(DWORD sender, DWORD var, double* val, char* unit)
 }*/
 
 
-/*void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit)
+/*void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit)
 {
 }*/

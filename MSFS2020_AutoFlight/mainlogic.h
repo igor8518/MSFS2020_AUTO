@@ -79,13 +79,13 @@ signals:
   void ReplotGraphs();
   
 
-  void RegisterVar(DWORD DefaultParameter, char* unit = "");
-  void GetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void GetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
+  void RegisterVar(DWORD DefaultParameter, const char* unit = "");
+  void GetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void GetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
   void GetDataStringSignal(DWORD sender, DWORD var, std::string* val);
-  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+  void SetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit = "");
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
 
   void SendCommand(DWORD command, double parameter1, double parameter2);
@@ -143,6 +143,7 @@ private:
   int GraphNums = 0;
   double NPitchWork = 0;
   double AvgCounter = 0;
+  double Pitch50 = 8518;
   double AvgMax = 0;
   double AvgPitch = 0;
   bool GetDataChanged = false;
@@ -151,10 +152,10 @@ private:
   IAirportData* AirportData = NULL;
   std::vector<bool> DataChanged = std::vector<bool>(CVars, true);
   
-  //double GetData(DWORD DefaultParameter, char* unit = "");
-  double GetDataL(DWORD DefaultParameter, char* unit = "");
-  double SetData(DWORD var, double val, char* unit = "");
-  double SetDataL(DWORD var, double val, char* unit = "");
+  //double GetData(DWORD DefaultParameter, const char* unit = "");
+  double GetDataL(DWORD DefaultParameter, const char* unit = "");
+  double SetData(DWORD var, double val, const char* unit = "");
+  double SetDataL(DWORD var, double val, const char* unit = "");
   std::string GetDataString(DWORD var);
   DWORD SendEvent(DWORD EventID, DWORD dwData);
   Ui::MSFS2020_AutoFlightClass* ui;
@@ -182,6 +183,8 @@ private:
   QJsonArray ja;
   sWayPoint CurrentLeg;
   double RudWithHead(double Heading);
+  double CalcVelocity(double last, double current, double dt);
+  double LimitVal(double val, double min, double max);
   std::string AtcRwy = "";
 
   void AddWayPoint(double lon, double lat, double alt, QString pointType, QString PointName, double heading, int fixAlt, double speed, double radial, double altLo, QJsonObject* fix = NULL);

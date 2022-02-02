@@ -12,6 +12,7 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 {
 	if (*Status != 2) {
 		*Status = 1;
+		CabinLight(3);
 		WindowsAndDoors(5, 1);
 		WindowsAndDoors(2, 1);
 		Sleep(2000);
@@ -28,13 +29,15 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 		CabinLight(1);
 		APUFireTest();
 		Sleep(2000);
+		SetDataL(A32NX_INITFLIGHT_STATE, 1);
 		APUSet(1);
 		NavLight(1);
 		CabinLight(1);
-		SetDataL(A32NX_INITFLIGHT_STATE, 1);
+		CabinLight(3);
 		ParkBrake = 1;
 		//AccuPressCheck
 		//BrakesPressCheck
+		Gears = 1;
 		Flaps = 0;
 		Spoilers = 0;
 		ProbeWindowHeat(0);
@@ -250,6 +253,8 @@ void CabinWork::CLAfterStart(int* Status) {
 	if (*Status != 2) {
 		*Status = 1;
 		Sleep(2000);
+		SetTimer(-1);
+		SetTimer(1);
 		EngineModeSelector(1);
 		APUBleedSet(0);
 		Spoilers = -1;
@@ -397,7 +402,7 @@ void CabinWork::CLParking(int* Status) {
 	if (*Status != 2) {
 		*Status = 1;
 		Sleep(5000);
-		CabinLight(1);
+		CabinLight(2);
 		EngineAntiIce(1, 0);
 		EngineAntiIce(2, 0);
 		WingAntiIce(0);
@@ -405,12 +410,15 @@ void CabinWork::CLParking(int* Status) {
 		EngineMasterSwitches(1, 0);
 		EngineMasterSwitches(2, 0);
 		BeaconLigts(0);
+		SetTimer(0);
+		CabinLight(2);
 		FuelPump(2, 0);
 		FuelPump(5, 0);
 		FuelPump(1, 0);
 		FuelPump(4, 0);
 		FuelPump(3, 0);
 		FuelPump(6, 0);
+		CabinLight(2);
 		SeatBeltSign(0);
 		NoSmokeSign(2);
 		Sleep(10000);
@@ -423,6 +431,25 @@ void CabinWork::CLParking(int* Status) {
 }
 
 
+void CabinWork::SetTimer(DWORD mode) {
+	if (mode == 1) {
+		//SetDataL(A32NX_CHRONO_ET_SWITCH_POS, 2);
+		SendEvent(A32NX_CHRONO_ET_SWITCH_POS, 2);
+		Sleep(2000);
+		//SetDataL(A32NX_CHRONO_ET_SWITCH_POS, 1);
+		SendEvent(A32NX_CHRONO_ET_SWITCH_POS, 1);
+	}
+	else if (mode == 0) {
+		//SetDataL(A32NX_CHRONO_ET_SWITCH_POS, 1);
+		SendEvent(A32NX_CHRONO_ET_SWITCH_POS, 1);
+	}
+	else {
+		//SetDataL(A32NX_CHRONO_ET_SWITCH_POS, 0);
+		SendEvent(A32NX_CHRONO_ET_SWITCH_POS, 0);
+	}
+}
+
+
 void CabinWork::EngineModeSelector(DWORD mode) {
 	int i = 1000;
 	while ((DataT->GData.TURB_ENG_IGNITION_SWITCH_EX11 != mode) && i) {
@@ -431,6 +458,7 @@ void CabinWork::EngineModeSelector(DWORD mode) {
 			}
 			else {
 				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET1, mode);
+				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET, mode);
 			}
 			i--;
 	}
@@ -440,6 +468,7 @@ void CabinWork::EngineModeSelector(DWORD mode) {
 			}
 			else {
 				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET2, mode);
+				emit SendEvent(KEY_TURBINE_IGNITION_SWITCH_SET, mode);
 			}
 			i--;
 	}
@@ -451,6 +480,7 @@ void CabinWork::EngineMasterSwitches(DWORD num, DWORD onoff) {
 	if (num == 1) {
 		if (DataT->GData.GENERAL_ENG_STARTER1 != onoff) {
 			if (onoff == 1) {
+				
 				emit SendEvent(KEY_FUELSYSTEM_VALVE_OPEN, num);
 			}
 			else {
@@ -628,6 +658,18 @@ void CabinWork::CabinLight(DWORD mode) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 1);
 			}
 			break;
+		}
+		case 3: {
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_10_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_84_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_87_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_11_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_83_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_85_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_76_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_86_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_8_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_9_SET, 100);
 		}
 		default: {
 			if (DataT->GData.LIGHT_POTENTIOMETER7 != 1) {
@@ -1367,7 +1409,7 @@ void CabinWork::Pack(DWORD num, DWORD onoff) {
 }
 
 
-double CabinWork::SetData(DWORD var, double val, char* unit) {
+double CabinWork::SetData(DWORD var, double val, const char* unit) {
 	emit SetDataSignal(CABINWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
@@ -1375,7 +1417,7 @@ double CabinWork::SetData(DWORD var, double val, char* unit) {
 }
 
 
-double CabinWork::SetDataL(DWORD var, double val, char* unit) {
+double CabinWork::SetDataL(DWORD var, double val, const char* unit) {
 	emit SetDataSignalL(CABINWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
@@ -1390,7 +1432,7 @@ DWORD CabinWork::SendEvent(DWORD EventID, long dwData)
 }
 
 
-DWORD CabinWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit)
+DWORD CabinWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, const char* unit)
 {
 	SendEventSignal2(CABINWORK_ID, EventID, dwData, var, val, unit);
 	return 0;
@@ -1527,6 +1569,10 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		SetAutoBrakes(parameter1);
 		break;
 	}
+	case SEATBELT_SET: {
+		SeatBeltSign(parameter1);
+		break;
+	}
 	}
 }
 	
@@ -1551,15 +1597,11 @@ void CabinWork::TimerProc() {
 		BarometricRef();
 	}
 	SpoilersSet(Spoilers);
-	//if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
-		if (SpeedMode == 1) {
-			SendEvent(A32NX_FCU_SPD_PUSH, 1);
-		}
-		else if (SpeedMode == 0) {
-			//SendEvent(A32NX_FCU_SPD_PULL, 1);
-			SpeedMode = -1;
-			//SpeedSel(Speed);
-		}
+
+	
+
+	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		
 		if (HeadingMode == 1) {
 			SendEvent(A32NX_FCU_HDG_PUSH, 1);
 			HeadingMode = -1;
@@ -1576,6 +1618,14 @@ void CabinWork::TimerProc() {
 		else {
 			AltSet(Alt);
 		}
+		if (SpeedMode == 1) {
+			SendEvent(A32NX_FCU_SPD_PUSH, 1);
+		}
+		else if (SpeedMode == 0) {
+			/*SendEvent(A32NX_FCU_SPD_PULL, 1);
+			SpeedMode = -1;
+			SpeedSel(Speed);*/
+		}
 		if (AltMode == 0) {
 			SendEvent(A32NX_FCU_ALT_PULL, 1);
 			AltMode = -1;
@@ -1591,7 +1641,7 @@ void CabinWork::TimerProc() {
 			SendEvent(A32NX_FCU_ALT_PUSH, 1);
 			AltMode = -1;
 		}
-	//}
+	}
 	if (AltMode == 7) {
 		SendEvent(A32NX_FCU_ALT_PUSH, 1);
 		AltMode = -1;
