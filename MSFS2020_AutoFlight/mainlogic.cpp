@@ -1704,7 +1704,8 @@ VOID MainLogic::TimerProc()
 			FlightCruise = 1000;
 		}
 
-		double AngleToFixAlt = atan((IndicatedAltitude - CurrentLeg.FinalAlt) / 3280.84 / CurrentLeg.DistToAlt) * 180.0 / M_PI;
+		double AngleToFixAlt = 0;// = atan((IndicatedAltitude - CurrentLeg.FinalAlt) / 3280.84 / CurrentLeg.DistToAlt) * 180.0 / M_PI;
+		
 
 		if (RemainingDistance > 17) {
 			int cI = CurrentWayIndex;
@@ -1717,16 +1718,20 @@ VOID MainLogic::TimerProc()
 			// Create vertical profile //TO DO Big work
 			if ((IndicatedAltitude > 10000) && (CurrentLeg.FinalAlt < 10000)) {
 				VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, CurrentLeg.FinalAlt - 500, -20);
+				AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 20)) * 180.0 / M_PI;
 			}
 			else if (IndicatedAltitude > 10000) {
 				VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, CurrentLeg.FinalAlt - 500, -5);
+				AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 5)) * 180.0 / M_PI;
 			}
 			else {
 				if (FlightPhase < 5) {
 					VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 2.7, CurrentLeg.FinalAlt - 500, -5);
+					AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 5)) * 180.0 / M_PI;
 				}
 				else {
 					VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 2.7, CurrentLeg.FinalAlt - 500, 0);
+					AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05)) * 180.0 / M_PI;
 				}
 			}
 			
@@ -1743,7 +1748,7 @@ VOID MainLogic::TimerProc()
 			if (FlightCruise < (IndicatedAltitude - 100)) {
 				//SendCommand(VS_SEL, 0, 20);
 			}
-			if ((AngleToDesc >= 2.8/*GetAngleToDesc(IndicatedAltitude) */ ) || (Mode == DESCENT)) {
+			if ((AngleToDesc >= 2.7/*GetAngleToDesc(IndicatedAltitude) */ ) || (Mode == DESCENT)) {
 				Mode = DESCENT;
 				SendCommand(ALT_SEL, FlightCruise, 20);
 				if (FlightCruise > (IndicatedAltitude - 100)) {
@@ -1825,6 +1830,7 @@ VOID MainLogic::TimerProc()
 			//LANDING
 			SendCommand(AUTOBRAKES_SET, 1, 0);
 			VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, Legs->at(CurrentWayIndex).EAltitudeHi);
+			AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt) * 0.0003048) / (CurrentLeg.DistToAlt - Legs->at(CurrentWayIndex).Distance + 1.00)) * 180.0 / M_PI;
 			//VerticalSpeedForGlide = ManVSWithAngle(3);
 			
 			if (SimOnGround) {
@@ -2384,20 +2390,21 @@ double MainLogic::ManVSWithAngle(double GS) {
 double MainLogic::GetVerticalSpeedForGlide(sWayPoint* Leg, double GlideAngle, double TargetAlt, double BiasDistance) {
 	double GS = data->GData.GROUND_VELOCITY;
 	double IndicatedAltitude = data->GData.INDICATED_ALTITUDE;
+	double PlaneAltitude = data->GData.PLANE_ALTITUDE;
 	double GroundAltitude = data->GData.PLANE_ALT_ABOVE_GROUND - 9;
 	double TimeToNextWay;
 	double CurrentNeedAlt;
 
 	if (Leg->Type == "RUNWAY") {
-		TimeToNextWay = (CurrentLeg.Distance - Leg->Distance + 0.15) / GS * 1.852;
-		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.Distance - Leg->Distance + 0.15)) * 3280.84) + Leg->EAltitudeHi;
+		TimeToNextWay = ((CurrentLeg.Distance - Leg->Distance + 1.12) / 1.852) / GS; //Hour
+		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.Distance - Leg->Distance + 1.0)) * 3280.84) + Leg->EAltitudeHi; //Feet
 	}
 	else {
-		TimeToNextWay = (CurrentLeg.DistToAlt + BiasDistance + 0.05) / GS * 1.852;
+		TimeToNextWay = ((CurrentLeg.DistToAlt + BiasDistance + 0.05) / 1.852) / GS;
 		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.DistToAlt + BiasDistance)) * 3280.84) + TargetAlt;
 	}
 
-	double VSWay = -(CurrentNeedAlt) * 0.0003048 / TimeToNextWay * 54.681;
+	double VSWay = -(((CurrentNeedAlt - Leg->EAltitudeHi) * 0.0003048) /*Km*/ / TimeToNextWay) * 54.681; // Feet per Minute
 	int NeedVerticalSpeed = (VSWay + (CurrentNeedAlt - IndicatedAltitude) * 5);
 
 	if (NeedVerticalSpeed > 0) {
@@ -2405,9 +2412,12 @@ double MainLogic::GetVerticalSpeedForGlide(sWayPoint* Leg, double GlideAngle, do
 	}
 
 	if ((IndicatedAltitude - Legs->at(Legs->size() - 1).EAltitudeHi) < -NeedVerticalSpeed / 6) {
-		NeedVerticalSpeed = -GroundAltitude * 5;
+	//if ((PlaneAltitude - Legs->at(Legs->size() - 1).EAltitudeHi) < -NeedVerticalSpeed / 6) {
+		if ((CurrentLeg.Distance - Leg->Distance - 0.2) < 0) {
+			NeedVerticalSpeed = -GroundAltitude * 5;
+		}
 	}
-	if (GroundAltitude < 30) {
+	if (GroundAltitude < 40) {
 		NeedVerticalSpeed = 0;
 	}
 	return NeedVerticalSpeed;
@@ -3264,14 +3274,18 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 
 	double Coefficient = 15;
 	if (Mode == TAKEOFF) {
-		Coefficient = 50;
+		Coefficient = 70;
 	}
 	if (Mode == CRUISE) {
 		Coefficient = 30;
 	}
-	if ((Mode == DESCENT) && ((data->GData.PLANE_ALT_ABOVE_GROUND - 9) < 30) && (data->GData.SIM_ON_GROUND == 0)) {
+	if (landing != 0) {
 		Coefficient = 50;
+	}
+	if ((Mode == DESCENT) && ((data->GData.PLANE_ALT_ABOVE_GROUND - 9) < 100) && (data->GData.SIM_ON_GROUND == 0)) {
+		Coefficient = 70;
 	} 
+	
 	static double StickYPos = data->AllData.A32NX_SIDESTICK_POSITION_Y * 16383;
 	static int countFails = 5;
 	if (countFails >= 5) {
