@@ -15,10 +15,13 @@ public:
   Ui::MSFS2020_AutoFlightClass* GetUi();
   QThread* maimThread;
 private slots:
-  //void SlotRangeChanged(const QCPRange &newRange);
   void AppendListView(QString s);
   void on_ButtonConnect();
+  void on_PMDGButton();
+  void on_startButton();
   void ButtonModify(QPushButton* button, QString text, QString style);
+  void ConnectButtonEnabled(bool enabled);
+  void StartButtonEnabled(bool enabled);
   void realtimeDataSlot();
   void PlotCircle(double dist, double alt, double common);
   void PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex);
@@ -37,6 +40,8 @@ private slots:
 signals:
   void Connect();
   void ChangeCurrentLegIndex(int currentLegIndex);
+  void PMDGSend(DWORD val);
+  void StartSend();
 private:
   QObject* planesWork;
   QCPItemEllipse* pos;

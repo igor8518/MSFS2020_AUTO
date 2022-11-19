@@ -16,8 +16,13 @@ namespace PMDG_TEST
 		ALTORABOVE,
 		CRUISEALT
 	};
+	/*std::string ParkType[14] = {"", "RAMP_GA", "RAMP_GA_SMALL", "RAMP_GA_MEDIUM", "RAMP_GA_LARGE", "RAMP_CARGO", "RAMP_MIL_CARGO", "RAMP_MIL_COMBAT", "GATE_SMALL", "GATE_MEDIUM", "GATE_HEAVY", "DOCK_GA", "FUEL", "VEHICLES"};
+	std::string ParkName[38] = { "NONE", "PARKING", "N_PARKING", "NE_PARKING", "E_PARKING", "SE_PARKING", "S_PARKING", "SW_PARKING", "W_PARKING", "NW_PARKING", "GATE", "DOCK",
+	  "GATE_A", "GATE_B", "GATE_C", "GATE_D", "GATE_E", "GATE_F", "GATE_G", "GATE_H", "GATE_I", "GATE_J", "GATE_K", "GATE_L", "GATE_M", "GATE_N", "GATE_O", "GATE_P", "GATE_Q", "GATE_R", "GATE_S", "GATE_T",
+	  "GATE_U", "GATE_V", "GATE_W", "GATE_X", "GATE_Y", "GATE_Z" };*/
 	static class SIMMATH {
 	public:
+		
 		static struct DSHEH {
 			SIMCONNECT_DATA_LATLONALT Slla;
 			SIMCONNECT_DATA_LATLONALT Ella;
@@ -34,6 +39,12 @@ namespace PMDG_TEST
 			double Speed = 0.0;
 			double Dist = 0.0;
 		};
+		static double GetFixDA(double da, double angle) {
+			if (((angle < 0) && (da > 0)) || ((angle > 0) && (da < 0))) {
+				return -da;
+			}
+			return da;
+		}
 		static void DOrtoKM(DSHEH* dsheh) {
 			double SLatitude = dsheh->Slla.Latitude / 180 * M_PI;
 			double SLongitude = dsheh->Slla.Longitude / 180 * M_PI;
@@ -79,11 +90,21 @@ namespace PMDG_TEST
 				dsheh->EH = dsheh->EH + 360;
 			}
 		}
+		static double Constrain180(double angle) {
+			angle = Constrain360(angle + 180.0);
+			return angle - 180.0;
+		}
 		static double DecodeLat(DWORD lat) {
 			return  90.0 - lat * (180.0 / (2 * 0x10000000));
 		}
+		static DWORD EncodeLat(double lat) {
+			return  double(90.0 - lat) / double(180.0 / double(2 * 0x10000000));
+		}
 		static double DecodeLon(DWORD lon) {
 			return lon * (360.0 / (3 * 0x10000000)) - 180.0;
+		}
+		static DWORD EncodeLon(double lon) {
+			return double(lon + 180.0) / double(360.0 / double(3 * 0x10000000));
 		}
 		static double GetAngle360(double angle) {
 			double Tangle;
@@ -95,6 +116,14 @@ namespace PMDG_TEST
 				Tangle = Tangle - 360;
 			}
 			return Tangle;
+		}
+
+		static double Constrain360(double angle) {
+			angle = fmod(angle, 360.0);
+			while (angle < 0.0) {
+				angle += 360.0;
+			}
+			return angle;
 		}
 
 		static SIMCONNECT_DATA_LATLONALT GetDALatLon(double lat, double lon, double ang, double dist) {
@@ -116,16 +145,30 @@ namespace PMDG_TEST
 			for (int i = 0; i < m; i++) {
 				if ((tpaths->at(i).Type & 0xf) == 0x3) {
 					//tpaths->at(i).IndexEndPoint = tpaths->at(i).IndexEndPoint + tpoints->size();
+					if (tpaths->at(i).End == 24) {
+						std::cout << 1;
+					}
 					tpaths->at(i).End = tpaths->at(i).End + tpoints->size();
+					/*DWORD PI = tParks->at(i).TaxiParkInfo;
+					DWORD PIi = (PI >> 12) & 0xfff;
+					DWORD PIt = (PI >> 8) & 0xf;
+					DWORD PIn = PI & 0x1f;
+					tpaths->at(i).TaxiNameIndex = tNames->size();*/
+					//tNames->push_back(std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn]));
 				}
 				tpaths->push_back(tpaths->at(i));
 				//tpaths->at(tpaths->size() - 1).IndexEndPoint = tpaths->at(i).IndexStartPoint;
 				//tpaths->at(tpaths->size() - 1).IndexStartPoint = tpaths->at(i).IndexEndPoint & 0xfff;
 				tpaths->at(tpaths->size() - 1).End = tpaths->at(i).IndexStartPoint;
 				tpaths->at(tpaths->size() - 1).IndexStartPoint = tpaths->at(i).End;
+
+				
 			}
 			for (int i = 0; i < tParks->size(); i++) {
 				tpoints->push_back(tpoints->at(0));
+
+				
+
 				tpoints->at(tpoints->size() - 1).Lat = tParks->at(i).Lat;
 				tpoints->at(tpoints->size() - 1).Lon = tParks->at(i).Lon;
 			}
@@ -171,18 +214,54 @@ namespace PMDG_TEST
 			a[v] = heading;
 			DSHEH* dsheh = new DSHEH();
 			int x;
+			std::vector<TaxiwayPaths> Falls;
 			for (;;) {
 				bool any = false;
 				x = -1;
 				for (int j = 0; j < m; ++j) {
-					if (j == 511) {
-						std::cout << 0;
+					if ((tpaths->at(j).Type & 0xf) == 0xb || 
+						(tpaths->at(j).Type & 0xf) == 0xc || 
+						(tpaths->at(j).Type & 0xf) == 0xe || 
+						(tpaths->at(j).Type & 0xf) == 0x6 || 
+						(tpaths->at(j).Type & 0xf) == 0x9 || 
+						(tpaths->at(j).Type & 0xf) == 0x0)
+					{
+						if ((tpaths->at(j).IndexStartPoint) >= d->size()) {
+							tpaths->at(j).IndexStartPoint = tpaths->at(j).IndexStartPoint & 0xfff;
+							//Falls.push_back(tpaths->at(j));
+						}
+						/*if ((tpaths->at(j).IndexEndPoint) >= d->size()) {
+							tpaths->at(j).IndexEndPoint = tpaths->at(j).IndexEndPoint & 0xfff;
+							Falls.push_back(tpaths->at(j));
+						}*/
+						if ((tpaths->at(j).End) >= d->size()) {
+							tpaths->at(j).End = tpaths->at(j).End & 0xfff;
+							//Falls.push_back(tpaths->at(j));
+						}
+					}
+					
+					/*if (((tpaths->at(j).Type & 0xf) == 0x0) ||
+						((tpaths->at(j).Type & 0xf) == 0x6) || 
+						((tpaths->at(j).Type & 0xf) >= 0x8))
+					{
+						Falls.push_back(tpaths->at(j));
+						continue;
+					}*/
+					if ((tpaths->at(j).IndexStartPoint) >= d->size()) {
+						tpaths->at(j).IndexStartPoint = tpaths->at(j).IndexStartPoint & 0xff;
+						Falls.push_back(tpaths->at(j));
+						//continue;
+					}
+					if ((tpaths->at(j).End) >= tpoints->size()) {
+						tpaths->at(j).End = tpaths->at(j).End & 0xff;
+						Falls.push_back(tpaths->at(j));
+						//continue;
 					}
 					if ((d->at(tpaths->at(j).IndexStartPoint) < INF) && (((tpaths->at(j).Type & 0xf) == 1) || ((tpaths->at(j).Type & 0xf) == 2) || ((tpaths->at(j).Type & 0xf) == 3) || ((tpaths->at(j).Type & 0xf) == 4) || ((tpaths->at(j).Type & 0xf) == 14))) {
 						dsheh->Slla.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexStartPoint).Lat);
 						dsheh->Slla.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexStartPoint).Lon);
-						/*dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lat);
-						dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lon);*/
+						/*dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexEndPoint).Lat);
+						dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexEndPoint).Lon);*/
 						dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).End).Lat);
 						dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).End).Lon);
 						DOrtoKM(dsheh);
@@ -237,16 +316,16 @@ namespace PMDG_TEST
 						ra = ra / CountRa;
 						double RRA;
 						RRA = abs(pow(abs(ra), 3)) / 100.0;
-						//if (d->at(tpaths->at(j).IndexEndPoint & 0xfff) > (d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA)) {
-							//if ((tpaths->at(j).IndexEndPoint & 0xfff) == 511) {
-								if (d->at(tpaths->at(j).End) > (d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA)) {
-									if ((tpaths->at(j).End) == 511) {
+						//if (d->at(tpaths->at(j).IndexEndPoint) > (d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA)) {
+							//if ((tpaths->at(j).IndexEndPoint) == 511) {
+						if (d->at(tpaths->at(j).End) > (d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA)) {
+							if ((tpaths->at(j).End) == 511) {
 								std::cout << 0;
 							}
-							//d->at(tpaths->at(j).IndexEndPoint & 0xfff) = max(-INF, d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA);
-							//a[tpaths->at(j).IndexEndPoint & 0xfff] = dsheh->EH;
-							//p[tpaths->at(j).IndexEndPoint & 0xfff] = tpaths->at(j).IndexStartPoint;
-							//x = tpaths->at(j).IndexEndPoint & 0xfff;
+							//d->at(tpaths->at(j).IndexEndPoint) = max(-INF, d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA);
+							//a[tpaths->at(j).IndexEndPoint] = dsheh->EH;
+							//p[tpaths->at(j).IndexEndPoint] = tpaths->at(j).IndexStartPoint;
+							//x = tpaths->at(j).IndexEndPoint;
 							d->at(tpaths->at(j).End) = max(-INF, d->at(tpaths->at(j).IndexStartPoint) + dsheh->D + RRA);
 							a[tpaths->at(j).End] = dsheh->EH;
 							p[tpaths->at(j).End] = tpaths->at(j).IndexStartPoint;
@@ -259,15 +338,15 @@ namespace PMDG_TEST
 								else {
 									R1 = std::to_string(tpaths->at(j).TaxiNameIndex) + ds[tpaths->at(j).IndexEndPoint >> 12];
 								}
-								//names[tpaths->at(j).IndexEndPoint & 0xfff] = R1;
+								//names[tpaths->at(j).IndexEndPoint] = R1;
 								names[tpaths->at(j).End] = R1;
 							}
 							else if ((tpaths->at(j).Type & 0xf) == 14) {
-								//names[tpaths->at(j).IndexEndPoint & 0xfff] = RunwayName;
+								//names[tpaths->at(j).IndexEndPoint] = RunwayName;
 								names[tpaths->at(j).End] = RunwayName;
 							}
 							else {
-								//names[tpaths->at(j).IndexEndPoint & 0xfff] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
+								//names[tpaths->at(j).IndexEndPoint] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
 								names[tpaths->at(j).End] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
 							}
 							any = true;
@@ -329,6 +408,7 @@ namespace PMDG_TEST
 					sPath.Lat = DecodeLat(tpoints->at(path[i]).Lat);
 					sPath.Lon = DecodeLon(tpoints->at(path[i]).Lon);
 					sPath.Type = 0;
+					sPath.InRunway = tpoints->at(path[i]).Flag;
 					rPath.push_back(sPath);
 				}
 				PMDG_TEST::SIMMATH::DSHEH dsheh = {
@@ -376,15 +456,15 @@ namespace PMDG_TEST
 							for (int j = 0; j < tpaths->size(); j++) {
 								if ((tpaths->at(j).IndexStartPoint == path[i]) &&
 									((tpaths->at(j).Type & 0xf) != 0x3) &&
-									//((tpaths->at(j).IndexEndPoint & 0xfff) != path[i - 1]) &&
-									//((tpaths->at(j).IndexEndPoint & 0xfff) != path[i + 1])) {
+									//((tpaths->at(j).IndexEndPoint) != path[i - 1]) &&
+									//((tpaths->at(j).IndexEndPoint) != path[i + 1])) {
 									((tpaths->at(j).End) != path[i - 1]) &&
 										((tpaths->at(j).End) != path[i + 1])) {
 									PMDG_TEST::SIMMATH::DSHEH dshehE = {
 										DecodeLat(tpoints->at(tpaths->at(j).IndexStartPoint).Lat),
 										DecodeLon(tpoints->at(tpaths->at(j).IndexStartPoint).Lon), 0.0,
-										//DecodeLat(tpoints->at((tpaths->at(j).IndexEndPoint & 0xfff)).Lat),
-										//DecodeLon(tpoints->at((tpaths->at(j).IndexEndPoint & 0xfff)).Lon), 0.0
+										//DecodeLat(tpoints->at((tpaths->at(j).IndexEndPoint)).Lat),
+										//DecodeLon(tpoints->at((tpaths->at(j).IndexEndPoint)).Lon), 0.0
 										DecodeLat(tpoints->at((tpaths->at(j).End)).Lat),
 										DecodeLon(tpoints->at((tpaths->at(j).End)).Lon), 0.0
 									};
@@ -411,11 +491,12 @@ namespace PMDG_TEST
 								TPath sPath;
 								sPath.index = path[i];
 								sPath.name = names.at(path[i]);
-								//sPath.Lat = DecodeLat(tpoints->at((tpaths->at(index).IndexEndPoint & 0xfff)).Lat);
-								//sPath.Lon = DecodeLon(tpoints->at((tpaths->at(index).IndexEndPoint & 0xfff)).Lon);
+								//sPath.Lat = DecodeLat(tpoints->at((tpaths->at(index).IndexEndPoint)).Lat);
+								//sPath.Lon = DecodeLon(tpoints->at((tpaths->at(index).IndexEndPoint)).Lon);
 								sPath.Lat = DecodeLat(tpoints->at((tpaths->at(index).End)).Lat);
 								sPath.Lon = DecodeLon(tpoints->at((tpaths->at(index).End)).Lon);
 								sPath.Type = 11;
+								sPath.InRunway = tpoints->at((tpaths->at(index).End)).Flag;
 								rPath.insert(rPath.begin() + i + 1, sPath);
 								break;
 							}
@@ -432,6 +513,7 @@ namespace PMDG_TEST
 			sPath.name = RunwayName;
 			sPath.Lat = DecodeLat(tpoints->at(run).Lat);
 			sPath.Lon = DecodeLon(tpoints->at(run).Lon);
+			sPath.InRunway = tpoints->at(run).Flag;
 			sPath.Type = 14;
 			rPath.push_back(sPath);
 		

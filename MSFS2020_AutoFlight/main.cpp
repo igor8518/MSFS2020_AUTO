@@ -30,6 +30,8 @@ int main(int argc, char *argv[])
     w->maimThread->start();
 
     QObject::connect(w, SIGNAL(Connect()), m, SLOT(Connect()));
+    QObject::connect(w, SIGNAL(PMDGSend(DWORD)), m, SLOT(SendDataPMDG(DWORD)));
+    QObject::connect(w, SIGNAL(StartSend()), m, SLOT(StartStopSim()));
     w->setWindowTitle("MSFS 2020 AutoFlight");
     qApp->setStyle(QStyleFactory::create("Fusion"));
     w->show();

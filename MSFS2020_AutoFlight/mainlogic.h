@@ -21,6 +21,17 @@ public:
 private:
     std::vector<sWayPoint>* values;
 };
+
+template <typename T, typename U>
+struct CompareByMember {
+    // This is a pointer-to-member, it represents a member of class T
+    // The data member has type U
+    U T::* field;
+    CompareByMember(U T::* f) : field(f) {}
+    bool operator()(const T& lhs, const T& rhs) {
+        return lhs.*field < rhs.*field;
+    }
+};
 //#include "WriteStream.h"
 class MainLogic : public QObject {
   Q_OBJECT;
@@ -61,6 +72,8 @@ signals:
   void SendText(QString s, bool sendSim);
   void SendLog(QString s);
   void ButtonModify(QPushButton* button, QString text, QString style);
+  void StartButtonEnabled(bool enabled);
+  void ConnectButtonEnabled(bool enabled);
   void SetDataReg(unsigned int index, double data);
   void SetDataSetReg(unsigned int index, double data);
   void CLPreliminaryCocpitPrep(int* Status);
@@ -106,6 +119,11 @@ private slots:
   double AltPitchWithPos(double TargetValue);
   double PBHeadWithWay(sWayPoint* Way, bool PB = false);
   double ManHeadWithWay(sWayPoint* Way);
+
+  double GetAngleFront(double frontOut, bool nose);
+
+  double PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral);
+
   void ManPitchWithFD(double NPitch);
   void ManBankWithFD(double NNBank);
   double BankWithHead(double Heading);
@@ -114,6 +132,8 @@ private slots:
   float GetAngleToDesc(float alt);
   double ManVSWithAngle(double GS);
   double GetVerticalSpeedForGlide(sWayPoint* Way, double GS, double TAlt, double BiasDist = 0);
+  void SendDataPMDG(DWORD val);
+  void StartStopSim();
   bool SetTimeOff(int IDREQ, int TimeOffset);
 private:
     bool Approach = FALSE;

@@ -81,6 +81,8 @@ MainLogic::MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainObject, QO
 	ObjectConnectors->push_back(connect(this, SIGNAL(SendText(QString, bool)), utils, SLOT(SetText(QString, bool))));
 	ObjectConnectors->push_back(connect(this, SIGNAL(SendLog(QString)), utils, SLOT(AddLog(QString))));
 	ObjectConnectors->push_back(connect(this, SIGNAL(ButtonModify(QPushButton*, QString, QString)), mainObject, SLOT(ButtonModify(QPushButton*, QString, QString))));
+	ObjectConnectors->push_back(connect(this, SIGNAL(StartButtonEnabled(bool)), mainObject, SLOT(StartButtonEnabled(bool))));
+	ObjectConnectors->push_back(connect(this, SIGNAL(ConnectButtonEnabled(bool)), mainObject, SLOT(ConnectButtonEnabled(bool))));
 	emit SendLog("READY");
 	Mode = START;
 	ObjectConnectors->push_back(connect(MainTimer, SIGNAL(timeout()), this, SLOT(TimerProc())));
@@ -274,6 +276,12 @@ void MainLogic::AddWayPoint(double lon, double lat, double altHi, QString pointT
 			Legs->at(Legs->size() - 1).Dist = radial;
 			Legs->at(Legs->size() - 1).H = heading;
 		}
+		if (pointType == "RUNWAY") {
+			Legs->at(Legs->size() - 1).Dist = radial;
+		}
+		if (pointType == "TAXIWAY") {
+			Legs->at(Legs->size() - 1).Dist = radial;
+		}
 		//QLegs->at(QLegs->size() - 1) = Legs->at(Legs->size() - 1);
 		//CountWays++;
 		point = 0;
@@ -356,6 +364,12 @@ void MainLogic::AddWayPoint(double lon, double lat, double altHi, QString pointT
 		if (pointType == "TRKUNTILALT") {
 			sw.H = heading;
 		}
+		if (pointType == "RUNWAY") {
+			sw.Dist = radial;
+		}
+		if (pointType == "TAXIWAY") {
+			sw.Dist = radial;
+		}
 		Legs->push_back(sw);
 		//QLegs->push_back(sw);
 		//CountWays++;
@@ -409,37 +423,43 @@ int MainLogic::GetDestRunwayIndex() {
 }
 
 double MainLogic::GetRemainingDistance() {
-	int cI = CurrentWayIndex;
-	double rD = CurrentLeg.Distance;
-	double tD = 0;
-	while ((Legs->at(cI).Type != "RUNWAY") && (cI < (Legs->size() - 1))) {
-		rD += Legs->at(cI + 1).Distance;
-		cI++;
+	if (CurrentWayIndex > 0) {
+		int cI = CurrentWayIndex;
+		double rD = CurrentLeg.Distance;
+		double tD = 0;
+		while ((Legs->at(cI).Type != "RUNWAY") && (cI < (Legs->size() - 1))) {
+			rD += Legs->at(cI + 1).Distance;
+			cI++;
+		}
+		cI = CurrentWayIndex - 1;
+		/*while ((Legs->at(cI).Type != "RUNWAY") && (cI >= 1)) {
+			tD += Legs->at(cI - 1).RealDistance + Legs->at(cI - 1).Distance;
+			cI--;
+		}
+		CurrentLeg.RealDistance = TraveledDistance - tD;
+		Legs->at(CurrentWayIndex).RealDistance = CurrentLeg.RealDistance;
+		Legs->at(CurrentWayIndex).Distance = CurrentLeg.Distance;*/
+
+		CurrentLeg.CommonDistance = TraveledDistance + CurrentLeg.Distance;
+		Legs->at(CurrentWayIndex).CommonDistance = TraveledDistance + Legs->at(CurrentWayIndex).Distance;
+		Legs->at(CurrentWayIndex).RealDistance = TraveledDistance - Legs->at(CurrentWayIndex - 1).CommonDistance;
+		//Legs->at(CurrentWayIndex).Distance = CurrentLeg.Distance;
+		for (int i = CurrentWayIndex + 1; i < Legs->size(); i++) {
+			Legs->at(i).CommonDistance = Legs->at(i - 1).RealDistance + Legs->at(i - 1).CommonDistance + Legs->at(i - 1).Distance;
+		}
+		//ModelTable->populate(Legs);
+		return rD;
 	}
-	cI = CurrentWayIndex - 1;
-	/*while ((Legs->at(cI).Type != "RUNWAY") && (cI >= 1)) {
-		tD += Legs->at(cI - 1).RealDistance + Legs->at(cI - 1).Distance;
-		cI--;
+	else {
+		return 0.0;
 	}
-	CurrentLeg.RealDistance = TraveledDistance - tD;
-	Legs->at(CurrentWayIndex).RealDistance = CurrentLeg.RealDistance;
-	Legs->at(CurrentWayIndex).Distance = CurrentLeg.Distance;*/
-	
-	CurrentLeg.CommonDistance = TraveledDistance + CurrentLeg.Distance;
-	Legs->at(CurrentWayIndex).CommonDistance = TraveledDistance + Legs->at(CurrentWayIndex).Distance;
-	Legs->at(CurrentWayIndex).RealDistance = TraveledDistance - Legs->at(CurrentWayIndex - 1).CommonDistance;
-	//Legs->at(CurrentWayIndex).Distance = CurrentLeg.Distance;
-	for (int i = CurrentWayIndex + 1; i < Legs->size(); i++) {
-		Legs->at(i).CommonDistance = Legs->at(i - 1).RealDistance + Legs->at(i - 1).CommonDistance + Legs->at(i - 1).Distance;
-	}
-	//ModelTable->populate(Legs);
-	return rD;
 }
 
 //Main timer loop
 
 VOID MainLogic::TimerProc()
 {
+	//emit CLLanding(&landing);
 	if ((Legs != NULL) && (Legs->size() > 0)) {
 		//emit PlotPoints(Legs, GetOrigRunwayIndex(), GetDestRunwayIndex());
 		emit PlotConstraints(Legs, GetOrigRunwayIndex(), GetDestRunwayIndex(), CurrentWayIndex);
@@ -457,7 +477,7 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	
-	if ((Mode == TAKEOFF || Mode == CRUISE || Mode == DESCENT) /*&& (!data->GData.SIM_ON_GROUND)*/) {
+	if ((Mode == TAKEOFF || Mode == CRUISE || Mode == DESCENT || Mode == PREPREPARE) /*&& (!data->GData.SIM_ON_GROUND)*/) {
 		sWayPoint currDis;
 		double RealDistance = 0;
 		for (int i = GetOrigRunwayIndex(); i <= GetDestRunwayIndex(); i++) {
@@ -514,7 +534,6 @@ VOID MainLogic::TimerProc()
 		}
 		
 	}
-	
 	if (Mode == START) {
 		if (InTimer) {
 			return;
@@ -526,7 +545,7 @@ VOID MainLogic::TimerProc()
 			Legs = new std::vector<sWayPoint>();
 
 			mgr = new QNetworkAccessManager(this);
-			const QUrl url(QStringLiteral("http://www.simbrief.com/api/xml.fetcher.php?json=1&username=autom"));
+			const QUrl url(QStringLiteral("http://www.simbrief.com/api/xml.fetcher.php?json=1&username=SamFrieeman"));
 			QNetworkRequest request(url);
 			request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -686,12 +705,24 @@ VOID MainLogic::TimerProc()
 				RunwayWaysOrig1 = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1);
 				if (data->GData.SIM_ON_GROUND) {
 					for (int i = 0; i < RunwayWaysOrig->at(rrr).size() - 1; i++) {
-						AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, 0, 0.0);
+						if (RunwayWaysOrig->at(rrr).at(i).InRunway == 0xff) {
+							AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, -1.0, 0.0);
+						}
+						else {
+							AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, 0, 0.0);
+						}
 					}
+					
 
 					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 5555, "RUNWAY", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name.c_str()), 0, 0, 0, 0, 4444);
-					SendCommand(PULL_HDG, 1, 0);
-					SendCommand(HDG_SEL, Legs->at(Legs->size() - 1).HeadingMag, 10);
+					for (int i = Legs->size() - 2; i > 0; i--) {
+						if ((Legs->at(i).Dist != -1.0)||(abs(Utils::Constrain180(Legs->at(i).EndHeadingTrue - Legs->at(Legs->size()-1).EndHeadingTrue))<90)) {
+							Legs->at(i + 1).Dist = 2.0;
+							break;
+						}
+					}
+					//SendCommand(PULL_HDG, 1, 0);
+					//SendCommand(HDG_SEL, Legs->at(Legs->size() - 1).HeadingMag, 10);
 				}
 				else {
 					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat, 0, "CLIMB", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).name.c_str()), 0, 0, 0, 0, 0.0);
@@ -777,12 +808,12 @@ VOID MainLogic::TimerProc()
 				else {
 					runway = AirportData->GetStartCoord(FindRWYIndex);
 				}
-				runway.alt = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
+				//runway.alt = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
 				fix = ja[0].toObject();
 				//AddWayPoint(0, 0, 0, "WAYPOINT", "", 0, FIXALT, 0, 0, &fix);
-				AddWayPoint(runway.sLongitude, runway.sLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28, "AIRPORT", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28);
-				AddWayPoint(runway.sLongitude, runway.sLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28, "AIRPORT", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28);
-				AddWayPoint(runway.eLongitude, runway.eLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28, "RUNWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28);
+				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt, "AIRPORT", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
+				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt, "AIRPORT", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
+				AddWayPoint(runway.eLongitude, runway.eLatitude, runway.alt, "RUNWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
 				
 				SIDPoint = Legs->size() - 1;
 				SimBriefSID = " ";
@@ -873,11 +904,31 @@ VOID MainLogic::TimerProc()
 			SendLog("Setup route");
 			sWayPoint tWP;
 			bool sid = false;
+			int CrzAlt = 0;
+			int toc = -1;
+			int tod = -1;
+			for (int j = 1; j < ja.count() - 1; j++) {
+				if (ja[j].toObject().value("ident").toString() == "TOC") {
+					toc = j;
+				}
+				if (ja[j].toObject().value("ident").toString() == "TOD") {
+					tod = j;
+				}
+			}
 			for (int i = 1; i < ja.count() - 1; i++) {
 				fix = ja[i].toObject();
 				if (ja[i+1].toObject().value("is_sid_star").toString() == "0") {
 					if (ja[i - 1].toObject().value("is_sid_star").toString() == "0") {
-						AddWayPoint(0, 0, root["general"].toObject()["initial_altitude"].toString().toDouble(), "WAYPOINT", "", 0, CRUISEALT, 0, 0, 0.0, &fix);
+						if (i < toc) {
+							CrzAlt = ja[toc].toObject().value("altitude_feet").toString().toDouble();
+						}
+						else if (i > tod) {
+							CrzAlt = ja[tod].toObject().value("altitude_feet").toString().toDouble();
+						}
+						else {
+							CrzAlt = ja[i].toObject().value("altitude_feet").toString().toDouble();;
+						}	
+						AddWayPoint(0, 0, CrzAlt,/*root["general"].toObject()["initial_altitude"].toString().toDouble(),*/ "WAYPOINT", "", 0, CRUISEALT, 0, 0, 0.0, &fix);
 					}
 				}
 			}
@@ -937,7 +988,7 @@ VOID MainLogic::TimerProc()
 			else {
 				runway = AirportData->GetStartCoord(FindRWYIndex);
 			}
-			runway.alt = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
+			//runway.alt = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
 			SIMCONNECT_DATA_LATLONALT latlon = Utils::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
 			STARPoint = Legs->size();
 			std::vector<TSTARS>* OrigStars = AddSTAR(DestSidStar, &runway, FixSTAR, SimBriefSTAR);
@@ -950,6 +1001,7 @@ VOID MainLogic::TimerProc()
 				if (QString(OrigStars->at(i).STAR.c_str()) == SimBriefSTAR) {
 					FindStar = true;
 					Star = i;
+					break;
 				}
 			}
 			if (OrigStars->size() > 0) {
@@ -975,41 +1027,46 @@ VOID MainLogic::TimerProc()
 					}
 					AddSidStarTrack(&OrigStars->at(Star).wayPoint->at(i), NULL, &fixx, &runway);
 				}
+				Legs->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
 			}
 			else {
 				SIMCONNECT_DATA_LATLONALT latlon = Utils::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
-				AddWayPoint(latlon.Longitude, latlon.Latitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28 + 2000.0, "FIX", "GlideAngle 18.0 " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28 + 2000.0);
-				AddWayPoint(runway.sLongitude, runway.sLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28 + 2000.0, "WAYPOINT", "FINAL " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28 + 2000.0);
-				AddWayPoint(runway.sLongitude, runway.sLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28, "GSWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28);
-				AddWayPoint(runway.eLongitude, runway.eLatitude, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28, "RUNWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28);
+				AddWayPoint(latlon.Longitude, latlon.Latitude, runway.alt + 2000.0, "FIX", "GlideAngle 18.0 " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt + 2000.0);
+				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt + 2000.0, "WAYPOINT", "FINAL " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt + 2000.0);
+				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt, "GSWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
+				AddWayPoint(runway.eLongitude, runway.eLatitude, runway.alt, "RUNWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
+				Legs->at(STARPoint).Name = QString(" -> ");
 			}
-			AddWayPoint(0, 0, AirportData->GetAirport()->PAirportInformation->Alt, "AIRPORT", "", 0, FIXALT, 0, 0, AirportData->GetAirport()->PAirportInformation->Alt, &fix);
-			Legs->at(Legs->size() - 1).SAltitudeHi = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
-			Legs->at(Legs->size() - 1).EAltitudeHi = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
+			AddWayPoint(0, 0, runway.alt, "AIRPORT", "", 0, FIXALT, 0, 0, runway.alt, &fix);
+			Legs->at(Legs->size() - 1).SAltitudeHi = runway.alt;
+			Legs->at(Legs->size() - 1).EAltitudeHi = runway.alt;
 			//QLegs->at(Legs->size() - 1).SAltitudeHi = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
 			//QLegs->at(Legs->size() - 1).EAltitudeHi = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
-			Legs->at(Legs->size() - 1).SAltitudeLo = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
-			Legs->at(Legs->size() - 1).EAltitudeLo = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
+			Legs->at(Legs->size() - 1).SAltitudeLo = runway.alt;
+			Legs->at(Legs->size() - 1).EAltitudeLo = runway.alt;
 			//QLegs->at(Legs->size() - 1).SAltitudeLo = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
 			//QLegs->at(Legs->size() - 1).EAltitudeLo = AirportData->GetAirport()->PAirportInformation->Alt / 1000 * 3.28;
-			Legs->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
+			
 			//QLegs->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
-
+			STAR = true;
 			if (!Connected) {
 				ModelTable->populate(Legs);
 				//delete Legs;
 				//Legs = NULL;
 				InTimer = false;
 				Mode = -1;
+				ConnectButtonEnabled(true);
 				//Sleep(300000);
 				//emit SendLog("Refresh flightplan: " + root["origin"].toObject()["icao_code"].toString() + " -> " + root["destination"].toObject()["icao_code"].toString());
 				//QLegs->clear();
 				return;
 			}
-			STAR = true;
+			
 
-			Mode = PREPARE;
-
+			Mode = PREPREPARE;
+			TCabinWork->start();
+			ConnectButtonEnabled(true);
+			StartButtonEnabled(true);
 			if (data->GData.SIM_ON_GROUND != 1) {
 				SendCommand(GEAR_SET, 0, 0);
 				SendCommand(SET_THROTTLE, 3900, 0);
@@ -1026,7 +1083,21 @@ VOID MainLogic::TimerProc()
 			Utils::DOrtoKM(&CurrentLeg);
 		}
 	}
+	if (Mode == PREPREPARE) {
+
+		CurrentLeg = GetCurrentLeg();
+		double RemainingDistance = GetRemainingDistance();
+		GRemainingDistance = RemainingDistance;
+		double DToChange = CalcToNewWay(true);
+		CHAR s[512];
+		SendText("MODE: AUTO Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " EFIS: " + " km Total: " + QString::number(RemainingDistance, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWayIndex) + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()) + " D for head: " + QString::number(DToChange, 'f', 3), false);
+
+	}
 	if (Mode == PREPARE) {
+		SendCommand(START_TIMER, 0, 0);
+		int rrrrr = sizeof(UINT64);
+		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
+		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
 		if (data->AllData.A32NX_INITFLIGHT_STATE >= 8) {
 			Log("Start boarding");
 		}
@@ -1084,7 +1155,7 @@ VOID MainLogic::TimerProc()
 			CurrentLeg = Legs->at(CurrentWayIndex);
 			if (CurrentLeg.Type == TYPE_PATHS[11]) {
 				if (Mode == STARTPUSHBACK) {
-					if (data->GData.PUSHBACK_AVAILABLE);
+					/*if (data->GData.PUSHBACK_AVAILABLE);
 					//SendEvent(KEY_PARKING_BRAKES, 1);
 					SendEvent(KEY_PUSHBACK_SET, 1);
 					while (data->GData.GROUND_VELOCITY < 0.02);
@@ -1092,8 +1163,19 @@ VOID MainLogic::TimerProc()
 					Sleep(60000);
 					//SendEvent(KEY_PARKING_BRAKES, 0);
 					SendCommand(PARKBRAKE_SET, 0, 0);
-					SetData(PUSHBACK_WAIT, 0);
-					Mode = PUSHBACK;
+					SetData(PUSHBACK_WAIT, 0);*/
+					if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 5) {
+						SetDataL(FSDT_GSX_MENU_CHOICE, 1);
+						while (data->GData.GROUND_VELOCITY < 0.02) {
+							data->AllData.FSDT_GSX_MENU_CHOICE = 1;
+							while (data->AllData.FSDT_GSX_MENU_CHOICE != -2);
+							SendCommand(PARKBRAKE_SET, 0, 0);
+							Sleep(2000);
+						}
+						Mode = PUSHBACK;
+						Log("Start pushback");
+					}
+					
 				}
 				//emit SendCommand(SET_PUSHBACK_SPEED, 5, 10);
 				//SetData(GROUND_VELOCITY, 5);
@@ -1124,11 +1206,20 @@ VOID MainLogic::TimerProc()
 				else {
 					double HeadingRel = PBHeadWithWay(&Legs->at(CurrentWayIndex), true);
 				}
+				
+				if (data->GData.GROUND_VELOCITY < 0.05) {
+					SendCommand(PARKBRAKE_SET, 1, 0);
+				}
+				if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
+					SendCommand(PARKBRAKE_SET, 1, 0);
+					Mode = ENGINESTART;
+					Log("End pushback");
+				}
 			}
 			else {
 				if (Mode == PUSHBACK) {
 					
-					SetData(PUSHBACK_WAIT, 1);
+					/*SetData(PUSHBACK_WAIT, 1);
 					//emit SendCommand(SET_PUSHBACK_SPEED, 0, 10);
 					//SetData(GROUND_VELOCITY, 0);
 					SendEvent(KEY_PUSHBACK_SET, 0);
@@ -1136,13 +1227,19 @@ VOID MainLogic::TimerProc()
 						SetData(PUSHBACK_WAIT, 1);
 						SetData(GROUND_VELOCITY, 0);
 					};
-					SetData(PUSHBACK_WAIT, 1);
+					SetData(PUSHBACK_WAIT, 1);*/
 					//SendEvent(KEY_PARKING_BRAKES, 1);
-					SendCommand(PARKBRAKE_SET, 1, 0);
+					
 					//SendEvent(KEY_PUSHBACK_SET, 1);
 				}
-				Log("End pushback");
-				Mode = ENGINESTART;
+				if (data->GData.GROUND_VELOCITY < 1.5) {
+					SendCommand(PARKBRAKE_SET, 1, 0);
+				}
+				if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
+					SendCommand(PARKBRAKE_SET, 1, 0);
+					Mode = ENGINESTART;
+					Log("End pushback");
+				}
 				Sleep(30000);
 				//brakes = { 0.0,0.0 };
 				//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes.LBrake);
@@ -1185,25 +1282,32 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	if ((Mode == TAXIOUT) || (Mode == TAXIIN)) {
+		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
+		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
 		double GAlt = data->GData.PLANE_ALT_ABOVE_GROUND - 9;
 		CurrentLeg = Legs->at(CurrentWayIndex);
 		CurrentLeg.Lat = data->GData.PLANE_LATITUDE;
 		CurrentLeg.Lon = data->GData.PLANE_LONGITUDE;
 		Utils::DOrtoKM(&CurrentLeg);
+		double AngleFront = GetAngleFront(0.04, false);
+		double NoseFront = GetAngleFront(0.01, false);
 		double HeadingRel = ManHeadWithWay(&Legs->at(CurrentWayIndex));
+		//double HeadingRel = RudWithHead(data->GData.PLANE_HEADING_DEGREES_TRUE + NoseFront);
 		double DCommon = Utils::DToType(CurrentWayIndex, Legs, "RUNWAY", &CurrentLeg, Utils::Constrain180(CurrentLeg.EndHeadingTrue-data->GData.PLANE_HEADING_DEGREES_TRUE));
 		
+		SetDataL(AI_ANGLE_HEAD, AngleFront);
+		SetDataL(AI_ANGLE_HEAD, NoseFront);
 		double DToRunway = 1;
 		if (Mode == TAXIOUT) {
 			DToRunway = Utils::DToRunway(CurrentWayIndex, Legs, &CurrentLeg);
 		}
 		if (Mode == TAXIOUT) {
-			SendText("MODE: TAXI_OUT To " + Legs->at(SIDPoint + 1).Name + " - " + Legs->at(SIDPoint).Name + " Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " GroundAltitude: " + QString::number(GAlt, 'f', 3) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \n \
-			Speed " + QString::number(speed) + "; Current way: " + QString::number(CurrentWayIndex) + " Name: " + CurrentLeg.Name + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()), false);
+			SendText("MODE: TAXI_OUT To " + Legs->at(SIDPoint + 1).Name + " - " + Legs->at(SIDPoint).Name + " Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " GroundAltitude: " + QString::number(GAlt, 'f', 3) + " km Total: " + QString::number(AngleFront, 'f', 3) + " km \n \
+			Speed " + QString::number(speed) + "; Current way: " + QString::number(CurrentWayIndex) + " EFIS: " + QString(LIdent.c_str()) + " Name: " + CurrentLeg.Name + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()), false);
 		}
 		else {
 			SendText("MODE: TAXI_IN To " + Legs->at(SIDPoint + 1).Name + " - " + QString(ParkN->c_str()) + " Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \n \
-			Speed " + QString::number(speed) + "; Current way: " + QString::number(CurrentWayIndex) + " Name: " + CurrentLeg.Name + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()), false);
+			Speed " + QString::number(speed) + "; Current way: " + QString::number(CurrentWayIndex) + " EFIS: " + QString(LIdent.c_str()) + " Name: " + CurrentLeg.Name + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()), false);
 		}
 		double kDToHed = 0.00004;
 		double REangle;
@@ -1297,6 +1401,9 @@ VOID MainLogic::TimerProc()
 			else {
 				if (CurrentWayIndex + 1 < Legs->size()) {
 					CurrentWayIndex = CurrentWayIndex + 1;
+					if ((Mode == TAXIOUT) && (Legs->at(CurrentWayIndex).Dist == 2.0)) {
+						CurrentWayIndex = SIDPoint + 1;
+					}
 				}
 			}
 		}
@@ -1328,22 +1435,22 @@ VOID MainLogic::TimerProc()
 				}
 			}
 			else {
-				if ((abs(EangleRel) > 60) || (CurrentLeg.Distance < (DToHed + 0.30))) {
+				if ((abs(AngleFront) > 60) || (CurrentLeg.Distance < (DToHed + 0.30))) {
 					speed = 20;
 					//speed = 5;
-					if (abs(REangle) > 10) {
+					if (abs(AngleFront) > 10) {
 						speed = 15;
 						//speed = 5;
 					}
-					if (abs(REangle) > 30) {
+					if (abs(AngleFront) > 30) {
 						speed = 12;
 						//speed = 5;
 					}
-					if (abs(REangle) > 50) {
+					if (abs(AngleFront) > 50) {
 						speed = 10;
 						//speed = 5;
 					}
-					if (abs(REangle) > 100) {
+					if (abs(AngleFront) > 100) {
 						speed = 5;
 					}
 					if (abs(HeadingRel) > 5) {
@@ -1434,6 +1541,8 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	if (Mode == TAKEOFF) {
+		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
+		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
 		//SendCommand(SET_THROTTLE, 3900, 0);
 		SendCommand(SET_ATHR, 1, 0);
 		double NPitch = (data->AllData.A32NX_FLIGHT_DIRECTOR_PITCH + data->GData.PLANE_PITCH_DEGREES);
@@ -1527,9 +1636,9 @@ VOID MainLogic::TimerProc()
 				//PPID.FT = true;
 				//Mode = CLIMB;
 			}
-			if (GAlt > 60) {
+			if (GAlt > 500) {
 				if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
-					//SendEvent(A32NX_FCU_AP_1_PUSH, 1);
+					SendEvent(A32NX_FCU_AP_1_PUSH, 1);
 				}
 			}
 
@@ -1579,7 +1688,7 @@ VOID MainLogic::TimerProc()
 
 		double DToChange = CalcToNewWay(true);
 		CHAR s[512];
-		SendText("MODE: TAKEOFF Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWayIndex) + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()) + " D for head: " + QString::number(DToChange, 'f', 3), false);
+		SendText("MODE: TAKEOFF Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " EFIS: " + QString(LIdent.c_str()) + " km Total: " + QString::number(DCommon, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWayIndex) + " Type: " + CurrentLeg.Type + " Total ways: " + QString::number(Legs->size()) + " D for head: " + QString::number(DToChange, 'f', 3), false);
 		if (SOG == 1) {
 			double HeadingRel = ManHeadWithWay(&Legs->at(CurrentWayIndex));
 			SendCommand(SET_AILERON, 0, 20);
@@ -1618,8 +1727,10 @@ VOID MainLogic::TimerProc()
 		double Lat = data->GData.PLANE_LATITUDE;
 		double Lon = data->GData.PLANE_LONGITUDE;
 		double FlightPhase = data->AllData.A32NX_FMGC_FLIGHT_PHASE;
+		double TD = data->AllData.A32NX_PFD_MSG_TD_REACHED;
 		double VerticalSpeedForGlide;
-
+		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
+		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
 		ChangeFlightPhaseReport();
 
 		CurrentLeg = GetCurrentLeg();
@@ -1633,16 +1744,18 @@ VOID MainLogic::TimerProc()
 		///////
 		GRemainingDistance = RemainingDistance;
 
+
+
 		double AngleToDesc = GetDescentAngle();
 
 		// Set approach phase
 		if ((RemainingDistance < 30) && (!Approach) && (FlightPhase != 5)) {
-			SetDataL(A32NX_APPROACH_STATE, 1);
+			SetDataL(A32NX_APPROACH_STATE, 1); //Verify
 			SendCommand(PUSH_SPD, 1, 0);
 		}
 		
 		// Working flaps and gears
-		if ((FlightPhase == 5)) {
+		if ((FlightPhase >= 4)) {
 			if (IAS < FSpeed + 5) {
 				SendCommand(FLAPS_SET, 4.0, 0);
 				SendCommand(LIGHTLANDING_SET, 1, 20);	
@@ -1678,6 +1791,11 @@ VOID MainLogic::TimerProc()
 					SendCommand(GEAR_SET, 0.0, 0);
 				}
 			}
+			if (GroundAltitude > 500) {
+				if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+					//SendEvent(A32NX_FCU_AP_1_PUSH, 0);
+				}
+			}
 		}
 
 		// Gear up if positive climb
@@ -1709,11 +1827,38 @@ VOID MainLogic::TimerProc()
 
 		if (RemainingDistance > 17) {
 			int cI = CurrentWayIndex;
-			while ((Legs->at(cI).Type != "RUNWAY") && (cI < (Legs->size() - 1))) {
+			while ((Legs->at(cI).Type != "RUNWAY") && (cI < (Legs->size() - 1))) {				
 				cI++;
+			}
+			int II = CurrentWayIndex+1;
+			QString Id = QString(LIdent.c_str());
+			while ((Legs->at(II).Type != "RUNWAY") && (II < (Legs->size() - 1))) {
+				
+				if (Legs->at(II).Name == Id) {
+					CurrentWayIndex = II;
+					CurrentLeg = GetCurrentLeg();
+					AngleToDesc = GetDescentAngle();
+					break;
+				}
+				II++;
 			}
 			if (RemainingDistance < 20) {
 				CurrentWayIndex = cI;
+				CurrentLeg = GetCurrentLeg();
+				AngleToDesc = GetDescentAngle();
+				if (data->AllData.A32NX_AUTOPILOT_1_ACTIVE) {
+					SendEvent(A32NX_FCU_AP_1_PUSH, 0);
+				}
+			}
+			else {
+				if (TD == 1) {
+					SendCommand(PUSH_ALT_TEST, 0, 0); // Future working
+					Mode = DESCENT;
+				}
+			}
+			
+			if ((Mode == DESCENT) && ((IndicatedAltitude - Legs->at(cI).SAltitudeHi) < 3000)) {
+				//CurrentWayIndex = cI;
 			}
 			// Create vertical profile //TO DO Big work
 			if ((IndicatedAltitude > 10000) && (CurrentLeg.FinalAlt < 10000)) {
@@ -1721,12 +1866,12 @@ VOID MainLogic::TimerProc()
 				AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 20)) * 180.0 / M_PI;
 			}
 			else if (IndicatedAltitude > 10000) {
-				VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, CurrentLeg.FinalAlt - 500, -5);
+				VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, CurrentLeg.FinalAlt - 500, -10);
 				AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 5)) * 180.0 / M_PI;
 			}
 			else {
 				if (FlightPhase < 5) {
-					VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 2.7, CurrentLeg.FinalAlt - 500, -5);
+					VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 2.7, CurrentLeg.FinalAlt - 500, -10);
 					AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt - 500) * 0.0003048) / (CurrentLeg.DistToAlt + 0.05 - 5)) * 180.0 / M_PI;
 				}
 				else {
@@ -1748,9 +1893,11 @@ VOID MainLogic::TimerProc()
 			if (FlightCruise < (IndicatedAltitude - 100)) {
 				//SendCommand(VS_SEL, 0, 20);
 			}
-			if ((AngleToDesc >= 2.7/*GetAngleToDesc(IndicatedAltitude) */ ) || (Mode == DESCENT)) {
+			
+			if ((AngleToDesc >= 122.6/*GetAngleToDesc(IndicatedAltitude) */) || (Mode == DESCENT)) {
 				Mode = DESCENT;
 				SendCommand(ALT_SEL, FlightCruise, 20);
+				SendCommand(ALT_TEST, 2000, 20); // Future working
 				if (FlightCruise > (IndicatedAltitude - 100)) {
 					if (FlightCruise != MaximumAltitude) {
 						SendCommand(PULL_ALT, 0, 0);
@@ -1830,7 +1977,7 @@ VOID MainLogic::TimerProc()
 			//LANDING
 			SendCommand(AUTOBRAKES_SET, 1, 0);
 			VerticalSpeedForGlide = GetVerticalSpeedForGlide(&Legs->at(CurrentWayIndex), 3.0, Legs->at(CurrentWayIndex).EAltitudeHi);
-			AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt) * 0.0003048) / (CurrentLeg.DistToAlt - Legs->at(CurrentWayIndex).Distance + 1.00)) * 180.0 / M_PI;
+			AngleToFixAlt = atan(((IndicatedAltitude - CurrentLeg.FinalAlt) * 0.0003048) / (CurrentLeg.DistToAlt - Legs->at(CurrentWayIndex).Distance + Legs->at(CurrentWayIndex).Dist+ 0.25)) * 180.0 / M_PI;
 			//VerticalSpeedForGlide = ManVSWithAngle(3);
 			
 			if (SimOnGround) {
@@ -1916,14 +2063,20 @@ VOID MainLogic::TimerProc()
 			if ((GroundAltitude < 50) && Pitch50 == 8518) {
 				Pitch50 = Pitch;
 			}
-			if (GroundAltitude > 50) {
+			if (GroundAltitude > 100) {
 				ManPitchWithFD(FlightDirectorPitch);
 			}
-			else if (GroundAltitude > 30) {
-				ManPitchWithFD(Pitch50);
+			else if (GroundAltitude > 70) {
+				//ManPitchWithFD(Pitch50);
+				ManPitchWithFD(-2.5);
+			}
+			else if (GroundAltitude > 50) {
+				//ManPitchWithFD(Pitch50);
+				ManPitchWithFD(-3.5);
 			}
 			else {
-				ManPitchWithFD(Pitch50 - 2.0);
+				//ManPitchWithFD(Pitch50 - 2.0);
+				ManPitchWithFD(-4.0);
 			}
 			
 			
@@ -1948,7 +2101,7 @@ VOID MainLogic::TimerProc()
 		
 		double DToChange = CalcToNewWay();
 
-		SendText("MODE: CRUISE \"" + Legs->at(STARPoint).Name + "\" Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " GroundAltitude: " + QString::number(GroundAltitude, 'f', 3) + " km Total: " + QString::number(RemainingDistance, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWayIndex) + " Type: " + CurrentLeg.Type + " Name: \"" + CurrentLeg.Name + "\" Total ways: " + QString::number(Legs->size()) + " D for head: " + QString::number(DToChange, 'f', 3) + " \n SSpeed: " + QString::number(VerticalSpeedForGlide) + " D to altHi: " + QString::number(CurrentLeg.DistToAlt, 'f', 3) + " Next altHi: " + QString::number(CurrentLeg.FinalAlt, 'f', 3) + " \n ATD: " + QString::number(AngleToDesc, 'f', 3) + " Current angle: " + QString::number(GetAngleToDesc(IndicatedAltitude), 'f', 3) + " Angle to next alt: " + QString::number(AngleToFixAlt, 'f', 3), false);
+		SendText("MODE: CRUISE \"" + Legs->at(STARPoint).Name + "\" Current: " + QString::number(CurrentLeg.Distance, 'f', 3) + " GroundAltitude: " + QString::number(GroundAltitude, 'f', 3) + " km Total: " + QString::number(RemainingDistance, 'f', 3) + " km \nCurrent way: " + QString::number(CurrentWayIndex) + " Type: " + CurrentLeg.Type + " EFIS: " + QString(LIdent.c_str()) + " Name: \"" + CurrentLeg.Name + "\" Total ways: " + QString::number(Legs->size()) + " D for head: " + QString::number(DToChange, 'f', 3) + " \n SSpeed: " + QString::number(VerticalSpeedForGlide) + " D to altHi: " + QString::number(CurrentLeg.DistToAlt, 'f', 3) + " Next altHi: " + QString::number(CurrentLeg.FinalAlt, 'f', 3) + " \n ATD: " + QString::number(AngleToDesc, 'f', 3) + " Current angle: " + QString::number(GetAngleToDesc(IndicatedAltitude), 'f', 3) + " Angle to next alt: " + QString::number(AngleToFixAlt, 'f', 3), false);
 
 	}
 		
@@ -1979,8 +2132,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if ((data->GData.INDICATED_ALTITUDE > CurrentLeg.EAltitudeHi)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-					SendCommand(PULL_SPD, 1, 0);
-					SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+					//SendCommand(PULL_SPD, 1, 0);
+					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
 				else {
 					SendCommand(PUSH_SPD, 1, 0);
@@ -1996,8 +2149,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if (CurrentLeg.Distance > CurrentLeg.Dist) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-					SendCommand(PULL_SPD, 1, 0);
-					SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+					//SendCommand(PULL_SPD, 1, 0);
+					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
 				else {
 					SendCommand(PUSH_SPD, 1, 0);
@@ -2015,8 +2168,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 			if (abs(abs(CurrentLeg.EndHeadingTrue) - abs(Legs->at(CurrentWayIndex).Dist)) < 1.0) {
 				if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-						SendCommand(PULL_SPD, 1, 0);
-						SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+						//SendCommand(PULL_SPD, 1, 0);
+						//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 					}
 					else {
 						SendCommand(PUSH_SPD, 1, 0);
@@ -2031,8 +2184,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 			if ((CurrentLeg.Distance < REangle)) {
 				if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-						SendCommand(PULL_SPD, 1, 0);
-						SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+						//SendCommand(PULL_SPD, 1, 0);
+						//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 					}
 					else {
 						SendCommand(PUSH_SPD, 1, 0);
@@ -2048,8 +2201,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		else {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-					SendCommand(PULL_SPD, 1, 0);
-					SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+					//SendCommand(PULL_SPD, 1, 0);
+					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
 				else {
 					SendCommand(PUSH_SPD, 1, 0);
@@ -2067,8 +2220,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if ((CurrentLeg.Distance < REangle)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-					SendCommand(PULL_SPD, 1, 0);
-					SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+					//SendCommand(PULL_SPD, 1, 0);
+					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
 				else {
 					SendCommand(PUSH_SPD, 1, 0);
@@ -2084,8 +2237,8 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if ((EangleRel > 60) || (EangleRel < -60) || (CurrentLeg.Distance < REangle)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
 				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
-					SendCommand(PULL_SPD, 1, 0);
-					SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
+					//SendCommand(PULL_SPD, 1, 0);
+					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
 				else {
 					SendCommand(PUSH_SPD, 1, 0);
@@ -2099,6 +2252,9 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	}
 	if ((Mode == TAKEOFF) && (data->GData.INDICATED_ALTITUDE > 500)) {
 		CurrentWayIndex = Curr;
+		if ((Mode == TAXIOUT) && (Legs->at(CurrentWayIndex).Dist == 2.0)) {
+			CurrentWayIndex = SIDPoint + 1;
+		}
 	}
 	else if (((Mode == CRUISE) || (Mode == DESCENT)) && (SOG)) {
 		CurrentWayIndex = CurrentWayIndex;
@@ -2106,9 +2262,16 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if (CurrentLeg.Type == "RUNWAY") {
 		CurrentWayIndex = CurrentWayIndex;
 	}
+	else if ((Mode == TAXIOUT) && (Legs->at(CurrentWayIndex).Dist == 2.0)) {
+		CurrentWayIndex = SIDPoint + 1;
+	}
 	else if (Mode != TAKEOFF) {
 		CurrentWayIndex = Curr;
+		if ((Mode == TAXIOUT) && (Legs->at(CurrentWayIndex).Dist == 2.0)) {
+			CurrentWayIndex = SIDPoint + 1;
+		}
 	}
+	
 	return REangle;
 }
 
@@ -2396,12 +2559,12 @@ double MainLogic::GetVerticalSpeedForGlide(sWayPoint* Leg, double GlideAngle, do
 	double CurrentNeedAlt;
 
 	if (Leg->Type == "RUNWAY") {
-		TimeToNextWay = ((CurrentLeg.Distance - Leg->Distance + 1.12) / 1.852) / GS; //Hour
-		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.Distance - Leg->Distance + 1.0)) * 3280.84) + Leg->EAltitudeHi; //Feet
+		TimeToNextWay = ((CurrentLeg.Distance - Leg->Distance + Leg->Dist + 0.25) / 1.852) / GS; //Hour
+		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.Distance - Leg->Distance + Leg->Dist + 0.25)) * 3280.84) + Leg->EAltitudeHi; //Feet
 	}
 	else {
 		TimeToNextWay = ((CurrentLeg.DistToAlt + BiasDistance + 0.05) / 1.852) / GS;
-		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.DistToAlt + BiasDistance)) * 3280.84) + TargetAlt;
+		CurrentNeedAlt = (((tan(GlideAngle / 180 * M_PI)) * (CurrentLeg.DistToAlt + BiasDistance + 0.05)) * 3280.84) + TargetAlt;
 	}
 
 	double VSWay = -(((CurrentNeedAlt - Leg->EAltitudeHi) * 0.0003048) /*Km*/ / TimeToNextWay) * 54.681; // Feet per Minute
@@ -2413,7 +2576,7 @@ double MainLogic::GetVerticalSpeedForGlide(sWayPoint* Leg, double GlideAngle, do
 
 	if ((IndicatedAltitude - Legs->at(Legs->size() - 1).EAltitudeHi) < -NeedVerticalSpeed / 6) {
 	//if ((PlaneAltitude - Legs->at(Legs->size() - 1).EAltitudeHi) < -NeedVerticalSpeed / 6) {
-		if ((CurrentLeg.Distance - Leg->Distance - 0.2) < 0) {
+		if ((CurrentLeg.Distance - Leg->Distance - 0.1) < 0) {
 			NeedVerticalSpeed = -GroundAltitude * 5;
 		}
 	}
@@ -2421,6 +2584,29 @@ double MainLogic::GetVerticalSpeedForGlide(sWayPoint* Leg, double GlideAngle, do
 		NeedVerticalSpeed = 0;
 	}
 	return NeedVerticalSpeed;
+}
+
+void MainLogic::SendDataPMDG(DWORD val) {
+	if (Connected) {
+		SendCommand(SEND_COMMAND_PMDG, val, 0);
+	}
+}
+
+void MainLogic::StartStopSim() {
+	if (Mode == PREPREPARE) {
+		cabinWork->Work = true;
+		Mode = PREPARE;
+	}
+	if (MainTimer->isActive()) {
+		MainTimer->stop();
+	}
+	else {
+		MainTimer->start();
+	}
+	/*if (Mode == TAXIOUT) {
+		data->Timer->stop();
+		//MainTimer->stop();
+	}*/
 }
 
 // Main connect method
@@ -2452,6 +2638,7 @@ void MainLogic::Connect() {
 
 
 			HRESULT hr = (SimConnect_MapClientDataNameToID(HSimConnect, A32NX_ALLDATA_NAME, A32NX_ALLDATA_ID));
+			int sz = sizeof(sAllData);
 			hr = (SimConnect_AddToClientDataDefinition(HSimConnect, A32NX_ALLDATA_DEFINITION, 0, sizeof(sAllData)));
 			//hr = (SimConnect_RequestClientData(HSimConnect, A32NX_ALLDATA_ID, REQ_ALL_DATA, A32NX_ALLDATA_DEFINITION,
 //				SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0));
@@ -2459,8 +2646,38 @@ void MainLogic::Connect() {
 
 			SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_TEXT));
 			SUCC(SimConnect_RequestSystemState(HSimConnect, REQ_AIR_PATH, "AircraftLoaded"));
-			SUCC(SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_SIM_START, "SimStart"));
-			//SUCC(SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz"));
+			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_SIM_START, "SimStart"));
+
+			hr = (SimConnect_MapClientEventToSimEvent(HSimConnect, EXTERNAL_SYSTEM_SET, "EXTERNAL_SYSTEM_SET"));
+			hr = (SimConnect_MapClientEventToSimEvent(HSimConnect, EXTERNAL_SYSTEM_TOGGLE, "EXTERNAL_SYSTEM_TOGGLE"));
+
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_REGISTER_VARIABLE_QUERY, "WASM.RegisterVariableQuery");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_REGISTER_VARIABLE_RESPONSE, "WASM.RegisterVariableResponse");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_GET_VARIABLE_QUERY, "WASM.GetVariableQuery");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_GET_VARIABLE_RESPONSE, "WASM.GetVariableResponse");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_SET_VARIABLE_QUERY, "WASM.SetVariableQuery");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_SET_VARIABLE_RESPONSE, "WASM.SetVariableResponse");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_EXEC_CODE_QUERY, "WASM.ExecCodeQuery");
+			//hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_EXEC_CODE_RESPONSE, "WASM.ExecCodeResponse");
+			hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_MENU_OPEN, "WASM.MenuOpen");
+			hr = SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_MENU_CHOISE, "WASM.MenuChoice");
+
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_REGISTER_VARIABLE_QUERY, TRUE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_REGISTER_VARIABLE_RESPONSE, FALSE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_GET_VARIABLE_QUERY, TRUE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_GET_VARIABLE_RESPONSE, FALSE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_SET_VARIABLE_QUERY, TRUE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_SET_VARIABLE_RESPONSE, FALSE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_EXEC_CODE_QUERY, TRUE);
+			//hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_EXEC_CODE_RESPONSE, FALSE);
+			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_MENU_OPEN, FALSE);
+			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EVENT_MENU_CHOISE, FALSE);
+
+			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EXTERNAL_SYSTEM_SET);
+			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EXTERNAL_SYSTEM_TOGGLE);
+			hr = SimConnect_SetNotificationGroupPriority(HSimConnect, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST);
+
+			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz"));
 			SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_AIRCRAFT_USER, "Title", NULL, SIMCONNECT_DATATYPE_STRING256));
 			//SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, A32NX_APU_FLAP_OPEN_PERCENTAGE, "Autoflight.A32NX_APU_FLAP_OPEN_PERCENTAGE"));
 
@@ -2555,8 +2772,7 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(this, SIGNAL(CLParking(int*)), cabinWork, SLOT(CLParking(int*))));
 
 			ConnectConnectors->push_back(connect(this, SIGNAL(CabinReport()), cabinWork, SLOT(CabinReport())));
-			TCabinWork->start();
-			SendCommand(START_TIMER, 0, 0);
+			
 			Quit = FALSE;
 			Connected = TRUE;			
 			Mode = START;
@@ -2662,8 +2878,8 @@ void MainLogic::AddSidStarTrack(WayPointA* wayPoint, TPath* RWEnd, FIXX* fixx, D
 		AddWayPoint(fixx->Lon, fixx->Lat, wayPoint->ALT, TYPE_PATHS[wayPoint->TYPE], QString(wayPoint->FIXName.c_str()), wayPoint->TRK, FIXALT, 0.0, 0, wayPoint->ALT);
 	}
 	else if (wayPoint->TypeName == "RNW") {
-		AddWayPoint(runway->sLongitude, runway->sLatitude, runway->alt, "GSWAY", QString(runway->Name.c_str()), 0, FIXALT, 0, 0, runway->alt);
-		AddWayPoint(runway->eLongitude, runway->eLatitude, runway->alt, "RUNWAY", QString(runway->Name.c_str()), 0, FIXALT, 0, 0, runway->alt);
+		AddWayPoint(runway->sLongitude, runway->sLatitude, runway->alt, "GSWAY", QString(runway->Name.c_str()), 0, FIXALT, 0, runway->Dev, runway->alt);
+		AddWayPoint(runway->eLongitude, runway->eLatitude, runway->alt, "RUNWAY", QString(runway->Name.c_str()), 0, FIXALT, 0, runway->Dev, runway->alt);
 	}
 	else if (wayPoint->TypeName == "FIXOVERFLYATORABOVESPEED") {
 		AddWayPoint(fixx->Lon, fixx->Lat, 0.0, TYPE_PATHS[wayPoint->TYPE], QString(wayPoint->FIXName.c_str()), wayPoint->TRK, ALTORABOVE, wayPoint->SPEED, 0, wayPoint->ALT);
@@ -2728,6 +2944,17 @@ std::vector<TSTARS>* MainLogic::AddSTAR(SIDSTAR* sidstar, DATA_RUNWAY* runway, Q
 	bool FindAppr = false;
 	bool FindTransAppr = false;
 	bool FindTransStar = false;
+	std::vector<std::string> AppTypes = { "ILS", "GLS", "LOC", "NDB", "VOR", "RNV" };
+	for (int i = 0; i < sidstar->APPROACHES->size(); i++) {
+		for (int k = 0; k < AppTypes.size(); k++) {
+			if (sidstar->APPROACHES->at(i).Name.find(AppTypes[k]) != std::string::npos) {
+				sidstar->APPROACHES->at(i).Priority = k;
+			}
+		}
+	}
+	std::sort(sidstar->APPROACHES->begin(), sidstar->APPROACHES->end(),
+		CompareByMember<Points, int>(&Points::Priority));
+
 	for (j = 0; j < sidstar->APPROACHES->size(); j++) {
 		for (r = 0; r < sidstar->APPROACHES->at(j).Runways->size(); r++) {
 			if (sidstar->APPROACHES->at(j).Runways->at(r) == runway->Name) {
@@ -3144,6 +3371,9 @@ double MainLogic::PBHeadWithWay(sWayPoint* Way, bool PB) {
 
 double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 	double EndHead;
+	if (CurrentWayIndex > 1750) {
+		CurrentWayIndex = 98;
+	}
 	if ((CurrentLeg.Type == TYPE_PATHS[FIXHEADING])) {
 		EndHead = Legs->at(CurrentWayIndex).EndHeadingTrue + data->GData.MAGVAR;
 	}
@@ -3163,21 +3393,24 @@ double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 	double a = Utils::GetFixDA(sin(EangleRel * M_PI / 180) * CurrentLeg.Distance, EangleRel);
 	double HeadingRel;
 	if ((data->GData.SIM_ON_GROUND== 1)) {
-		EangleRel = a * 500;
-		if (data->GData.GROUND_VELOCITY < 2) {
-			EangleRel = a * 50000;
-		}
-		if (data->GData.GROUND_VELOCITY < 5) {
-			EangleRel = a * 10000;
+		EangleRel = a * 500; //500
+		if (data->GData.GROUND_VELOCITY < 10) {
+			EangleRel = a * 2000; //2000
 		}
 		if (data->GData.GROUND_VELOCITY < 7) {
-			EangleRel = a * 3000;
+			EangleRel = a * 3000; //6000
 		}
-		if (data->GData.GROUND_VELOCITY < 10) {
-			EangleRel = a * 1000;
+		if (data->GData.GROUND_VELOCITY < 5) {
+			EangleRel = a * 3000; //20000
 		}
+		if (data->GData.GROUND_VELOCITY < 2) {
+			EangleRel = a * 6000;
+		}
+		
+		
+		
 		double EangleRel1 = EangleRel;
-		EangleRel = Utils::AngleLimitS(EangleRel, 60);
+		EangleRel = Utils::AngleLimitS(EangleRel, 40);
 		EangleRel = Utils::Constrain180(EndHead + EangleRel);
 		HeadingRel = RudWithHead(EangleRel);
 	}
@@ -3194,46 +3427,122 @@ double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 		double AngleDrift = asin(sin(AngleWind / 180 * M_PI) * data->GData.AMBIENT_WIND_VELOCITY / data->GData.AIRSPEED_TRUE)* 180 / M_PI;
 		EangleRel = Utils::Constrain180(EndHead + EangleRel + AngleDrift);
 		int EangleRel2 = Utils::Constrain180(EangleRel - data->GData.MAGVAR);
-		SendCommand(HDG_SEL, EangleRel2, 0);
+		//SendCommand(HDG_SEL, EangleRel2, 0);
 		HeadingRel = BankWithHead(EangleRel);
 	}
 	return HeadingRel;
 }
 
-double MainLogic::RudWithHead(double Heading) {
+double MainLogic::GetAngleFront(double frontOut, bool nose = false) {
+	double D = CurrentLeg.Distance;
+	int way = CurrentWayIndex;
+	SIMCONNECT_DATA_LATLONALT noselatlon;
+	SIMCONNECT_DATA_LATLONALT latlon;
+	double dDist;
+	while (D < frontOut) {
+		if (way >= Legs->size()) {
+			break;
+		}
+		D += Legs->at(way).Distance;
+		way++;
+	}
+	if (way != CurrentWayIndex) {
+		way--;
+		D -= Legs->at(way).Distance;
+		dDist = frontOut - D;
 
+		latlon = Utils::GetDALatLon(Legs->at(way).Lat, Legs->at(way).Lon, Legs->at(way).EndHeadingTrue, dDist);
+	}
+	else {
+		D -= CurrentLeg.Distance;
+		dDist = frontOut - D;
+
+		latlon = Utils::GetDALatLon(CurrentLeg.Lat, CurrentLeg.Lon, CurrentLeg.EndHeadingTrue, dDist);
+	}
+	if (nose) {
+
+	}
+	noselatlon = Utils::GetDALatLon(CurrentLeg.Lat, CurrentLeg.Lon, data->GData.PLANE_HEADING_DEGREES_TRUE, 0.0084);
+	sWayPoint front = CurrentLeg;
+	front.ELat = latlon.Latitude;
+	front.ELon = latlon.Longitude;
+	Utils::DOrtoKM(&front);
+
+	double angleFront = Utils::Constrain180(front.HeadingTrue - data->GData.PLANE_HEADING_DEGREES_TRUE);
+	return angleFront;
+}
+
+double MainLogic::PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral) {
+
+	double P = err * kp;
+	*integral = Utils::Constrain(*integral + (err * dt * ki), -bi, bi);
+	double I = *integral;
+	double D = Utils::Constrain(((err - *prevErr) / dt) * kd, -bd, bd);
+	*prevErr = err;
+	return P + I + D;
+}
+
+double MainLogic::RudWithHead(double Heading) {
+	double VelV = data->GData.ROTATION_VELOCITY_BODY_Y;
+	VelV = VelV / 1;
+	
 	static double sHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
 	double eHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
 	double HeadingRel = Utils::Constrain180(Heading - data->GData.PLANE_HEADING_DEGREES_TRUE);
 
+	static double prevErr = 0;
+	static double integral = 0;
+	static QDateTime Start = QDateTime::currentDateTime();
+	double dt = (double)Start.msecsTo(QDateTime::currentDateTime()) / 1000;
+	Start = QDateTime::currentDateTime();
+	//computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral);
+
 	double parameter = HeadingRel / 4; //-45.0 - +45.0
 	double rud = data->GData.RUDDER_PEDAL_POSITION * 16383;
+	double rudPID;
 	int intParameter;
+	if (!data->GData.SIM_ON_GROUND) {
+		integral = 0;
+		//rudPID = 0;
+	}
+	else {
+		rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+	}
 	if (data->GData.GROUND_VELOCITY > 5) {
 
 		if (data->GData.AIRSPEED_INDICATED > 60) {
-			rud = rud - (100 * (data->GData.ROTATION_VELOCITY_BODY_Y - parameter) * (data->GData.GROUND_VELOCITY / 5)); //50
+			rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 5)); //50
+			//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral) * 16383;
 			//intParameter = -Utils::Constrain(rud, -3000, 3000);
 			intParameter = -Utils::Constrain(rud, -16383, 16383);
 		}
 		else {
 			if (data->GData.AIRSPEED_INDICATED > 20) {
-				rud = rud - (100 * (data->GData.ROTATION_VELOCITY_BODY_Y - parameter) * (data->GData.GROUND_VELOCITY / 2));
+				rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2));
+				//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral) * 16383;
 				//intParameter = -Utils::Constrain(rud, -13100, 13100);
 				intParameter = -Utils::Constrain(rud, -16383, 16383);
 			} 
 			else {
-				rud = rud - (100 * (data->GData.ROTATION_VELOCITY_BODY_Y - parameter) * (data->GData.GROUND_VELOCITY / 2));
+				rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2));
+				//rud = computePID(dt, HeadingRel, 0.0, 0.0, 0.1, 1.0, 1.0, &prevErr, &integral) * 16383;
 				//intParameter = -Utils::Constrain(rud, -15290, 15290);
 				intParameter = -Utils::Constrain(rud, -16383, 16383);
 			}
 		}
 	}
 	else {
-		rud = rud - (500.0 * (data->GData.ROTATION_VELOCITY_BODY_Y - parameter) * (data->GData.GROUND_VELOCITY / 2));
+		rud = rud - (500 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2));
+		//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral)*16383;
 		intParameter = -Utils::Constrain(rud, -16383, 16383);
 	}
-	
+	if (Mode == TAKEOFF || Mode == LANDING) {
+		intParameter = -Utils::Constrain(rud, -16383, 16383);
+	}
+	else {
+		//rudPID = 0;
+		intParameter = -Utils::Constrain(rudPID, -16383, 16383);
+	}
 	if (Mode == PUSHBACK || Mode == STARTPUSHBACK) {
 		intParameter = -intParameter;
 		SendEvent(KEY_TUG_HEADING, (0xFFFFFFFF / 360) * Heading);
@@ -3272,6 +3581,9 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 	//if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
 		//static double StickYPos = data->GData.YOKE_Y_POSITION;
 
+	static double prevErr = 0;
+	static double integral = 0;
+
 	double Coefficient = 15;
 	if (Mode == TAKEOFF) {
 		Coefficient = 70;
@@ -3288,11 +3600,11 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 	
 	static double StickYPos = data->AllData.A32NX_SIDESTICK_POSITION_Y * 16383;
 	static int countFails = 5;
-	if (countFails >= 5) {
+	if (countFails >= 0) { //5
 		countFails = 0;
 		SetDataPitch = true;
 	}
-	
+
 	/*if (round(StickYPos * 1000000) == round(StickYPos * 1000000)) {
 		SetDataPitch = true;
 	}*/
@@ -3304,11 +3616,13 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 		double CurrentPitch = data->GData.PLANE_PITCH_DEGREES;
 		//double RequiredPitch_L = RequiredPitch;
 		double DeltaTime = cTime - sTime; //Delta time from last iterration
+		
 		//ui->delta->setText(QString::number(DeltaTime, 'f', 3));
 		//Safe NaN
 		if (DeltaTime == 0) {
 			DeltaTime = 0.000001;
 		}
+		double dt = DeltaTime;
 		double PichVelocity = CalcVelocity(LastPitch, CurrentPitch, DeltaTime);
 		double RequiredPitchVelocity = CalcVelocity(LastRequiredPich, RequiredPitch, DeltaTime);
 
@@ -3321,6 +3635,11 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 		NeededChangeStickYPos = LimitVal(NeededChangeStickYPos, Coefficient);
 
 		double NewStickYPos = StickYPos + NeededChangeStickYPos;
+
+		//Test PID
+		//NewStickYPos = PID(dt, PitchRelative, 1000.0, 0.1, 5.0, 100, 100.0, &prevErr, &integral); //0.1,0.001,0.05,1.0,1.0
+		NewStickYPos = PID(dt, PitchRelative, data->AllData.AI_PITCH_P, data->AllData.AI_PITCH_I, data->AllData.AI_PITCH_D, data->AllData.AI_PITCH_IB, data->AllData.AI_PITCH_ID, &prevErr, &integral) * data->AllData.AI_PITCH_K; //0.1,0.001,0.05,1.0,1.0
+		//////////
 
 		NewStickYPos = LimitVal(NewStickYPos, 16383);
 

@@ -18,6 +18,7 @@ public slots:
   static double DegToRad(double D);
   void AddLog(QString s);
   static double GetPathLength(std::vector<TPath>* p);
+  static std::string Utils::Unpack(std::vector<double> values);
   static double GetRWAngle(std::vector<TPath>* p);
   static double GetRWLength(std::vector<TPath>* p);
   static SIMCONNECT_DATA_LATLONALT GetDALatLon(double lat, double lon, double ang, double dist);

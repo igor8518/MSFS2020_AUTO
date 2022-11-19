@@ -1193,6 +1193,239 @@ HRESULT Airport::GetSIDSTAR() {
 //	std::string ICAO = BGLXData::DecodeICAO(PAirportInformation->ICAO);
 //	ReadStreamText* SIDSTARFile = new ReadStreamText(AirportData->RootSim + L"PMDG\\SIDSTARS\\" + std::wstring(ICAO.begin(), ICAO.end()) + L".txt");
 //}
+
+HRESULT Airport::GetRunwayInformation() {
+	if (Records)
+	{
+		std::string ds[] = { "", "L", "R", "C", "W", "A", "B" };
+		if (PRunways)
+		{
+			PRunways->clear();
+		}
+		else
+		{
+			PRunways = new std::vector<RunwayInfoMSFS>();
+		}
+		if (POneWayRunways) {
+			POneWayRunways->clear();
+		}
+		else {
+			POneWayRunways = new std::vector<DATA_RUNWAY>();
+		}
+		if (PPointsRunway) {
+			PPointsRunway->clear();
+		}
+		else {
+			PPointsRunway = new std::vector<POINTS_RUNWAY>();
+		}
+
+		for (int i = 0; i < PTaxiwayPaths->size(); i++) {
+			if ((PTaxiwayPaths->at(i).Type & 0xf) == 2) {
+				//PTaxiwayPaths->at(i).Type = PTaxiwayPaths->at(i).Type & 0xf1;
+			}
+		}
+
+		for (int i = 0; i < Records->size(); i++)
+		{
+			if (Records->at(i).ID == 0xCE)
+			{
+				DWORD Offset = Records->at(i).Offset;
+				
+				RunwayInfoMSFS Runway;
+				DATA_RUNWAY OneRunway;
+				RunwayOffsetThreshold PrimaryOT;
+				RunwayOffsetThreshold SecondaryOT;
+				double PrimaryRunwayDeviation = 0.0;
+				double SecondaryRunwayDeviation = 0.0;
+				
+				double sAlt = -1.0, eAlt = -1.0;
+				BGLX->BGLXFile->Read(&Runway, Offset, sizeof(RunwayInfoMSFS));
+
+				for (int j = i+1; j < Records->size(); j++) {
+					RunwayDeform RunwayDef;
+					if (Records->at(j).ID == 0xCE) {
+						break;
+					}
+					if (Records->at(j).ID == 0x3E) {
+						BGLX->BGLXFile->Read(&RunwayDef, Records->at(j).Offset, sizeof(RunwayDeform));
+						if (RunwayDef.Ratio == 0.0) {
+							sAlt = RunwayDef.Alt;
+						}
+						else if (RunwayDef.Ratio == 1.0) {
+							eAlt = RunwayDef.Alt;
+						}
+
+					}
+					if (Records->at(j).ID == 0x05) {
+						BGLX->BGLXFile->Read(&PrimaryOT, Records->at(j).Offset, sizeof(RunwayOffsetThreshold));
+						PrimaryRunwayDeviation = PrimaryOT.Length;
+					}
+					if (Records->at(j).ID == 0x06) {
+						BGLX->BGLXFile->Read(&SecondaryOT, Records->at(j).Offset, sizeof(RunwayOffsetThreshold));
+						SecondaryRunwayDeviation = SecondaryOT.Length;
+					}
+				}
+
+				if (sAlt == -1.0 || eAlt == -1.0) {
+					sAlt = eAlt = double(Runway.Alt) / 1000.0;
+				}
+				
+				PMDG_TEST::SIMMATH::DSHEH dsheh;
+				dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), Runway.Heading, (Runway.Distance)/2000);
+				dsheh.Slla = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), (Runway.Distance) / 2000);
+
+				PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+				OneRunway.sLatitude = dsheh.Slla.Latitude;
+				OneRunway.sLongitude = dsheh.Slla.Longitude;
+				OneRunway.sHeading = dsheh.SH;
+				OneRunway.eLatitude = dsheh.Ella.Latitude;
+				OneRunway.eLongitude = dsheh.Ella.Longitude;
+				OneRunway.eHeading = dsheh.EH;
+				OneRunway.alt = sAlt * 3.28084;
+				OneRunway.Dev = PrimaryRunwayDeviation / 1000.0;
+				if (Runway.PrimaryNumber < 10) {
+					OneRunway.Name = "0" + std::to_string(Runway.PrimaryNumber) + ds[Runway.PrimaryDesignator];
+				} 
+				else {
+					OneRunway.Name = std::to_string(Runway.PrimaryNumber) + ds[Runway.PrimaryDesignator];
+				}
+				POneWayRunways->push_back(OneRunway);
+
+				dsheh.Slla = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), Runway.Heading, (Runway.Distance ) / 2000);
+				dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), (Runway.Distance) / 2000);
+
+				PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+				OneRunway.sLatitude = dsheh.Slla.Latitude;
+				OneRunway.sLongitude = dsheh.Slla.Longitude;
+				OneRunway.sHeading = dsheh.SH;
+				OneRunway.eLatitude = dsheh.Ella.Latitude;
+				OneRunway.eLongitude = dsheh.Ella.Longitude;
+				OneRunway.eHeading = dsheh.EH;
+				OneRunway.alt = eAlt * 3.28084;
+				OneRunway.Dev = SecondaryRunwayDeviation / 1000.0;
+				if (Runway.SecondaryNumber < 10) {
+					OneRunway.Name = "0" + std::to_string(Runway.SecondaryNumber) + ds[Runway.SecondaryDesignator];
+				}
+				else {
+					OneRunway.Name = std::to_string(Runway.SecondaryNumber) + ds[Runway.SecondaryDesignator];
+				}
+				
+				POneWayRunways->push_back(OneRunway);
+				PRunways->push_back(Runway);
+				for (int j = 0; j < PTaxiwayPoints->size(); j++) {
+					dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), Runway.Distance / 2000);
+					POINTS_RUNWAY PointRunway;
+					PointRunway.Runway = POneWayRunways->size() - 2;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					dsheh.Slla.Latitude = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(j).Lat);
+					dsheh.Slla.Longitude = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(j).Lon);
+					PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+					double a = PMDG_TEST::SIMMATH::GetFixDA(sin(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading) * M_PI / 180) * dsheh.D, PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading));
+					PointRunway.DistToEnd = dsheh.D;
+					PointRunway.DistToCenterLine = abs(a);
+					PointRunway.TaxiwayPoint = j;
+					PointRunway.Lat = dsheh.Ella.Latitude;
+					PointRunway.Lon = dsheh.Ella.Longitude;
+					if ((dsheh.D <= (Runway.Distance / 1000)) && (abs(a) <= (Runway.Width / 2000)) && (abs(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading))) > 90.0) {
+						PTaxiwayPoints->at(PointRunway.TaxiwayPoint).Flag = 0xFF;
+						PPointsRunway->push_back(PointRunway);
+						PPointsRunway->push_back(PointRunway);
+					}	
+				}
+				for (int j = 0; j < PTaxiwayPoints->size(); j++) {
+					dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), Runway.Distance / 2000);
+					POINTS_RUNWAY PointRunway;
+					PointRunway.Runway = POneWayRunways->size() - 1;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					dsheh.Slla.Latitude = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(j).Lat);
+					dsheh.Slla.Longitude = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(j).Lon);
+					PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+					double a = PMDG_TEST::SIMMATH::GetFixDA(sin(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading) * M_PI / 180) * dsheh.D, PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading));
+					PointRunway.DistToEnd = dsheh.D;
+					PointRunway.DistToCenterLine = abs(a);
+					PointRunway.TaxiwayPoint = j;
+					PointRunway.Lat = dsheh.Ella.Latitude;
+					PointRunway.Lon = dsheh.Ella.Longitude;
+					if ((dsheh.D <= (Runway.Distance / 1000)) && (abs(a) <= (Runway.Width / 2000)) && (abs(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading))) < 90.0) {
+						//PPointsRunway->push_back(PointRunway);
+						//PPointsRunway->push_back(PointRunway);
+					}
+				}
+				double max = -50000, min = 50000;
+				int maxPoint = -1, minPoint = -1;
+				for (int j = 0; j < PPointsRunway->size(); j++) {
+					if ((PPointsRunway->at(j).Runway == (POneWayRunways->size() - 2)) || (PPointsRunway->at(j).Runway == (POneWayRunways->size() - 1))) {
+						if (PPointsRunway->at(j).DistToEnd < min) {
+							min = PPointsRunway->at(j).DistToEnd;
+							minPoint = j;
+						}
+						if (PPointsRunway->at(j).DistToEnd > max) {
+							max = PPointsRunway->at(j).DistToEnd;
+							maxPoint = j;
+						}
+					}
+				}
+				TaxiwayPoints tPoint;
+				TaxiwayPaths tPath;
+				if ((minPoint >= 0) || (maxPoint >= 0)) {
+					tPoint.Lat = PMDG_TEST::SIMMATH::EncodeLat(POneWayRunways->at(POneWayRunways->size() - 2).sLatitude);
+					tPoint.Lon = PMDG_TEST::SIMMATH::EncodeLon(POneWayRunways->at(POneWayRunways->size() - 2).sLongitude);
+					tPoint.Type = 1;
+					tPoint.Flag = 0xFF;
+					POINTS_RUNWAY PointRunway;
+					PointRunway.DistToEnd = 0;
+					PointRunway.DistToCenterLine = 0;
+					PointRunway.TaxiwayPoint = PTaxiwayPoints->size();
+					PointRunway.Lat = POneWayRunways->at(POneWayRunways->size() - 2).sLatitude;
+					PointRunway.Lon = POneWayRunways->at(POneWayRunways->size() - 2).sLongitude;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					PTaxiwayPoints->push_back(tPoint);
+					PPointsRunway->push_back(PointRunway);
+					tPath.IndexStartPoint = PPointsRunway->at(minPoint).TaxiwayPoint;
+					tPath.End = PTaxiwayPoints->size() - 1;
+					tPath.Type = 1; //???
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = 0; //  Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+					tPoint.Lat = PMDG_TEST::SIMMATH::EncodeLat(POneWayRunways->at(POneWayRunways->size() - 2).eLatitude);
+					tPoint.Lon = PMDG_TEST::SIMMATH::EncodeLon(POneWayRunways->at(POneWayRunways->size() - 2).eLongitude);
+					tPoint.Type = 1;
+
+					tPoint.Flag = 0xFF;
+
+					PointRunway.DistToEnd = Runway.Distance;
+					PointRunway.DistToCenterLine = 0;
+					PointRunway.TaxiwayPoint = PTaxiwayPoints->size();
+					PointRunway.Lat = POneWayRunways->at(POneWayRunways->size() - 2).eLatitude;
+					PointRunway.Lon = POneWayRunways->at(POneWayRunways->size() - 2).eLongitude;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					PTaxiwayPoints->push_back(tPoint);
+					PPointsRunway->push_back(PointRunway);
+					tPath.IndexStartPoint = PPointsRunway->at(maxPoint).TaxiwayPoint;
+					tPath.End = PTaxiwayPoints->size() - 1;
+					tPath.Type = 1; //???
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = 0; // Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+
+					tPath.IndexStartPoint = PTaxiwayPoints->size() - 1;
+					tPath.End = PTaxiwayPoints->size() - 2;
+					tPath.Type = 2; 
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+				}
+			}
+		}
+		return NOERROR;
+	}
+	return E_UNEXPECTED;
+}
+
+
 HRESULT Airport::GetTaxiwayInformation()
 {
 	if (Records)
@@ -1344,7 +1577,11 @@ HRESULT Airport::GetTaxiwayInformation()
 						BGLX->BGLXFile->Read(&TaxiwayPathEmpty, Offset, sizeof(TaxiwayPathEmpty));
 						Offset = Offset + sizeof(TaxiwayPathEmpty);
 					}
+					if ((TaxiwayPath.Type & 0xf) == 2) {
+						//TaxiwayPath.Type = TaxiwayPath.Type & 0xf1;
+					}
 					PTaxiwayPaths->push_back(TaxiwayPath);
+
 					Offset = Offset + sizeof(TaxiwayPath);
 
 				}
@@ -1392,6 +1629,9 @@ HRESULT Airport::GetTaxiwayInformation()
 					TaxiwayPath.Unk1 = TaxiwayPathMSFS.Unk1;
 					TaxiwayPath.WeightLimit = TaxiwayPathMSFS.WeightLimit;
 					TaxiwayPath.Width = TaxiwayPathMSFS.Width;
+					if ((TaxiwayPath.Type & 0xf) == 2) {
+						//TaxiwayPath.Type = TaxiwayPath.Type & 0xf1;
+					}
 					PTaxiwayPaths->push_back(TaxiwayPath);
 				}
 			}

@@ -18,6 +18,7 @@ class Airport : public IAirport {
 		// Methods
 
 		HRESULT							GetTaxiwayInformation();
+		HRESULT							GetRunwayInformation();
 		HRESULT							GetSIDSTAR();
 
 	private:

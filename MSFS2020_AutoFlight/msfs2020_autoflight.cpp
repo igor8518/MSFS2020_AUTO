@@ -156,7 +156,6 @@ void MSFS2020_AutoFlight::PlotCircle(double dist, double alt, double common) {
 	if (common > 0) {
 		ui->Graph2->xAxis->setRange(0, common);
 	}
-	
 }
 
 void MSFS2020_AutoFlight::PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex) {
@@ -321,6 +320,16 @@ void MSFS2020_AutoFlight::on_ButtonConnect()
   emit Connect();
 }
 
+void MSFS2020_AutoFlight::on_PMDGButton()
+{
+	emit PMDGSend(ui->switchID->value());
+}
+
+void MSFS2020_AutoFlight::on_startButton()
+{
+	emit StartSend();
+}
+
 void MSFS2020_AutoFlight::AppendListView(QString s) {
   
   ui->listWidget->addItem(s);
@@ -333,4 +342,10 @@ void MSFS2020_AutoFlight::ButtonModify(QPushButton* button, QString text, QStrin
   if (style != "") {
     button->setStyleSheet(style);
   }
+}
+void MSFS2020_AutoFlight::ConnectButtonEnabled(bool enabled) {
+	ui->ConnectButton->setEnabled(enabled);
+}
+void MSFS2020_AutoFlight::StartButtonEnabled(bool enabled) {
+	ui->startButton->setEnabled(enabled);
 }

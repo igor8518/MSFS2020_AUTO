@@ -187,10 +187,101 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 			//delete a;
 			break;
 		}
-		default: {
-			lContext->data->SendLog("NA ID EVENT: " + QString::number(evt->uEventID));
+		case EXTERNAL_SYSTEM_SET:
+		{
+			//lContext->data->SendLog("[GSX PopUp] timeout: " + QString::number(evt->dwData));
+			QFile data("C:\\Program Files (x86)\\Addon Manager\\MSFS\\fsdreamteam-gsx-pro\\html_ui\\InGamePanels\\FSDT_GSX_Panel\\tooltip");
+			data.open(QIODevice::ReadOnly);
+			QTextStream stream(&data);
+			QStringList strings(stream.readAll().split("\n"));
+			data.close();
+			lContext->data->SendLog("[GSX PopUp]: " + strings[0]);
 			break;
 		}
+		case EXTERNAL_SYSTEM_TOGGLE: {
+			QFile data("C:\\Program Files (x86)\\Addon Manager\\MSFS\\fsdreamteam-gsx-pro\\html_ui\\InGamePanels\\FSDT_GSX_Panel\\menu");
+			data.open(QIODevice::ReadOnly);
+			QTextStream stream(&data);
+			//QStringList strings(stream.readAll().split("\n"));
+			lContext->data->menu = stream.readAll().split("\n");
+			data.close();
+			switch (evt->dwData) {
+			case 1: {
+				//lContext->data->SendLog("[GSX Menu] Reload");
+				lContext->data->SendLog("[GSX menu]: " + lContext->data->menu[0]);
+				lContext->data->NewGSXQuestion = true;
+				break;
+			}
+			case 2: {
+				lContext->data->SendLog("[GSX Menu] Hide)");
+				break;
+			}
+			case 3: {
+				lContext->data->SendLog("[GSX Menu] Timeout");
+				break;
+			}
+			case 4: {
+				lContext->data->SendLog("[GSX Menu] Force close");
+				break;
+			}
+			default: {
+				lContext->data->SendLog("[GSX] N/A: " + QString::number(evt->dwData));
+				for (int i = 0; i < lContext->data->menu.size(); i++) {
+					lContext->data->SendLog("[GSX menu]: " + lContext->data->menu[i]);
+				}
+				break;
+			}
+			}
+			break;
+		}
+		case EVENT_REGISTER_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_REGISTER_VARIABLE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_REGISTER_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_REGISTER_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_GET_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_GET_VARIABLE_QUERY: " + QString((char*)evt->dwData));
+			break;
+		}
+		case EVENT_GET_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_GET_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_SET_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_SET_VARIABLE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_SET_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_SET_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_EXEC_CODE_QUERY: {
+			lContext->data->SendLog("EVENT_EXEC_CODE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_EXEC_CODE_RESPONSE: {
+			lContext->data->SendLog("EVENT_EXEC_CODE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_MENU_OPEN: {
+			lContext->data->SendLog("EVENT_MENU_OPEN: " + QString::number(evt->dwData));
+			break;
+		}
+		case EVENT_MENU_CHOISE: {
+			if ((evt->dwData + 1) < lContext->data->menu.size()) {
+				lContext->data->SendLog(lContext->data->menu[evt->dwData + 1]);
+				lContext->data->NewGSXQuestion = false;
+			}
+			break;
+		}
+		default: {
+
+			lContext->data->SendLog("COUATL: " + QString::number(evt->uEventID));
+			break;
+		}		
 		}
 		break;
 	}
@@ -285,7 +376,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	set54 = false;
 	set60 = false;
 	Quit = false;
-	RegEvent = std::vector<bool>(1600, false);
+	RegEvent = std::vector<bool>(1700, false);
 
 
 

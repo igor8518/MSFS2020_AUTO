@@ -262,9 +262,11 @@ private:
   double _inRudder = 0;
   double _outRudder = 0;
 
-  double _PInThrottleOutThrottle = 0;
-  double _IInThrottleOutThrottle = 4;
-  double _DInThrottleOutThrottle = 0;
+  double _PInThrottleOutThrottle = 1.0;
+  double _IInThrottleOutThrottle = 0.01;
+  double _DInThrottleOutThrottle = 10.0;
+  double _IBInThrottleOutThrottle = 1.0;
+  double _DBInThrottleOutThrottle = 20.0;
 
   double _PInAileronOutAileron = 0;
   double _IInAileronOutAileron = 4;
@@ -361,5 +363,6 @@ public slots:
   void TimerProc();
   void ReceiveCommand(DWORD command, double parameter1, double parameter2);
   void PushbackSpeedSet(double setSpeed, DWORD speed);
+  double PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral);
 };
 
