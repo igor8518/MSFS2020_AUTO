@@ -545,7 +545,8 @@ VOID MainLogic::TimerProc()
 			Legs = new std::vector<sWayPoint>();
 
 			mgr = new QNetworkAccessManager(this);
-			const QUrl url(QStringLiteral("http://www.simbrief.com/api/xml.fetcher.php?json=1&username=SamFrieeman"));
+			//const QUrl url(QStringLiteral("http://www.simbrief.com/api/xml.fetcher.php?json=1&username=SamFrieeman"));
+			const QUrl url(QStringLiteral("http://www.simbrief.com/api/xml.fetcher.php?json=1&username=igor8518"));
 			QNetworkRequest request(url);
 			request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -682,17 +683,20 @@ VOID MainLogic::TimerProc()
 				std::vector<TPath> P;
 				for (int i = 1; i <= RP->size(); i++) {
 					P = AirportData->GetPath1(nearTaxiwayPointIndex, data->GData.PLANE_HEADING_DEGREES_TRUE, i);
-
-					RP->at(i - 1).RunwayName1 = P[P.size() - 1].name;
-					RP->at(i - 1).R1Dist = Utils::GetPathLength(&P);
-					RP->at(i - 1).Deg1 = Utils::GetRWAngle(&P);
-					RunwayWaysOrig->push_back(P);
+					if (P.size() > 1) {
+						RP->at(i - 1).RunwayName1 = P[P.size() - 1].name;
+						RP->at(i - 1).R1Dist = Utils::GetPathLength(&P);
+						RP->at(i - 1).Deg1 = Utils::GetRWAngle(&P);
+						RunwayWaysOrig->push_back(P);
+					}
 					P = AirportData->GetPath1(nearTaxiwayPointIndex, data->GData.PLANE_HEADING_DEGREES_TRUE, -i);
-					RP->at(i - 1).RunwayName2 = P[P.size() - 1].name;
-					RP->at(i - 1).R2Dist = Utils::GetPathLength(&P);
-					RP->at(i - 1).Deg2 = Utils::GetRWAngle(&P);
-					RunwayWaysOrig->push_back(P);
-					RP->at(i - 1).Lenght = Utils::GetRWLength(&P);
+					if (P.size() > 1) {
+						RP->at(i - 1).RunwayName2 = P[P.size() - 1].name;
+						RP->at(i - 1).R2Dist = Utils::GetPathLength(&P);
+						RP->at(i - 1).Deg2 = Utils::GetRWAngle(&P);
+						RunwayWaysOrig->push_back(P);
+						RP->at(i - 1).Lenght = Utils::GetRWLength(&P);
+					}
 				}
 
 				std::string RWFromSB = root["origin"].toObject()["plan_rwy"].toString().toStdString();

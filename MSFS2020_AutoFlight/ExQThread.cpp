@@ -20,4 +20,4 @@ void ExQThread::exit()
 void ExQThread::run() {
   Log("Thread: " + Name + " start");
   QThread::run();
-}
+	}
