@@ -15,10 +15,11 @@ public:
   Ui::MSFS2020_AutoFlightClass* GetUi();
   QThread* maimThread;
 private slots:
+	void on_startButton();
   void AppendListView(QString s);
   void on_ButtonConnect();
   void on_PMDGButton();
-  void on_startButton();
+  
   void ButtonModify(QPushButton* button, QString text, QString style);
   void ConnectButtonEnabled(bool enabled);
   void StartButtonEnabled(bool enabled);

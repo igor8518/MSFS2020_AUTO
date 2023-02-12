@@ -317,7 +317,7 @@ Ui::MSFS2020_AutoFlightClass* MSFS2020_AutoFlight::GetUi()
 
 void MSFS2020_AutoFlight::on_ButtonConnect()
 {
-  emit Connect();
+	emit Connect();
 }
 
 void MSFS2020_AutoFlight::on_PMDGButton()

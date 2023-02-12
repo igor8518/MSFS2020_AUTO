@@ -586,9 +586,43 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>startButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_startButton()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>435</x>
+     <y>74</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>668</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PMDGButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_PMDGButton()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>767</x>
+     <y>184</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>668</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>on_ButtonConnect()</slot>
+  <slot>on_PMDGButton()</slot>
+  <slot>on_startButton()</slot>
   <slot>on_cc1(bool)</slot>
   <slot>on_vs1(int)</slot>
   <slot>on_cb1past(QString)</slot>
