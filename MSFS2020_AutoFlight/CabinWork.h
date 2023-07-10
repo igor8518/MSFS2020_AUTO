@@ -144,6 +144,8 @@ public slots:
   void CLParking(int* Status);
   void SetTimer(DWORD mode);
 
+  void SetCabinLight(DWORD value);
+
   void CLAfterStart(int* Status);
   void CLBeforeTaxi(int flightLevel, int heading, int* Status);
   void CLBeforeTakeoff(int* Status);

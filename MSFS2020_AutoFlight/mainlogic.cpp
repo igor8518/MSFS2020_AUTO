@@ -1214,7 +1214,8 @@ VOID MainLogic::TimerProc()
 				if (data->GData.GROUND_VELOCITY < 0.05) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 				}
-				if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
+				if ((data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) || 
+					data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					Mode = ENGINESTART;
 					Log("End pushback");

@@ -26,6 +26,7 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 	if (*Status != 2) {
 		*Status = 1;
 		CabinLight(3);
+		SetCabinLight(0);
 		//WindowsAndDoors(5, 1);
 		//WindowsAndDoors(2, 1);
 		ParkingBrakeSet(1);
@@ -45,12 +46,15 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 		ExternalPower(1);
 		NavLight(1);
 		CabinLight(1);
+		SetCabinLight(1);
+		Sleep(1000);
 		APUFireTest();
 		Sleep(2000);
 		APUSet(1);
 		NavLight(1);
 		CabinLight(1);
 		CabinLight(3);
+		SetCabinLight(50);
 		ParkBrake = 1;
 		//AccuPressCheck
 		//BrakesPressCheck
@@ -95,7 +99,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		//SendEvent(KEY_REQUEST_CATERING, 0);
 		GSXServicesRequest(REQUEST_CATERING_SERVICE);
 		SetDataL(FSDT_GSX_FUEL_COUNTER_MAX, 99999.0);
-		//while (DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
+		while (DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
 		Sleep(3000);
 		//SendEvent(KEY_REQUEST_FUEL, 0);
 		while ((DataT->AllData.FSDT_GSX_SIMBRIEF_SUCCESS != 0) && 
@@ -111,7 +115,9 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		while (DataT->AllData.FSDT_GSX_FUELHOSE_CONNECTED != 1);
 		SetDataL(A32NX_INITFLIGHT_STATE, 1);
 		while (DataT->AllData.FSDT_GSX_REFUELING_STATE != 6);
+
 		Sleep(3000);
+		SetCabinLight(100);
 		//SendEvent(KEY_REQUEST_LUGGAGE, 0);
 		WindowsAndDoors(5, 1);
 		GSXServicesRequest(REQUEST_BOARDING);
@@ -217,7 +223,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		IrsAligned();
 		while (DataT->AllData.A32NX_INITFLIGHT_STATE != 20);
 		while (DataT->AllData.FSDT_GSX_BOARDING_STATE != 6 ||
-			//DataT->AllData.FSDT_GSX_REFUELING_STATE != 6 ||
+			DataT->AllData.FSDT_GSX_REFUELING_STATE != 6 ||
 			DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
 		//SendEvent(KEY_TOGGLE_JETWAY, 0);
 		//Sleep(30000);
@@ -237,6 +243,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 void CabinWork::CLBeforeStart(int* Status) {
 	*Status = 1;
 	Sleep(2000);
+	SetCabinLight(50);
 	//LoadSheetCheck
 	//TakeOffDataCheck
 	//SeatBels
@@ -322,6 +329,7 @@ void CabinWork::CLBeforeTaxi(int flightLevel, int heading, int* Status) {
 	if (*Status != 2) {
 		*Status = 1;
 		Sleep(2000);
+		SetCabinLight(5);
 		CabinLight(0);
 		//TaxiClearance
 		LightTaxi = 1;
@@ -383,6 +391,7 @@ void CabinWork::CLBeforeTakeoff(int* Status) {
 	if (*Status != 2) {
 		*Status = 1;
 		APUSet(0);
+		SetCabinLight(1);
 		Sleep(2000);
 		CabinReport();
 		Sleep(2000);
@@ -415,6 +424,7 @@ void CabinWork::CLAfterTakeoff(int* Status) {
 		Spoilers = 0;
 		EngineModeSelector(1);
 		TcasTraffic(1);
+		SetCabinLight(5);
 		*Status = 2;
 	}
 }
@@ -428,6 +438,7 @@ void CabinWork::CLLanding(int* Status) {
 		LandingLight(1);
 		EngineModeSelector(2);
 		CabinReport();
+		SetCabinLight(1);
 		*Status = 2;
 	}
 }
@@ -444,6 +455,7 @@ void CabinWork::CLAfterLanding(int* Status) {
 		TransponderMode(0);
 		APUSet(1);
 		WxrMode(0);
+		SetCabinLight(5);
 		//Predective weather off
 		*Status = 2;
 	}
@@ -471,6 +483,7 @@ void CabinWork::CLParking(int* Status) {
 		FuelPump(3, 0);
 		FuelPump(6, 0);
 		CabinLight(2);
+		SetCabinLight(100);
 		SeatBeltSign(0);
 		NoSmokeSign(2);
 		Sleep(10000);
@@ -500,6 +513,8 @@ void CabinWork::SetTimer(DWORD mode) {
 		//SendEvent(A32NX_CHRONO_ET_SWITCH_POS, 0);
 	}
 }
+
+
 
 
 void CabinWork::EngineModeSelector(DWORD mode) {
@@ -679,6 +694,9 @@ void CabinWork::APUBleedSet(DWORD onoff) {
 	SetDataL(A32NX_OVHD_PNEU_APU_BLEED_PB_IS_ON, onoff);
 }
 
+void CabinWork::SetCabinLight(DWORD value) {
+	emit SendEvent(KEY_LIGHT_POTENTIOMETER_12_SET, value);
+}
 
 void CabinWork::CabinLight(DWORD mode) {
 	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || mode == 0)
@@ -686,7 +704,7 @@ void CabinWork::CabinLight(DWORD mode) {
 		switch (mode) {
 		case 0: {
 			if (DataT->GData.LIGHT_POTENTIOMETER7 != 0) {
-				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 0);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 10);
 			}
 			if (DataT->GData.LIGHT_CABIN != 0) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 0);
@@ -704,7 +722,7 @@ void CabinWork::CabinLight(DWORD mode) {
 		}
 		case 2: {
 			if (DataT->GData.LIGHT_POTENTIOMETER7 != 1) {
-				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 100);
+				emit SendEvent(KEY_LIGHT_POTENTIOMETER_7_SET, 80);
 			}
 			if (DataT->GData.LIGHT_CABIN != 1) {
 				emit SendEvent(KEY_TOGGLE_CABIN_LIGHTS, 1);
