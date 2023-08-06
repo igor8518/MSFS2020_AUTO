@@ -241,6 +241,14 @@ double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* Cur
 	return Dist;
 }
 
+double Utils::DecodeLat(DWORD lat) {
+	return  90.0 - lat * (180.0 / (2 * 0x10000000));
+}
+double Utils::DecodeLon(DWORD lon) {
+	return lon * (360.0 / (3 * 0x10000000)) - 180.0;
+}
+
+
 
 
 /*void Utils::DrawAirport(IAirportData* PAirportData, double Lat, double Lon, double Hed) {

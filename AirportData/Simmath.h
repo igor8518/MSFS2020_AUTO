@@ -199,6 +199,7 @@ namespace PMDG_TEST
 			std::vector<TPath> rPath;
 			long v = start;
 			long t = end;
+			int na = 0;
 
 
 
@@ -219,12 +220,22 @@ namespace PMDG_TEST
 				bool any = false;
 				x = -1;
 				for (int j = 0; j < m; ++j) {
-					if ((tpaths->at(j).Type & 0xf) == 0xb || 
-						(tpaths->at(j).Type & 0xf) == 0xc || 
-						(tpaths->at(j).Type & 0xf) == 0xe || 
-						(tpaths->at(j).Type & 0xf) == 0x6 || 
-						(tpaths->at(j).Type & 0xf) == 0x9 || 
-						(tpaths->at(j).Type & 0xf) == 0x0)
+					//int typeNew = (tpaths->at(j).Type & 0xff);
+					int type = (tpaths->at(j).Type & 0xf);
+					if (
+
+						type == 0x0B ||
+						type == 0x0C ||
+						type == 0x0E ||
+						type == 0x06 ||
+						type == 0x09 ||
+						//type == 0x01 ||
+						//type == 0x02 ||
+						//type == 0x03 ||
+						//type == 0x04 ||
+						//type == 0x07 || //??
+						type == 0x00 )
+						
 					{
 						if ((tpaths->at(j).IndexStartPoint) >= d->size()) {
 							tpaths->at(j).IndexStartPoint = tpaths->at(j).IndexStartPoint & 0xfff;
@@ -238,6 +249,9 @@ namespace PMDG_TEST
 							tpaths->at(j).End = tpaths->at(j).End & 0xfff;
 							//Falls.push_back(tpaths->at(j));
 						}
+					}
+					else {
+						na = type;
 					}
 					
 					/*if (((tpaths->at(j).Type & 0xf) == 0x0) ||

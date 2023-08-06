@@ -1,11 +1,14 @@
 #include "msfs2020_autoflight.h"
+#include "airportview.h"
 #include "Structs.h"
+#include "MainLogic.h"
 
 
 MSFS2020_AutoFlight::MSFS2020_AutoFlight(QObject* planesWork, QWidget* parent) : QMainWindow(parent), ui(new Ui::MSFS2020_AutoFlightClass)
 {
   ui->setupUi(this);
   this->planesWork = planesWork;
+ 
 
   int propsCount = planesWork->metaObject()->propertyCount();
   ui->cb1->addItem("");
@@ -349,3 +352,13 @@ void MSFS2020_AutoFlight::ConnectButtonEnabled(bool enabled) {
 void MSFS2020_AutoFlight::StartButtonEnabled(bool enabled) {
 	ui->startButton->setEnabled(enabled);
 }
+
+void MSFS2020_AutoFlight::on_OpenAirport() {
+	
+
+	AirportView* dialog = new AirportView(mainlogic, this);
+	//dialog.setModal(true);
+	//dialog.exec();
+	dialog->show();
+}
+

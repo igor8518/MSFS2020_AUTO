@@ -37,9 +37,13 @@ class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    std::vector<TPath> DeparturePath;
+    std::vector<TPath> DestinationPath;
     SimData* data = NULL;
   MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
+  IAirport* Departure = NULL;
+  IAirport* Destination = NULL;
   QTableViewModel* ModelTable;
   std::vector<QString>* LogArray = new std::vector<QString>();
   void Log(QString log);

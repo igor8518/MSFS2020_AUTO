@@ -48,16 +48,61 @@ HRESULT Airport::GetAirportData(bool full)
 	else
 	{
 		PAirportInformation = new AirportInfo;
+		PAddAirportInformation = new AddAirportInfo;
 
 		BGLX->BGLXFile->Read(PAirportInformation, AirportDataOffset, sizeof(*PAirportInformation));
 		if ((PAirportInformation->ID != 0x03) && (PAirportInformation->ID != 0x3C) && (PAirportInformation->ID != 0xAB) && (PAirportInformation->ID != 0x56))
 		{
 			PAirportInformation = NULL;
+			PAddAirportInformation = NULL;
 			return E_NOTIMPL;
 		}
+		
 	}
 	return NOERROR;
 }
+
+HRESULT Airport::GetAirportRect() {
+	double MinLat = 360.0, MinLon = 360.0, MaxLat = -360.0, MaxLon = -360.0;
+	for (int i = 0; i < PTaxiwayPoints->size(); i++) {
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat) < MinLat) {
+			MinLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat) > MaxLat) {
+			MaxLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon) < MinLon) {
+			MinLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon) > MaxLon) {
+			MaxLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon);
+		}
+	}
+	for (int i = 0; i < PTaxiwayParks->size(); i++) {
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat) < MinLat) {
+			MinLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat) > MaxLat) {
+			MaxLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon) < MinLon) {
+			MinLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon) > MaxLon) {
+			MaxLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon);
+		}
+	}
+	double dLat = MaxLat - MinLat;
+	double dLon = MaxLon - MinLon;
+	PAddAirportInformation->MinLat = MinLat;
+	PAddAirportInformation->MinLon = MinLon;
+	PAddAirportInformation->MaxLat = MaxLat;
+	PAddAirportInformation->MaxLon = MaxLon;
+	PAddAirportInformation->DLat = dLat;
+	PAddAirportInformation->DLon = dLon;
+	return NOERROR;
+}
+
 HRESULT Airport::GetFixes(ReadStreamText* SIDSTARFile)
 {
 	std::string* str = new std::string("");
@@ -1837,6 +1882,11 @@ Airport::~Airport()
 	{
 		delete PAirportInformation;
 		PAirportInformation = NULL;
+	}
+	if (PAddAirportInformation)
+	{
+		delete PAddAirportInformation;
+		PAddAirportInformation = NULL;
 	}
 	if (Records)
 	{

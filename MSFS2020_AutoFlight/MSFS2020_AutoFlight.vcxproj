@@ -65,14 +65,14 @@
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>5.15.2_msvc2019_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;opengl;gui;widgets;openglextensions</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
     <QtQMLDebugEnable>true</QtQMLDebugEnable>
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>msvc2017_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;opengl</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
@@ -105,6 +105,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="airportview.cpp" />
     <ClCompile Include="CabinWork.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
@@ -139,6 +140,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <QtRcc Include="msfs2020_autoflight.qrc" />
+    <QtUic Include="airportview.ui" />
     <QtUic Include="msfs2020_autoflight.ui" />
     <QtMoc Include="msfs2020_autoflight.h" />
     <ClCompile Include="msfs2020_autoflight.cpp">
@@ -152,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="qcustomplot.h" />
+    <QtMoc Include="airportview.h" />
     <ClInclude Include="globaldata.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WriteStream.h" />

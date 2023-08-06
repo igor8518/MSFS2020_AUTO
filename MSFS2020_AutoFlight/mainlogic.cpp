@@ -681,6 +681,7 @@ VOID MainLogic::TimerProc()
 
 				std::vector<std::vector<TPath>>* RunwayWaysOrig = new std::vector<std::vector<TPath>>();
 				std::vector<TPath> P;
+				int countWays = 0;
 				for (int i = 1; i <= RP->size(); i++) {
 					P = AirportData->GetPath1(nearTaxiwayPointIndex, data->GData.PLANE_HEADING_DEGREES_TRUE, i);
 					if (P.size() > 1) {
@@ -688,7 +689,9 @@ VOID MainLogic::TimerProc()
 						RP->at(i - 1).R1Dist = Utils::GetPathLength(&P);
 						RP->at(i - 1).Deg1 = Utils::GetRWAngle(&P);
 						RunwayWaysOrig->push_back(P);
+						countWays++;
 					}
+
 					P = AirportData->GetPath1(nearTaxiwayPointIndex, data->GData.PLANE_HEADING_DEGREES_TRUE, -i);
 					if (P.size() > 1) {
 						RP->at(i - 1).RunwayName2 = P[P.size() - 1].name;
@@ -696,84 +699,95 @@ VOID MainLogic::TimerProc()
 						RP->at(i - 1).Deg2 = Utils::GetRWAngle(&P);
 						RunwayWaysOrig->push_back(P);
 						RP->at(i - 1).Lenght = Utils::GetRWLength(&P);
+						countWays++;
 					}
 				}
-
-				std::string RWFromSB = root["origin"].toObject()["plan_rwy"].toString().toStdString();
-				for (int RC = 0; RC < RunwayWaysOrig->size(); RC++) {
-					if (RunwayWaysOrig->at(RC).at(RunwayWaysOrig->at(RC).size() - 1).name == RWFromSB) {
-						rrr = RC;
-						break;
-					}
-				}
-				RunwayWaysOrig1 = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1);
-				if (data->GData.SIM_ON_GROUND) {
-					for (int i = 0; i < RunwayWaysOrig->at(rrr).size() - 1; i++) {
-						if (RunwayWaysOrig->at(rrr).at(i).InRunway == 0xff) {
-							AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, -1.0, 0.0);
-						}
-						else {
-							AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, 0, 0.0);
-						}
-					}
-					
-
-					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 5555, "RUNWAY", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name.c_str()), 0, 0, 0, 0, 4444);
-					for (int i = Legs->size() - 2; i > 0; i--) {
-						if ((Legs->at(i).Dist != -1.0)||(abs(Utils::Constrain180(Legs->at(i).EndHeadingTrue - Legs->at(Legs->size()-1).EndHeadingTrue))<90)) {
-							Legs->at(i + 1).Dist = 2.0;
+				if (countWays > 0) {
+					std::string RWFromSB = root["origin"].toObject()["plan_rwy"].toString().toStdString();
+					for (int RC = 0; RC < RunwayWaysOrig->size(); RC++) {
+						if (RunwayWaysOrig->at(RC).at(RunwayWaysOrig->at(RC).size() - 1).name == RWFromSB) {
+							rrr = RC;
 							break;
 						}
 					}
-					//SendCommand(PULL_HDG, 1, 0);
-					//SendCommand(HDG_SEL, Legs->at(Legs->size() - 1).HeadingMag, 10);
-				}
-				else {
-					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat, 0, "CLIMB", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).name.c_str()), 0, 0, 0, 0, 0.0);
-					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat, 0, "CLIMB", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).name.c_str()), 0, 0, 0, 0, 0.0);
 
-					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 5555, "RUNWAY", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name.c_str()), 0, 0, 0, 0, 4444);
-					CurrentWayIndex = 1;
 
-				}
-				SIDPoint = Legs->size() - 2;
-				SimBriefSID = " ";
-				FixSID = " ";
-				fix = ja[1].toObject();
-				if (fix.value("is_sid_star").toString() == "1") {
-					SimBriefSID = fix.value("via_airway").toString();
-				}
-				for (int i = 1; i < ja.count() - 1; i++) {
-					fix = ja[i].toObject();
-					if (fix.value("is_sid_star").toString() == "0") {
-						FixSID = fix.value("ident").toString();
-						break;
+
+					RunwayWaysOrig1 = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1);
+					DeparturePath = RunwayWaysOrig->at(rrr);
+					if (data->GData.SIM_ON_GROUND) {
+						for (int i = 0; i < RunwayWaysOrig->at(rrr).size() - 1; i++) {
+							if (RunwayWaysOrig->at(rrr).at(i).InRunway == 0xff) {
+								AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, -1.0, 0.0);
+							}
+							else {
+								AddWayPoint(RunwayWaysOrig->at(rrr).at(i).Lon, RunwayWaysOrig->at(rrr).at(i).Lat, 0.0, TYPE_PATHS[RunwayWaysOrig->at(rrr)[i].Type], QString(RunwayWaysOrig->at(rrr).at(i).name.c_str()), 0, 0, 0, 0, 0.0);
+							}
+						}
+
+
+						AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 5555, "RUNWAY", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name.c_str()), 0, 0, 0, 0, 4444);
+						for (int i = Legs->size() - 2; i > 0; i--) {
+							if ((Legs->at(i).Dist != -1.0) || (abs(Utils::Constrain180(Legs->at(i).EndHeadingTrue - Legs->at(Legs->size() - 1).EndHeadingTrue)) < 90)) {
+								Legs->at(i + 1).Dist = 2.0;
+								break;
+							}
+						}
+						//SendCommand(PULL_HDG, 1, 0);
+						//SendCommand(HDG_SEL, Legs->at(Legs->size() - 1).HeadingMag, 10);
+					}
+					else {
+						AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat, 0, "CLIMB", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).name.c_str()), 0, 0, 0, 0, 0.0);
+						AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat, 0, "CLIMB", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).name.c_str()), 0, 0, 0, 0, 0.0);
+
+						AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 5555, "RUNWAY", QString(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name.c_str()), 0, 0, 0, 0, 4444);
+						CurrentWayIndex = 1;
+
+					}
+					SIDPoint = Legs->size() - 2;
+					SimBriefSID = " ";
+					FixSID = " ";
+					fix = ja[1].toObject();
+					if (fix.value("is_sid_star").toString() == "1") {
+						SimBriefSID = fix.value("via_airway").toString();
+					}
+					for (int i = 1; i < ja.count() - 1; i++) {
+						fix = ja[i].toObject();
+						if (fix.value("is_sid_star").toString() == "0") {
+							FixSID = fix.value("ident").toString();
+							break;
+						}
+					}
+					HeadTakeOff;
+					HeadTakeOff.Lat = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat;
+					HeadTakeOff.Lon = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon;
+					HeadTakeOff.SAltitudeHi = 0.0;
+					HeadTakeOff.ELat = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat;
+					HeadTakeOff.ELon = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon;
+					HeadTakeOff.EAltitudeHi = 0.0;
+					Utils::DOrtoKM(&HeadTakeOff);
+
+					OrigSidStar = AirportData->GetAirport()->sidstar;
+					OrigSids = AddSID(OrigSidStar, &RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1), HeadTakeOff.EndHeadingTrue, FixSID, SimBriefSID);
+					if (OrigSids->size() == 0) {
+						OrigSids = AddSID(OrigSidStar, &RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1), HeadTakeOff.EndHeadingTrue, FixSID + "NB", SimBriefSID);
+					}
+					if (OrigSids->size() == 0) {
+						OrigSids->push_back({ -1, -1, NULL, "", "", RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name });
+						AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 1750, "HEADINGUNTILALT", "(1750)", HeadTakeOff.EndHeadingTrue - data->GData.MAGVAR, 0, 0.0, 0, 1750);
+						AddWayPoint(0, 0, FlightCruise, "FIX", "", 0, 0, 0, 0, 0.0, &ja[0].toObject());
+					}
+					for (int i = 0; i < RunwayWaysOrig->size(); i = i + 1) {
+						RunWaysPathsOrig.push_back({ "", "", "", 0, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 2).Lat, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 2).Lon,
+							RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 1).Lat, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 1).Lon
+							});
+						Utils::DOrtoKM(&RunWaysPathsOrig.at(i));
 					}
 				}
-				HeadTakeOff;
-				HeadTakeOff.Lat = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lat;
-				HeadTakeOff.Lon = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 2).Lon;
-				HeadTakeOff.SAltitudeHi = 0.0;
-				HeadTakeOff.ELat = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat;
-				HeadTakeOff.ELon = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon;
-				HeadTakeOff.EAltitudeHi = 0.0;
-				Utils::DOrtoKM(&HeadTakeOff);
-
-				OrigSidStar = AirportData->GetAirport()->sidstar;
-				OrigSids = AddSID(OrigSidStar, &RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1), HeadTakeOff.EndHeadingTrue, FixSID, SimBriefSID);
-				if (OrigSids->size() == 0) {
-					OrigSids = AddSID(OrigSidStar, &RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1), HeadTakeOff.EndHeadingTrue, FixSID + "NB", SimBriefSID);
-				}
-				if (OrigSids->size() == 0) {
-					OrigSids->push_back({ -1, -1, NULL, "", "", RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).name });
-					AddWayPoint(RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lon, RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1).Lat, 1750, "HEADINGUNTILALT", "(1750)", HeadTakeOff.EndHeadingTrue - data->GData.MAGVAR, 0, 0.0, 0,1750);
-					AddWayPoint(0, 0, FlightCruise, "FIX", "", 0, 0, 0, 0,0.0, &ja[0].toObject());
-				}
-				for (int i = 0; i < RunwayWaysOrig->size(); i = i + 1) {
-					RunWaysPathsOrig.push_back({ "", "", "", 0, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 2).Lat, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 2).Lon,
-						RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 1).Lat, RunwayWaysOrig->at(i).at(RunwayWaysOrig->at(i).size() - 1).Lon
-						});
-					Utils::DOrtoKM(&RunWaysPathsOrig.at(i));
+				else {
+					MessageBoxW(0, L"NO WAYS", L"ERROR", MB_OK);
+					Mode = DONE;
+					exit;
 				}
 			}
 			//Connected
@@ -856,7 +870,7 @@ VOID MainLogic::TimerProc()
 					AddWayPoint(0, 0, FlightCruise, "FIX", "", 0, 0, 0, 0,0.0, &ja[0].toObject());
 				}
 			} //Connected
-			
+			Departure = AirportData->GetAirport();
 
 			
 			if (OrigSids->size() > 0) {
@@ -1053,6 +1067,7 @@ VOID MainLogic::TimerProc()
 			
 			//QLegs->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
 			STAR = true;
+			Destination = AirportData->GetAirport();
 			if (!Connected) {
 				ModelTable->populate(Legs);
 				//delete Legs;

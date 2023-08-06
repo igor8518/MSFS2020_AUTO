@@ -4,13 +4,14 @@
 #include "ui_msfs2020_autoflight.h"
 #include "structs.h"
 
+class MainLogic;
 class MSFS2020_AutoFlight : public QMainWindow
 {
   Q_OBJECT
 public:
   explicit MSFS2020_AutoFlight(QObject* planesWork, QWidget *parent = Q_NULLPTR);
   //QObject* planes = NULL;
-  //MainLogic* mainLogic = NULL;
+  MainLogic* mainlogic = NULL;
   ~MSFS2020_AutoFlight();
   Ui::MSFS2020_AutoFlightClass* GetUi();
   QThread* maimThread;
@@ -19,10 +20,12 @@ private slots:
   void AppendListView(QString s);
   void on_ButtonConnect();
   void on_PMDGButton();
+  void on_OpenAirport();
   
   void ButtonModify(QPushButton* button, QString text, QString style);
   void ConnectButtonEnabled(bool enabled);
   void StartButtonEnabled(bool enabled);
+  
   void realtimeDataSlot();
   void PlotCircle(double dist, double alt, double common);
   void PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex);

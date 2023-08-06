@@ -19,6 +19,7 @@ class Airport : public IAirport {
 
 		HRESULT							GetTaxiwayInformation();
 		HRESULT							GetRunwayInformation();
+		HRESULT							GetAirportRect();
 		HRESULT							GetSIDSTAR();
 
 	private:
@@ -37,6 +38,7 @@ class Airport : public IAirport {
 
 		std::string						GetTypeNameFromPoint(sroute point);
 		HRESULT							GetAirportData(bool full);
+		
 		HRESULT							GetFixes(ReadStreamText * SIDSTARFile);
 		HRESULT							GetSids(ReadStreamText * SIDSTARFile);
 		

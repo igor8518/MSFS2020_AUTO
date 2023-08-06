@@ -1,4 +1,5 @@
 #pragma once
+#include <AirportData.h>
 #define CVars 1701
 #ifndef STRUCTS_H
 #define STRUCTS_H
@@ -5105,5 +5106,7 @@ LASTVAR
 		class SimData* data;
 		DWORD sender;
 	};
+
+	
 	
 #endif

@@ -64,6 +64,16 @@ class AirportInfo: public BGLData {
 		WORD	Unk2;
 };
 
+class AddAirportInfo : public AirportInfo {
+public:
+	double MinLat;
+	double MinLon;
+	double MaxLat;
+	double MaxLon;
+	double DLat;
+	double DLon;
+};
+
 class AirportInfoMSFS : public BGLData {
 public:
 	BYTE	RunwayCount;
@@ -467,6 +477,7 @@ public:
 	std::vector<RunwayInfoMSFS>*	PRunways			= 0;
 	std::vector<DATA_RUNWAY>*		POneWayRunways		= 0;
 	std::vector<POINTS_RUNWAY>*		PPointsRunway		= 0;
+	AddAirportInfo*					PAddAirportInformation = 0;
 	
 };
 
@@ -492,7 +503,9 @@ class IAirportData
 		std::vector<double>*							d																																						= 0;
 		std::vector<TPath>*								ReturnPath;
 		std::string											RootSim;
+		
 	};
+
 
 
 AIRPORTAPI GetAirportData();
