@@ -48,16 +48,61 @@ HRESULT Airport::GetAirportData(bool full)
 	else
 	{
 		PAirportInformation = new AirportInfo;
+		PAddAirportInformation = new AddAirportInfo;
 
 		BGLX->BGLXFile->Read(PAirportInformation, AirportDataOffset, sizeof(*PAirportInformation));
 		if ((PAirportInformation->ID != 0x03) && (PAirportInformation->ID != 0x3C) && (PAirportInformation->ID != 0xAB) && (PAirportInformation->ID != 0x56))
 		{
 			PAirportInformation = NULL;
+			PAddAirportInformation = NULL;
 			return E_NOTIMPL;
 		}
+		
 	}
 	return NOERROR;
 }
+
+HRESULT Airport::GetAirportRect() {
+	double MinLat = 360.0, MinLon = 360.0, MaxLat = -360.0, MaxLon = -360.0;
+	for (int i = 0; i < PTaxiwayPoints->size(); i++) {
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat) < MinLat) {
+			MinLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat) > MaxLat) {
+			MaxLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon) < MinLon) {
+			MinLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon) > MaxLon) {
+			MaxLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(i).Lon);
+		}
+	}
+	for (int i = 0; i < PTaxiwayParks->size(); i++) {
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat) < MinLat) {
+			MinLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat) > MaxLat) {
+			MaxLat = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayParks->at(i).Lat);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon) < MinLon) {
+			MinLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon);
+		}
+		if (PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon) > MaxLon) {
+			MaxLon = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayParks->at(i).Lon);
+		}
+	}
+	double dLat = MaxLat - MinLat;
+	double dLon = MaxLon - MinLon;
+	PAddAirportInformation->MinLat = MinLat;
+	PAddAirportInformation->MinLon = MinLon;
+	PAddAirportInformation->MaxLat = MaxLat;
+	PAddAirportInformation->MaxLon = MaxLon;
+	PAddAirportInformation->DLat = dLat;
+	PAddAirportInformation->DLon = dLon;
+	return NOERROR;
+}
+
 HRESULT Airport::GetFixes(ReadStreamText* SIDSTARFile)
 {
 	std::string* str = new std::string("");
@@ -565,14 +610,14 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						{
 							sidstar->STARS->at(sidstar->STARS->size() - 1).Runways = new std::vector<std::string>();
 						}
-						//if (sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints == NULL)
+						//if (sidstar->STARS->at(sidstar->STARS->size() - 1).Legs == NULL)
 						//{
-						//	sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints = new std::vector<WayPointA>();
+						//	sidstar->STARS->at(sidstar->STARS->size() - 1).Legs = new std::vector<WayPointA>();
 						//}
 						SIDSTARFile->Read(str, 0);
 						wayPoint.FIXName = "RNW";
 
-						//sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints->push_back(wayPoint);
+						//sidstar->STARS->at(sidstar->STARS->size() - 1).Legs->push_back(wayPoint);
 						sidstar->STARS->at(sidstar->STARS->size() - 1).Runways->push_back(*str);
 						SIDSTARFile->Read(str, 0);
 					}
@@ -583,14 +628,14 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						{
 							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Runways = new std::vector<std::string>();
 						}
-						//if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints == NULL)
+						//if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs == NULL)
 						//{
-						//	sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints = new std::vector<WayPointA>();
+						//	sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs = new std::vector<WayPointA>();
 						//}
 
 						SIDSTARFile->Read(str, 0);
 						wayPoint.FIXName = *str;
-						//sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints->push_back(wayPoint);
+						//sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs->push_back(wayPoint);
 						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Runways->push_back(*str);
 						SIDSTARFile->Read(str, 0);
 					}
@@ -621,17 +666,17 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 				{
 					if (typeSC == 0)
 					{
-						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints == NULL)
+						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs == NULL)
 						{
-							sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->SIDS->at(sidstar->SIDS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->SIDS->at(sidstar->SIDS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 1)
 					{
-						if (sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints == NULL)
+						if (sidstar->STARS->at(sidstar->STARS->size() - 1).Legs == NULL)
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->STARS->at(sidstar->STARS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
 						if (wayPoint.FIXName == "RNW")
 						{
@@ -640,16 +685,16 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 						}
 						else
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).WayPoints->push_back(wayPoint);
+							sidstar->STARS->at(sidstar->STARS->size() - 1).Legs->push_back(wayPoint);
 						}
 					}
 					else if (typeSC == 2)
 					{
-						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints == NULL)
+						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs == NULL)
 						{
-							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).Legs->push_back(wayPoint);
 					}
 					
 				}
@@ -657,27 +702,27 @@ HRESULT Airport::GetSids(ReadStreamText* SIDSTARFile)
 				{
 					if (typeSC == 0)
 					{
-						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->at(sidstar->SIDS->at(sidstar->SIDS->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 1)
 					{
-						if (sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->at(sidstar->STARS->at(sidstar->STARS->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					else if (typeSC == 2)
 					{
-						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints == NULL)
+						if (sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs == NULL)
 						{
-							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints = new std::vector<WayPointA>();
+							sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs = new std::vector<WayPointA>();
 						}
-						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).WayPoints->push_back(wayPoint);
+						sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->at(sidstar->APPROACHES->at(sidstar->APPROACHES->size() - 1).TRANSITIONS->size() - 1).Legs->push_back(wayPoint);
 					}
 					
 				}
@@ -970,7 +1015,7 @@ HRESULT Airport::GetSIDSTAR() {
 						TRANSITION ttransition;
 						tpoints.Name = sidstar2.esids->at(i).name;
 						tpoints.Runways->push_back(sidstar2.esids->at(i).ernws->at(k).name);
-						tpoints.WayPoints = new std::vector<WayPointA>();
+						tpoints.Legs = new std::vector<WayPointA>();
 						for (int m = 0; m < sidstar2.esids->at(i).ernws->at(k).eroute->size(); m++)
 						{
 							twaypointa.ALT = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).alt;
@@ -982,7 +1027,7 @@ HRESULT Airport::GetSIDSTAR() {
 							twaypointa.SPEED = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).speed;
 							twaypointa.TRK = sidstar2.esids->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.esids->at(i).ernws->at(k).eroute->at(m).trk;
 							twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.esids->at(i).ernws->at(k).eroute->at(m));
-							tpoints.WayPoints->push_back(twaypointa);
+							tpoints.Legs->push_back(twaypointa);
 						}
 						if (sidstar2.esids->at(i).etrans)
 						{
@@ -990,7 +1035,7 @@ HRESULT Airport::GetSIDSTAR() {
 							for (int m = 0; m < sidstar2.esids->at(i).etrans->size(); m++)
 							{
 								ttransition.Name = sidstar2.esids->at(i).etrans->at(m).name;
-								ttransition.WayPoints = new std::vector<WayPointA>();
+								ttransition.Legs = new std::vector<WayPointA>();
 								for (int n = 0; n < sidstar2.esids->at(i).etrans->at(m).eroute->size(); n++)
 								{
 									twaypointa.ALT = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1002,7 +1047,7 @@ HRESULT Airport::GetSIDSTAR() {
 									twaypointa.SPEED = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).speed;
 									twaypointa.TRK = sidstar2.esids->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.esids->at(i).etrans->at(m).eroute->at(n).trk;
 									twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.esids->at(i).etrans->at(m).eroute->at(n));
-									ttransition.WayPoints->push_back(twaypointa);
+									ttransition.Legs->push_back(twaypointa);
 								}
 								tpoints.TRANSITIONS->push_back(ttransition);
 							}
@@ -1033,7 +1078,7 @@ HRESULT Airport::GetSIDSTAR() {
 					{
 						tpoints.Runways->push_back(sidstar2.estars->at(i).ernw->at(s));
 					}
-					tpoints.WayPoints = new std::vector<WayPointA>();
+					tpoints.Legs = new std::vector<WayPointA>();
 					for (int m = 0; m < sidstar2.estars->at(i).ernws->at(k).eroute->size(); m++)
 					{
 						twaypointa.ALT = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).alt;
@@ -1045,7 +1090,7 @@ HRESULT Airport::GetSIDSTAR() {
 						twaypointa.SPEED = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).speed;
 						twaypointa.TRK = sidstar2.estars->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.estars->at(i).ernws->at(k).eroute->at(m).trk;
 						twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.estars->at(i).ernws->at(k).eroute->at(m));
-						tpoints.WayPoints->push_back(twaypointa);
+						tpoints.Legs->push_back(twaypointa);
 					}
 					if (sidstar2.estars->at(i).etrans)
 					{
@@ -1053,7 +1098,7 @@ HRESULT Airport::GetSIDSTAR() {
 						for (int m = 0; m < sidstar2.estars->at(i).etrans->size(); m++)
 						{
 							ttransition.Name = sidstar2.estars->at(i).etrans->at(m).name;
-							ttransition.WayPoints = new std::vector<WayPointA>();
+							ttransition.Legs = new std::vector<WayPointA>();
 							for (int n = 0; n < sidstar2.estars->at(i).etrans->at(m).eroute->size(); n++)
 							{
 								twaypointa.ALT = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1065,7 +1110,7 @@ HRESULT Airport::GetSIDSTAR() {
 								twaypointa.SPEED = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).speed;
 								twaypointa.TRK = sidstar2.estars->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.estars->at(i).etrans->at(m).eroute->at(n).trk;
 								twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.estars->at(i).etrans->at(m).eroute->at(n));
-								ttransition.WayPoints->push_back(twaypointa);
+								ttransition.Legs->push_back(twaypointa);
 							}
 							tpoints.TRANSITIONS->push_back(ttransition);
 						}
@@ -1095,7 +1140,7 @@ HRESULT Airport::GetSIDSTAR() {
 					{
 						tpoints.Runways->push_back(sidstar2.eapproaches->at(i).ernw->at(s));
 					}
-					tpoints.WayPoints = new std::vector<WayPointA>();
+					tpoints.Legs = new std::vector<WayPointA>();
 					for (int m = 0; m < sidstar2.eapproaches->at(i).ernws->at(k).eroute->size(); m++)
 					{
 						twaypointa.ALT = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).alt;
@@ -1107,7 +1152,7 @@ HRESULT Airport::GetSIDSTAR() {
 						twaypointa.SPEED = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).speed;
 						twaypointa.TRK = sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).hdg + sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m).trk;
 						twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.eapproaches->at(i).ernws->at(k).eroute->at(m));
-						tpoints.WayPoints->push_back(twaypointa);
+						tpoints.Legs->push_back(twaypointa);
 					}
 					if (sidstar2.eapproaches->at(i).etrans)
 					{
@@ -1115,7 +1160,7 @@ HRESULT Airport::GetSIDSTAR() {
 						for (int m = 0; m < sidstar2.eapproaches->at(i).etrans->size(); m++)
 						{
 							ttransition.Name = sidstar2.eapproaches->at(i).etrans->at(m).name;
-							ttransition.WayPoints = new std::vector<WayPointA>();
+							ttransition.Legs = new std::vector<WayPointA>();
 							for (int n = 0; n < sidstar2.eapproaches->at(i).etrans->at(m).eroute->size(); n++)
 							{
 								twaypointa.ALT = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).alt;
@@ -1127,7 +1172,7 @@ HRESULT Airport::GetSIDSTAR() {
 								twaypointa.SPEED = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).speed;
 								twaypointa.TRK = sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).hdg + sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n).trk;
 								twaypointa.TypeName = GetTypeNameFromPoint(sidstar2.eapproaches->at(i).etrans->at(m).eroute->at(n));
-								ttransition.WayPoints->push_back(twaypointa);
+								ttransition.Legs->push_back(twaypointa);
 							}
 							tpoints.TRANSITIONS->push_back(ttransition);
 						}
@@ -1144,7 +1189,7 @@ HRESULT Airport::GetSIDSTAR() {
 			{
 			std::string Name;
 			std::vector<std::string>* Runways;
-			std::vector<WayPointA>* WayPoints;
+			std::vector<WayPointA>* Legs;
 			std::vector<TRANSITION>* TRANSITIONS;
 			};*/
 			
@@ -1193,6 +1238,239 @@ HRESULT Airport::GetSIDSTAR() {
 //	std::string ICAO = BGLXData::DecodeICAO(PAirportInformation->ICAO);
 //	ReadStreamText* SIDSTARFile = new ReadStreamText(AirportData->RootSim + L"PMDG\\SIDSTARS\\" + std::wstring(ICAO.begin(), ICAO.end()) + L".txt");
 //}
+
+HRESULT Airport::GetRunwayInformation() {
+	if (Records)
+	{
+		std::string ds[] = { "", "L", "R", "C", "W", "A", "B" };
+		if (PRunways)
+		{
+			PRunways->clear();
+		}
+		else
+		{
+			PRunways = new std::vector<RunwayInfoMSFS>();
+		}
+		if (POneWayRunways) {
+			POneWayRunways->clear();
+		}
+		else {
+			POneWayRunways = new std::vector<DATA_RUNWAY>();
+		}
+		if (PPointsRunway) {
+			PPointsRunway->clear();
+		}
+		else {
+			PPointsRunway = new std::vector<POINTS_RUNWAY>();
+		}
+
+		for (int i = 0; i < PTaxiwayPaths->size(); i++) {
+			if ((PTaxiwayPaths->at(i).Type & 0xf) == 2) {
+				//PTaxiwayPaths->at(i).Type = PTaxiwayPaths->at(i).Type & 0xf1;
+			}
+		}
+
+		for (int i = 0; i < Records->size(); i++)
+		{
+			if (Records->at(i).ID == 0xCE)
+			{
+				DWORD Offset = Records->at(i).Offset;
+				
+				RunwayInfoMSFS Runway;
+				DATA_RUNWAY OneRunway;
+				RunwayOffsetThreshold PrimaryOT;
+				RunwayOffsetThreshold SecondaryOT;
+				double PrimaryRunwayDeviation = 0.0;
+				double SecondaryRunwayDeviation = 0.0;
+				
+				double sAlt = -1.0, eAlt = -1.0;
+				BGLX->BGLXFile->Read(&Runway, Offset, sizeof(RunwayInfoMSFS));
+
+				for (int j = i+1; j < Records->size(); j++) {
+					RunwayDeform RunwayDef;
+					if (Records->at(j).ID == 0xCE) {
+						break;
+					}
+					if (Records->at(j).ID == 0x3E) {
+						BGLX->BGLXFile->Read(&RunwayDef, Records->at(j).Offset, sizeof(RunwayDeform));
+						if (RunwayDef.Ratio == 0.0) {
+							sAlt = RunwayDef.Alt;
+						}
+						else if (RunwayDef.Ratio == 1.0) {
+							eAlt = RunwayDef.Alt;
+						}
+
+					}
+					if (Records->at(j).ID == 0x05) {
+						BGLX->BGLXFile->Read(&PrimaryOT, Records->at(j).Offset, sizeof(RunwayOffsetThreshold));
+						PrimaryRunwayDeviation = PrimaryOT.Length;
+					}
+					if (Records->at(j).ID == 0x06) {
+						BGLX->BGLXFile->Read(&SecondaryOT, Records->at(j).Offset, sizeof(RunwayOffsetThreshold));
+						SecondaryRunwayDeviation = SecondaryOT.Length;
+					}
+				}
+
+				if (sAlt == -1.0 || eAlt == -1.0) {
+					sAlt = eAlt = double(Runway.Alt) / 1000.0;
+				}
+				
+				PMDG_TEST::SIMMATH::DSHEH dsheh;
+				dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), Runway.Heading, (Runway.Distance)/2000);
+				dsheh.Slla = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), (Runway.Distance) / 2000);
+
+				PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+				OneRunway.sLatitude = dsheh.Slla.Latitude;
+				OneRunway.sLongitude = dsheh.Slla.Longitude;
+				OneRunway.sHeading = dsheh.SH;
+				OneRunway.eLatitude = dsheh.Ella.Latitude;
+				OneRunway.eLongitude = dsheh.Ella.Longitude;
+				OneRunway.eHeading = dsheh.EH;
+				OneRunway.alt = sAlt * 3.28084;
+				OneRunway.Dev = PrimaryRunwayDeviation / 1000.0;
+				if (Runway.PrimaryNumber < 10) {
+					OneRunway.Name = "0" + std::to_string(Runway.PrimaryNumber) + ds[Runway.PrimaryDesignator];
+				} 
+				else {
+					OneRunway.Name = std::to_string(Runway.PrimaryNumber) + ds[Runway.PrimaryDesignator];
+				}
+				POneWayRunways->push_back(OneRunway);
+
+				dsheh.Slla = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), Runway.Heading, (Runway.Distance ) / 2000);
+				dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), (Runway.Distance) / 2000);
+
+				PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+				OneRunway.sLatitude = dsheh.Slla.Latitude;
+				OneRunway.sLongitude = dsheh.Slla.Longitude;
+				OneRunway.sHeading = dsheh.SH;
+				OneRunway.eLatitude = dsheh.Ella.Latitude;
+				OneRunway.eLongitude = dsheh.Ella.Longitude;
+				OneRunway.eHeading = dsheh.EH;
+				OneRunway.alt = eAlt * 3.28084;
+				OneRunway.Dev = SecondaryRunwayDeviation / 1000.0;
+				if (Runway.SecondaryNumber < 10) {
+					OneRunway.Name = "0" + std::to_string(Runway.SecondaryNumber) + ds[Runway.SecondaryDesignator];
+				}
+				else {
+					OneRunway.Name = std::to_string(Runway.SecondaryNumber) + ds[Runway.SecondaryDesignator];
+				}
+				
+				POneWayRunways->push_back(OneRunway);
+				PRunways->push_back(Runway);
+				for (int j = 0; j < PTaxiwayPoints->size(); j++) {
+					dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), Runway.Distance / 2000);
+					POINTS_RUNWAY PointRunway;
+					PointRunway.Runway = POneWayRunways->size() - 2;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					dsheh.Slla.Latitude = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(j).Lat);
+					dsheh.Slla.Longitude = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(j).Lon);
+					PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+					double a = PMDG_TEST::SIMMATH::GetFixDA(sin(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading) * M_PI / 180) * dsheh.D, PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading));
+					PointRunway.DistToEnd = dsheh.D;
+					PointRunway.DistToCenterLine = abs(a);
+					PointRunway.TaxiwayPoint = j;
+					PointRunway.Lat = dsheh.Ella.Latitude;
+					PointRunway.Lon = dsheh.Ella.Longitude;
+					if ((dsheh.D <= (Runway.Distance / 1000)) && (abs(a) <= (Runway.Width / 2000)) && (abs(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading))) > 90.0) {
+						PTaxiwayPoints->at(PointRunway.TaxiwayPoint).Flag = 0xFF;
+						PPointsRunway->push_back(PointRunway);
+						PPointsRunway->push_back(PointRunway);
+					}	
+				}
+				for (int j = 0; j < PTaxiwayPoints->size(); j++) {
+					dsheh.Ella = PMDG_TEST::SIMMATH::GetDALatLon(PMDG_TEST::SIMMATH::DecodeLat(Runway.Lat), PMDG_TEST::SIMMATH::DecodeLon(Runway.Lon), PMDG_TEST::SIMMATH::Constrain360(Runway.Heading - 180.0), Runway.Distance / 2000);
+					POINTS_RUNWAY PointRunway;
+					PointRunway.Runway = POneWayRunways->size() - 1;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					dsheh.Slla.Latitude = PMDG_TEST::SIMMATH::DecodeLat(PTaxiwayPoints->at(j).Lat);
+					dsheh.Slla.Longitude = PMDG_TEST::SIMMATH::DecodeLon(PTaxiwayPoints->at(j).Lon);
+					PMDG_TEST::SIMMATH::DOrtoKM(&dsheh);
+					double a = PMDG_TEST::SIMMATH::GetFixDA(sin(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading) * M_PI / 180) * dsheh.D, PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading));
+					PointRunway.DistToEnd = dsheh.D;
+					PointRunway.DistToCenterLine = abs(a);
+					PointRunway.TaxiwayPoint = j;
+					PointRunway.Lat = dsheh.Ella.Latitude;
+					PointRunway.Lon = dsheh.Ella.Longitude;
+					if ((dsheh.D <= (Runway.Distance / 1000)) && (abs(a) <= (Runway.Width / 2000)) && (abs(PMDG_TEST::SIMMATH::Constrain180(dsheh.EH - POneWayRunways->at(PointRunway.Runway).eHeading))) < 90.0) {
+						//PPointsRunway->push_back(PointRunway);
+						//PPointsRunway->push_back(PointRunway);
+					}
+				}
+				double max = -50000, min = 50000;
+				int maxPoint = -1, minPoint = -1;
+				for (int j = 0; j < PPointsRunway->size(); j++) {
+					if ((PPointsRunway->at(j).Runway == (POneWayRunways->size() - 2)) || (PPointsRunway->at(j).Runway == (POneWayRunways->size() - 1))) {
+						if (PPointsRunway->at(j).DistToEnd < min) {
+							min = PPointsRunway->at(j).DistToEnd;
+							minPoint = j;
+						}
+						if (PPointsRunway->at(j).DistToEnd > max) {
+							max = PPointsRunway->at(j).DistToEnd;
+							maxPoint = j;
+						}
+					}
+				}
+				TaxiwayPoints tPoint;
+				TaxiwayPaths tPath;
+				if ((minPoint >= 0) || (maxPoint >= 0)) {
+					tPoint.Lat = PMDG_TEST::SIMMATH::EncodeLat(POneWayRunways->at(POneWayRunways->size() - 2).sLatitude);
+					tPoint.Lon = PMDG_TEST::SIMMATH::EncodeLon(POneWayRunways->at(POneWayRunways->size() - 2).sLongitude);
+					tPoint.Type = 1;
+					tPoint.Flag = 0xFF;
+					POINTS_RUNWAY PointRunway;
+					PointRunway.DistToEnd = 0;
+					PointRunway.DistToCenterLine = 0;
+					PointRunway.TaxiwayPoint = PTaxiwayPoints->size();
+					PointRunway.Lat = POneWayRunways->at(POneWayRunways->size() - 2).sLatitude;
+					PointRunway.Lon = POneWayRunways->at(POneWayRunways->size() - 2).sLongitude;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					PTaxiwayPoints->push_back(tPoint);
+					PPointsRunway->push_back(PointRunway);
+					tPath.IndexStartPoint = PPointsRunway->at(minPoint).TaxiwayPoint;
+					tPath.End = PTaxiwayPoints->size() - 1;
+					tPath.Type = 1; //???
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = 0; //  Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+					tPoint.Lat = PMDG_TEST::SIMMATH::EncodeLat(POneWayRunways->at(POneWayRunways->size() - 2).eLatitude);
+					tPoint.Lon = PMDG_TEST::SIMMATH::EncodeLon(POneWayRunways->at(POneWayRunways->size() - 2).eLongitude);
+					tPoint.Type = 1;
+
+					tPoint.Flag = 0xFF;
+
+					PointRunway.DistToEnd = Runway.Distance;
+					PointRunway.DistToCenterLine = 0;
+					PointRunway.TaxiwayPoint = PTaxiwayPoints->size();
+					PointRunway.Lat = POneWayRunways->at(POneWayRunways->size() - 2).eLatitude;
+					PointRunway.Lon = POneWayRunways->at(POneWayRunways->size() - 2).eLongitude;
+					PointRunway.Run = Runway.PrimaryDesignator * 0x1000 + Runway.PrimaryNumber;
+					PTaxiwayPoints->push_back(tPoint);
+					PPointsRunway->push_back(PointRunway);
+					tPath.IndexStartPoint = PPointsRunway->at(maxPoint).TaxiwayPoint;
+					tPath.End = PTaxiwayPoints->size() - 1;
+					tPath.Type = 1; //???
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = 0; // Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+
+					tPath.IndexStartPoint = PTaxiwayPoints->size() - 1;
+					tPath.End = PTaxiwayPoints->size() - 2;
+					tPath.Type = 2; 
+					tPath.Unk1 = 0x5555;
+					tPath.IndexEndPoint = Runway.PrimaryDesignator * 0x1000;
+					tPath.TaxiNameIndex = Runway.PrimaryNumber;
+					PTaxiwayPaths->push_back(tPath);
+				}
+			}
+		}
+		return NOERROR;
+	}
+	return E_UNEXPECTED;
+}
+
+
 HRESULT Airport::GetTaxiwayInformation()
 {
 	if (Records)
@@ -1344,7 +1622,11 @@ HRESULT Airport::GetTaxiwayInformation()
 						BGLX->BGLXFile->Read(&TaxiwayPathEmpty, Offset, sizeof(TaxiwayPathEmpty));
 						Offset = Offset + sizeof(TaxiwayPathEmpty);
 					}
+					if ((TaxiwayPath.Type & 0xf) == 2) {
+						//TaxiwayPath.Type = TaxiwayPath.Type & 0xf1;
+					}
 					PTaxiwayPaths->push_back(TaxiwayPath);
+
 					Offset = Offset + sizeof(TaxiwayPath);
 
 				}
@@ -1392,6 +1674,9 @@ HRESULT Airport::GetTaxiwayInformation()
 					TaxiwayPath.Unk1 = TaxiwayPathMSFS.Unk1;
 					TaxiwayPath.WeightLimit = TaxiwayPathMSFS.WeightLimit;
 					TaxiwayPath.Width = TaxiwayPathMSFS.Width;
+					if ((TaxiwayPath.Type & 0xf) == 2) {
+						//TaxiwayPath.Type = TaxiwayPath.Type & 0xf1;
+					}
 					PTaxiwayPaths->push_back(TaxiwayPath);
 				}
 			}
@@ -1597,6 +1882,11 @@ Airport::~Airport()
 	{
 		delete PAirportInformation;
 		PAirportInformation = NULL;
+	}
+	if (PAddAirportInformation)
+	{
+		delete PAddAirportInformation;
+		PAddAirportInformation = NULL;
 	}
 	if (Records)
 	{

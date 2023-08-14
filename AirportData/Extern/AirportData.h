@@ -2,7 +2,7 @@
 #include "AirportData.h"
 #include <SimConnect.h>
 #include <vector>
-
+#define _CRT_SECURE_NO_WARNINGS 1
 //#include "Airport.h"
 #if !defined(AIRPORTAPI)
 #define AIRPORTAPI extern "C" IAirportData* __stdcall
@@ -12,15 +12,27 @@
 #pragma pack(push, 1)
 
 class DATA_RUNWAY {
-	public:
-		double		sLatitude;
-		double		sLongitude;
-		double		sHeading;
-		double		eLatitude;
-		double		eLongitude;
-		double		eHeading;
-		double    alt;
-		std::string Name;
+public:
+	double		sLatitude;
+	double		sLongitude;
+	double		sHeading;
+	double		eLatitude;
+	double		eLongitude;
+	double		eHeading;
+	double    alt;
+	std::string Name;
+	double		Dev;
+};
+
+class POINTS_RUNWAY {
+public:
+	WORD Runway; //From POneWayRunways
+	WORD Run; //From PRunwats
+	WORD TaxiwayPoint; //From PTaxiWayPoints
+	double Lat;
+	double Lon;
+	double DistToEnd;
+	double DistToCenterLine;
 };
 
 class BGLData {
@@ -50,6 +62,16 @@ class AirportInfo: public BGLData {
 		BYTE	Unk1;
 		BYTE	TrafficScalar;
 		WORD	Unk2;
+};
+
+class AddAirportInfo : public AirportInfo {
+public:
+	double MinLat;
+	double MinLon;
+	double MaxLat;
+	double MaxLon;
+	double DLat;
+	double DLon;
 };
 
 class AirportInfoMSFS : public BGLData {
@@ -84,6 +106,49 @@ public:
 	WORD paintedHatchedAreaCt;
 };
 
+class RunwayDeform : public BGLData {
+public:
+	WORD Unk1;
+	FLOAT Ratio;
+	FLOAT Alt;
+	FLOAT ControlPointBefore;
+	FLOAT ControlPointAfter;
+};
+
+class RunwayOffsetThreshold : public BGLData {
+public:
+	WORD FsXsurface;
+	GUID Surface;
+	FLOAT Length;
+	FLOAT Width;
+};
+
+class RunwayInfoMSFS : public BGLData {
+public:
+	BYTE	Transparent;
+	BYTE	Unk1;
+	BYTE	PrimaryNumber;
+	BYTE	PrimaryDesignator;
+	BYTE	SecondaryNumber;
+	BYTE	SecondaryDesignator;
+	DWORD	PrimaryILSIdent;
+	DWORD	SecondaryILSIdent;
+	DWORD	Lon;
+	DWORD	Lat;
+	DWORD	Alt;
+	FLOAT	Distance;
+	FLOAT	Width;
+	FLOAT	Heading;
+	FLOAT	PatternAltitude;
+	WORD	Marking1;
+	BYTE	Marking2;
+	BYTE	Pattern;
+	BYTE	Unk2[0x14];
+	FLOAT	Falloff;
+	GUID	Surface;
+	DWORD	Coloration;
+};
+
 class AirportInfoP3D : public BGLData {
 public:
 	BYTE	RunwayCount;
@@ -105,7 +170,7 @@ public:
 	BYTE	Unk1;
 	BYTE	TrafficScalar;
 	WORD	Unk2;
-	DWORD Unk3;
+	DWORD	Unk3;
 };
 
 class AirportInfoFS9 : public BGLData {
@@ -303,15 +368,16 @@ class WayPointA {
 class TRANSITION {
 	public:
 		std::string					Name;
-		std::vector<WayPointA>*		WayPoints;
+		std::vector<WayPointA>*		Legs;
 };
 
 class Points {
 	public:
 		std::string					Name;
 		std::vector<std::string>*	Runways;
-		std::vector<WayPointA>*		WayPoints;
+		std::vector<WayPointA>*		Legs;
 		std::vector<TRANSITION>*	TRANSITIONS;
+		int							Priority = 1000;
 };
 
 class SIDSTAR {
@@ -365,6 +431,7 @@ class TPath {
 		double			Lat;
 		double			Lon;
 		WORD			Type;
+		BYTE			InRunway;
 };
 
 class AirportPaths {
@@ -391,22 +458,26 @@ public:
 	std::vector<int>*				Starts;
 	AirportInfo*					PAirportInformation	= 0;
 	TaxiwayPointsHeadrer*			PHTaxiwayPoints		= 0;
-	TaxiwayPointsHeadrerP3D* PHTaxiwayPointsP3D = 0;
+	TaxiwayPointsHeadrerP3D*		PHTaxiwayPointsP3D	= 0;
 	std::vector<TaxiwayPoints>*		PTaxiwayPoints		= 0;
-	std::vector<TaxiwayPointsP3D>* PTaxiwayPointsP3D = 0;
+	std::vector<TaxiwayPointsP3D>*	PTaxiwayPointsP3D	= 0;
 	TaxiwayParksHeader*				PHTaxiwayParks		= 0;
 	std::vector<TaxiwayParks>*		PTaxiwayParks		= 0;
-	TaxiwayParksHeaderMSFS* PHTaxiwayParksMSFS = 0;
-	std::vector<TaxiwayParksMSFS>* PTaxiwayParksMSFS = 0;
-	TaxiwayParksHeaderP3D* PHTaxiwayParksP3D = 0;
-	std::vector<TaxiwayParksP3D>* PTaxiwayParksP3D = 0;
+	TaxiwayParksHeaderMSFS*			PHTaxiwayParksMSFS	= 0;
+	std::vector<TaxiwayParksMSFS>*	PTaxiwayParksMSFS	= 0;
+	TaxiwayParksHeaderP3D*			PHTaxiwayParksP3D	= 0;
+	std::vector<TaxiwayParksP3D>*	PTaxiwayParksP3D	= 0;
 	TaxiwayPathsHeader*				PHTaxiwayPaths		= 0;
 	std::vector<TaxiwayPaths>*		PTaxiwayPaths		= 0;
-	std::vector<TaxiwayPathsMSFS>* PTaxiwayPathsMSFS = 0;
+	std::vector<TaxiwayPathsMSFS>* PTaxiwayPathsMSFS	= 0;
 	TaxiwayNamesHeader*				PHTaxiwayNames		= 0;
 	std::vector<TaxiwayNames>*		PTaxiwayNames		= 0;
-	std::vector<RunwayPaths>*		RPth;
+	std::vector<RunwayPaths>*		RPth				= 0;
 	SIDSTAR*						sidstar				= 0;
+	std::vector<RunwayInfoMSFS>*	PRunways			= 0;
+	std::vector<DATA_RUNWAY>*		POneWayRunways		= 0;
+	std::vector<POINTS_RUNWAY>*		PPointsRunway		= 0;
+	AddAirportInfo*					PAddAirportInformation = 0;
 	
 };
 
@@ -417,7 +488,7 @@ class IAirportData
 		virtual int												GetProgress()																																= 0;
 		virtual void											Release()																																		= 0;
 		virtual AirportList								GetNearAirport(double Lat, double Lon, int index = -1)											= 0;
-    virtual AirportList							  GetAirportByIcao(std::string icao)																					= 0;
+		virtual AirportList							  GetAirportByIcao(std::string icao)																					= 0;
 		virtual std::vector<RunwayPaths>*	GetRunways()																																= 0;
 		virtual std::vector<int>*					GetRunwayStart(double lat, double lon, double direction)										= 0;
 		virtual std::vector<TPath>				GetPath(DWORD start, DWORD heading, double direction)												= 0;
@@ -432,7 +503,9 @@ class IAirportData
 		std::vector<double>*							d																																						= 0;
 		std::vector<TPath>*								ReturnPath;
 		std::string											RootSim;
+		
 	};
+
 
 
 AIRPORTAPI GetAirportData();

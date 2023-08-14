@@ -262,9 +262,11 @@ private:
   double _inRudder = 0;
   double _outRudder = 0;
 
-  double _PInThrottleOutThrottle = 0;
-  double _IInThrottleOutThrottle = 4;
-  double _DInThrottleOutThrottle = 0;
+  double _PInThrottleOutThrottle = 1.0;
+  double _IInThrottleOutThrottle = 0.01;
+  double _DInThrottleOutThrottle = 10.0;
+  double _IBInThrottleOutThrottle = 1.0;
+  double _DBInThrottleOutThrottle = 20.0;
 
   double _PInAileronOutAileron = 0;
   double _IInAileronOutAileron = 4;
@@ -329,27 +331,27 @@ private:
   void RudderTrimSet(double pos, DWORD speed = 10);
   void PitchTrimSet(double deg, DWORD speed = 10);
 
-  //double GetData(DWORD var, char* unit = "");
-  double GetDataL(DWORD var, char* unit = "");
-  double SetData(DWORD var, double val, char* unit = "");
-  double SetDataL(DWORD var, double val, char* unit = "");
-  //double SetGetData(DWORD varSet, DWORD varGet, double val, char* unit = "");
+  //double GetData(DWORD var, const char* unit = "");
+  double GetDataL(DWORD var, const char* unit = "");
+  double SetData(DWORD var, double val, const char* unit = "");
+  double SetDataL(DWORD var, double val, const char* unit = "");
+  //double SetGetData(DWORD varSet, DWORD varGet, double val, const char* unit = "");
   //double SetSetData(DWORD var1, double val1, DWORD var2, double val2, char* unit1 = "", char* unit2 = "");
   DWORD SendEvent(DWORD EventID, long dwData);
 
-  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
 
 signals:
   void SendText(QString s, bool sendSim);
   void SendLog(QString s);
-  void GetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void GetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+  void GetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void GetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit = "");
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
-  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
-  void SetSetDataSignal(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
+  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
+  void SetSetDataSignal(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, const char* unit1 = "", const char* unit2 = "");
 
 
 
@@ -361,5 +363,6 @@ public slots:
   void TimerProc();
   void ReceiveCommand(DWORD command, double parameter1, double parameter2);
   void PushbackSpeedSet(double setSpeed, DWORD speed);
+  double PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral);
 };
 

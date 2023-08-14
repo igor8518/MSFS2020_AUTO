@@ -187,10 +187,101 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 			//delete a;
 			break;
 		}
-		default: {
-			lContext->data->SendLog("NA ID EVENT: " + QString::number(evt->uEventID));
+		case EXTERNAL_SYSTEM_SET:
+		{
+			//lContext->data->SendLog("[GSX PopUp] timeout: " + QString::number(evt->dwData));
+			QFile data("C:\\Program Files (x86)\\Addon Manager\\MSFS\\fsdreamteam-gsx-pro\\html_ui\\InGamePanels\\FSDT_GSX_Panel\\tooltip");
+			data.open(QIODevice::ReadOnly);
+			QTextStream stream(&data);
+			QStringList strings(stream.readAll().split("\n"));
+			data.close();
+			lContext->data->SendLog("[GSX PopUp]: " + strings[0]);
 			break;
 		}
+		case EXTERNAL_SYSTEM_TOGGLE: {
+			QFile data("C:\\Program Files (x86)\\Addon Manager\\MSFS\\fsdreamteam-gsx-pro\\html_ui\\InGamePanels\\FSDT_GSX_Panel\\menu");
+			data.open(QIODevice::ReadOnly);
+			QTextStream stream(&data);
+			//QStringList strings(stream.readAll().split("\n"));
+			lContext->data->menu = stream.readAll().split("\n");
+			data.close();
+			switch (evt->dwData) {
+			case 1: {
+				//lContext->data->SendLog("[GSX Menu] Reload");
+				lContext->data->SendLog("[GSX menu]: " + lContext->data->menu[0]);
+				lContext->data->NewGSXQuestion = true;
+				break;
+			}
+			case 2: {
+				lContext->data->SendLog("[GSX Menu] Hide)");
+				break;
+			}
+			case 3: {
+				lContext->data->SendLog("[GSX Menu] Timeout");
+				break;
+			}
+			case 4: {
+				lContext->data->SendLog("[GSX Menu] Force close");
+				break;
+			}
+			default: {
+				lContext->data->SendLog("[GSX] N/A: " + QString::number(evt->dwData));
+				for (int i = 0; i < lContext->data->menu.size(); i++) {
+					lContext->data->SendLog("[GSX menu]: " + lContext->data->menu[i]);
+				}
+				break;
+			}
+			}
+			break;
+		}
+		case EVENT_REGISTER_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_REGISTER_VARIABLE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_REGISTER_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_REGISTER_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_GET_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_GET_VARIABLE_QUERY: " + QString((char*)evt->dwData));
+			break;
+		}
+		case EVENT_GET_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_GET_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_SET_VARIABLE_QUERY: {
+			lContext->data->SendLog("EVENT_SET_VARIABLE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_SET_VARIABLE_RESPONSE: {
+			lContext->data->SendLog("EVENT_SET_VARIABLE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_EXEC_CODE_QUERY: {
+			lContext->data->SendLog("EVENT_EXEC_CODE_QUERY: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_EXEC_CODE_RESPONSE: {
+			lContext->data->SendLog("EVENT_EXEC_CODE_RESPONSE: " + QString::number(evt->dwData, 'f', 3));
+			break;
+		}
+		case EVENT_MENU_OPEN: {
+			lContext->data->SendLog("EVENT_MENU_OPEN: " + QString::number(evt->dwData));
+			break;
+		}
+		case EVENT_MENU_CHOISE: {
+			if ((evt->dwData + 1) < lContext->data->menu.size()) {
+				lContext->data->SendLog(lContext->data->menu[evt->dwData + 1]);
+				lContext->data->NewGSXQuestion = false;
+			}
+			break;
+		}
+		default: {
+
+			lContext->data->SendLog("COUATL: " + QString::number(evt->uEventID));
+			break;
+		}		
 		}
 		break;
 	}
@@ -244,7 +335,7 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 		break;
 	}
 	default: {
-		lContext->data->SendLog("UNKNOWN DATA RECEIVED: pData->dwID=" + QString::number(pData->dwID) + " cbData=" + QString::number(cbData));
+		//lContext->data->SendLog("UNKNOWN DATA RECEIVED: pData->dwID=" + QString::number(pData->dwID) + " cbData=" + QString::number(cbData));
 		break;
 	}
 	}
@@ -285,7 +376,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	set54 = false;
 	set60 = false;
 	Quit = false;
-	RegEvent = std::vector<bool>(1600, false);
+	RegEvent = std::vector<bool>(1700, false);
 
 
 
@@ -435,7 +526,7 @@ void SimData::SendEvent(DWORD sender, DWORD EventID, long dwData) {
 	// Test
 	return;
 }
-void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit) {
+void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit) {
 	RegisterEvent((CLIENTEVENTS)EventID);
 	RegisterVarSet(sender, var, val, unit);
 	for (int i = 0; i < RegVarsSet->size(); i++) {
@@ -446,7 +537,7 @@ void SimData::SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, do
 	return;
 }
 
-bool SimData::RegisterVarGet(DWORD sender, DWORD data, char* unit) {
+bool SimData::RegisterVarGet(DWORD sender, DWORD data, const char* unit) {
 	if (SimVarsGet[data] == NULL) {
 		int i = 0;
 			
@@ -473,7 +564,7 @@ void SimData::RegisterStringGet(DWORD sender, DWORD data) {
 	}
 	return;
 }
-void SimData::RegisterVarSet(DWORD sender, DWORD data, double var, char* unit) {
+void SimData::RegisterVarSet(DWORD sender, DWORD data, double var, const char* unit) {
 	
 	if (SimVarsSet[data] == NULL) {
 		int i = 0;
@@ -522,7 +613,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 }
 
 
-//void SimData::GetData(DWORD sender, DWORD var, double* val, char* unit)
+//void SimData::GetData(DWORD sender, DWORD var, double* val, const char* unit)
 //{
 	/*Context c = { this, 50 };
 	if (RegisterVarGet(15, var, unit)) {
@@ -538,7 +629,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 //}
 
 
-/*void SimData::GetDataL(DWORD sender, DWORD var, double* val, char* unit)
+/*void SimData::GetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	int f = 100000;
 	SendEvent(sender, var, Version);
@@ -555,14 +646,14 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 
 
 
-void SimData::SetDataL(DWORD sender, DWORD var, double* val, char* unit)
+void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	int f = 100000;
 	//RegisterVarGet(sender, var, unit);
 	//ExportData.version = false;
 	SendEvent(sender, var, Version);
 	//SUCC(SimConnect_RequestClientData(HSimConnect, A32NX_LOCAL_DATA_ID, REQ_LOCAL_DATA, A32NX_LOCAL_DATA_DEFINITION,
-//		SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0));
+	//SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0));
 	Context c = { this, 53 };
 	while (ExportData.version != Version) {
 		/*f--;
@@ -603,7 +694,7 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, char* unit)
 }
 
 
-void SimData::SetData(DWORD sender, DWORD var, double* val, char* unit)
+void SimData::SetData(DWORD sender, DWORD var, double* val, const char* unit)
 {
 	Context c;
 	if (RegVarsSet->size() > 0) {
@@ -659,6 +750,6 @@ void SimData::SetData(DWORD sender, DWORD var, double* val, char* unit)
 }*/
 
 
-/*void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit)
+/*void SimData::SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit)
 {
 }*/

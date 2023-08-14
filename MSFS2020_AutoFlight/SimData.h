@@ -21,6 +21,8 @@ public:
 	INT64 VerAll;
 	DWORD Version;
 	 A32NX_Control Control;
+	 QStringList menu;
+	 bool NewGSXQuestion = false;
 	
 private:
 	bool set50;
@@ -33,7 +35,7 @@ private:
 	DWORD Sender;
 	
 	double SendVars[100];
-	INT LVars[1000];
+	INT LVars[1100];
 	HANDLE HSimConnect;
 	BOOL Quit;
 	bool isPMDG737;
@@ -1458,10 +1460,10 @@ private:
 		"BUS CONNECTION ON:11",
 		"EXTERNAL POWER AVAILABLE:1",
 		"EXTERNAL POWER ON:1",
-		"FUELSYSTEM PUMP SWITCH:1",
+		"FUELSYSTEM PUMP SWITCH:9",
 		"FUELSYSTEM PUMP SWITCH:2",
 		"FUELSYSTEM PUMP SWITCH:3",
-		"FUELSYSTEM PUMP SWITCH:4",
+		"FUELSYSTEM PUMP SWITCH:10",
 		"FUELSYSTEM PUMP SWITCH:5",
 		"FUELSYSTEM PUMP SWITCH:6",
 		"LIGHT POTENTIOMETER:7",
@@ -4445,7 +4447,7 @@ private:
 			1,
 			1,
 	};
-	const char* EventString[1600] = {
+	const char* EventString[1700] = {
 		"",
 		"",
 		"",
@@ -5512,6 +5514,17 @@ private:
 			"TOGGLE_EXTERNAL_POWER",
 			"FUELSYSTEM_PUMP_TOGGLE",
 			"LIGHT_POTENTIOMETER_7_SET",
+			"LIGHT_POTENTIOMETER_10_SET",
+			"LIGHT_POTENTIOMETER_12_SET",
+			"LIGHT_POTENTIOMETER_84_SET",
+			"LIGHT_POTENTIOMETER_87_SET",
+			"LIGHT_POTENTIOMETER_11_SET",
+			"LIGHT_POTENTIOMETER_83_SET",
+			"LIGHT_POTENTIOMETER_85_SET",
+			"LIGHT_POTENTIOMETER_76_SET",
+			"LIGHT_POTENTIOMETER_86_SET",
+			"LIGHT_POTENTIOMETER_8_SET",
+			"LIGHT_POTENTIOMETER_9_SET",
 			"REQUEST_CATERING",
 			"TOGGLE_RAMPTRUCK",
 			"REQUEST_LUGGAGE",
@@ -5601,8 +5614,8 @@ private:
 			"Autoflight.A32NX_FWC_TOCONFIG",
 			"Autoflight.A32NX_SWITCH_TCAS_Position",
 			"Autoflight.A32NX_SWITCH_TCAS_Traffic_Position",
-			"Autoflight.A32NX_AIRCOND_PACK1_TOGGLE",
-			"Autoflight.A32NX_AIRCOND_PACK2_TOGGLE",
+			"Autoflight.A32NX_OVHD_COND_PACK_1_PB_IS_ON",
+			"Autoflight.A32NX_OVHD_COND_PACK_2_PB_IS_ON",
 
 
 
@@ -5628,9 +5641,9 @@ private:
 				"Autoflight.A32NX_KNOB_OVHD_AIRCOND_XBLEED_Position",
 				"Autoflight.A32NX_KNOB_OVHD_AIRCOND_PACKFLOW_Position",
 				"Autoflight.A32NX_AIRCOND_PACK1_FAULT",
-				"Autoflight.A32NX_AIRCOND_PACK1_TOGGLE",
+				"Autoflight.A32NX_OVHD_COND_PACK_1_PB_IS_ON",
 				"Autoflight.A32NX_AIRCOND_PACK2_FAULT",
-				"Autoflight.A32NX_AIRCOND_PACK2_TOGGLE",
+				"Autoflight.A32NX_OVHD_COND_PACK_2_PB_IS_ON",
 				"Autoflight.A32NX_AIRCOND_HOTAIR_FAULT",
 				"Autoflight.A32NX_AIRCOND_HOTAIR_TOGGLE",
 				"Autoflight.A32NX_AIRCOND_RAMAIR_TOGGLE",
@@ -6290,7 +6303,7 @@ private:
 					"AutoFlight.A32NX_INITFLIGHT_STATE",
 
 
-					"LVarsWrapper.SAVE_VARS",
+					"AutoFlight.SAVE_VARS",
 
 
 					//From FBW
@@ -6471,15 +6484,118 @@ private:
 						"AutoFlight.A32NX_APPROACH_STATE",
 						"AutoFlight.A32NX_SIDESTICK_POSITION_X",
 						"AutoFlight.A32NX_SIDESTICK_POSITION_Y",
+
+						"AutoFlight.A32NX_CHRONO_ET_SWITCH_POS",
+						"AutoFlight.A32NX_SWITCH_ATC_ALT",
+						"AutoFlight.A32NX_TRANSPONDER_MODE",
+						"AutoFlight.A32NX_PFD_MSG_TD_REACHED",
+						"AutoFlight.A32NX_EFIS_L_TO_WPT_IDENT_0",
+						"AutoFlight.A32NX_EFIS_L_TO_WPT_IDENT_1",
+						"AutoFlight.A32NX_EFIS_R_TO_WPT_IDENT_0",
+						"AutoFlight.A32NX_EFIS_R_TO_WPT_IDENT_1",
+						"Autoflight.A32NX_AUTOBRAKES_ARMED_MODE_SET",
+						"AutoFlight.AI_ANGLE_FRONT",
+						"AutoFlight.AI_NOSE_FRONT",
+						"AutoFlight.AI_RUDDER_K",
+					"AutoFlight.AI_RUDDER_P",
+					"AutoFlight.AI_RUDDER_I",
+					"AutoFlight.AI_RUDDER_D",
+					"AutoFlight.AI_RUDDER_IB",
+					"AutoFlight.AI_RUDDER_ID",
+
+					"AutoFlight.AI_PITCH_K",
+					"AutoFlight.AI_PITCH_P",
+					"AutoFlight.AI_PITCH_I",
+					"AutoFlight.AI_PITCH_D",
+					"AutoFlight.AI_PITCH_IB",
+					"AutoFlight.AI_PITCH_ID",
+
+						"WASM.MenuOpen",
+						"WASM.MenuChoice",
+
+					"AutoFlight.FSDT_GSX_AIRCRAFT_EXIT_1_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_EXIT_2_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_EXIT_3_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_EXIT_4_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_EXIT_5_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_CARGO_1_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_CARGO_2_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_CARGO_3_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_SERVICE_1_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_SERVICE_2_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_SERVICE_3_TOGGLE",
+					"AutoFlight.FSDT_GSX_AIRCRAFT_MAINCARGO_TOGGLE",
+
+					"AutoFlight.FSDT_GSX_DEICING_STATE",
+					"AutoFlight.FSDT_GSX_DEICING_TYPE",
+					"AutoFlight.FSDT_GSX_DEICING_CONCENTRATION",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS_BOARDING",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS_BOARDING_TOTAL",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS_DEBOARDING",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS_DEBOARDING_TOTAL",
+					"AutoFlight.FSDT_GSX_NUMPASSENGERS_TOTAL",
+					"AutoFlight.FSDT_GSX_BATTERY_VOLTAGE",
+					"AutoFlight.FSDT_GSX_MAX_BATTERY_VOLTAGE",
+					"AutoFlight.FSDT_GSX_DISABLE_DOORS_MSG",
+					"AutoFlight.FSDT_GSX_DISABLE_DETECT_REFUELING",
+					"AutoFlight.FSDT_GSX_BOARDING_CARGO_PERCENT",
+					"AutoFlight.FSDT_GSX_DEBOARDING_CARGO_PERCENT",
+					"AutoFlight.FSDT_GSX_NUMPILOTS",
+					"AutoFlight.FSDT_GSX_PILOTS_NOT_BOARDING",
+					"AutoFlight.FSDT_GSX_PILOTS_NOT_DEBOARDING",
+					"AutoFlight.FSDT_GSX_PILOTS_ON_BOARD",
+					"AutoFlight.FSDT_GSX_NUMCREW",
+					"AutoFlight.FSDT_GSX_CREW_NOT_BOARDING",
+					"AutoFlight.FSDT_GSX_CREW_NOT_DEBOARDING",
+					"AutoFlight.FSDT_GSX_CREW_ON_BOARD",
+					"AutoFlight.FSDT_GSX_FUEL_COUNTER",
+					"AutoFlight.FSDT_GSX_FUEL_COUNTER_MAX",
+					"AutoFlight.FSDT_GSX_FUEL_PRICE",
+					"AutoFlight.FSDT_GSX_FUELHOSE_CONNECTED",
+					"AutoFlight.FSDT_GSX_STATE",
+					"AutoFlight.FSDT_GSX_ENGINE_START_CONFIRMED",
+					"AutoFlight.FSDT_GSX_MENU_OPEN",
+					"AutoFlight.FSDT_GSX_PASSENGERGATE",
+					"AutoFlight.FSDT_GSX_CARGO_STAND",
+
+					"AutoFlight.FSDT_GSX_MENU_CHOICE",
+					"AutoFlight.FSDT_VAR_EnginesStopped",
+					"AutoFlight.FSDT_GSX_JETWAY_POWER",
+					"AutoFlight.FSDT_GSX_JETWAY_AIR",
+					"AutoFlight.FSDT_GSX_JETWAY",
+					"AutoFlight.FSDT_GSX_STAIRS",
+					"AutoFlight.FSDT_GSX_SIMBRIEF_SUCCESS",
+					"AutoFlight.FSDT_VAR_YouControlIsAvailable",
+
+					// Add Couatl
+					"AutoFlight.FSDT_GSX_COUATL_STARTED",
+					"AutoFlight.FSDT_GSX_OPERATESTAIRS_STATE",
+					"AutoFlight.FSDT_GSX_OPERATEJETWAYS_STATE",
+					"AutoFlight.FSDT_GSX_CATERING_STATE",
+					"AutoFlight.FSDT_GSX_REFUELING_STATE",
+					"AutoFlight.FSDT_GSX_GPU_STATE",
+					"AutoFlight.FSDT_GSX_LAVATORY_STATE",
+					"AutoFlight.FSDT_GSX_WATER_STATE",
+					"AutoFlight.FSDT_GSX_FOLLOWME_STATE",
+					"AutoFlight.FSDT_GSX_BOARDING_STATE",
+					"AutoFlight.FSDT_GSX_DEPARTURE_STATE",
+					"AutoFlight.FSDT_GSX_DEBOARDING_STATE",
+
+					//Add pushback system
+					"AutoFlight.A32NX_PUSHBACK_SYSTEM_ENABLED",
+					"AutoFlight.A32NX_PUSHBACK_SPD_FACTOR",
+					"AutoFlight.A32NX_PUSHBACK_HDG_FACTOR",
+						
 	};
 	std::vector<bool> RegEvent;
 	unsigned int GetRegisteredVarsGetCount();
 	unsigned int GetRegisteredVarsSetCount();
 	unsigned int GetRegisteredStringsGetCount();
 	unsigned int GetRegisteredVarsSetGetCount();
-	bool RegisterVarGet(DWORD sender, DWORD var, char* unit = "");
+	bool RegisterVarGet(DWORD sender, DWORD var, const char* unit = "");
 	void RegisterStringGet(DWORD sender, DWORD data);
-	void RegisterVarSet(DWORD sender, DWORD var, double val, char* unit = "");
+	void RegisterVarSet(DWORD sender, DWORD var, double val, const char* unit = "");
 	void RegisterEvent(DWORD clientEvent);
 	HRESULT GetAllData();
 	
@@ -6494,14 +6610,14 @@ signals:
 public slots:
 	void TimerProc();
 	void GetDataString(DWORD sender, DWORD var, std::string* val);
-	//void GetData(DWORD sender, DWORD var, double* val, char* unit = "");
-	//void GetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
-	void SetDataL(DWORD sender, DWORD var, double* val, char* unit = "");
-	void SetData(DWORD sender, DWORD var, double* val, char* unit = "");
+	//void GetData(DWORD sender, DWORD var, double* val, const char* unit = "");
+	//void GetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");
+	void SetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");
+	void SetData(DWORD sender, DWORD var, double* val, const char* unit = "");
 	//void SetSetData(DWORD sender, DWORD var1, double* val1, DWORD var2, double* val2, char* unit1 = "", char* unit2 = "");
-	//void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+	//void SetGetData(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit = "");
 	void SendEvent(DWORD sender, DWORD EventID, long dwData);
-	void SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+	void SendEvent2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
 };
 
 #endif

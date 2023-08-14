@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29519.87
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSFS2020_AutoFlight", "MSFS2020_AutoFlight\MSFS2020_AutoFlight.vcxproj", "{680CDF96-BADE-4752-8773-2690B1F50D9A}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSFS2020_AutoFlight", "MSFS
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AirportData", "AirportData\AirportData.vcxproj", "{02B16F1C-D1BB-4B28-B062-D479977DBA67}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lvars-bridge", "lvars-bridge\lvars-bridge.vcxproj", "{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,7 +29,6 @@ Global
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|MSFS.ActiveCfg = Release|x64
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|Win32.ActiveCfg = Release|x64
 		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|x64.ActiveCfg = Release|x64
-		{680CDF96-BADE-4752-8773-2690B1F50D9A}.Release|x64.Build.0 = Release|x64
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|MSFS.ActiveCfg = Debug|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|Win32.ActiveCfg = Debug|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Debug|Win32.Build.0 = Debug|Win32
@@ -37,7 +38,18 @@ Global
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|Win32.ActiveCfg = Release|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|Win32.Build.0 = Release|Win32
 		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|x64.ActiveCfg = Release|x64
-		{02B16F1C-D1BB-4B28-B062-D479977DBA67}.Release|x64.Build.0 = Release|x64
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|MSFS.ActiveCfg = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|MSFS.Build.0 = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|Win32.ActiveCfg = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|Win32.Build.0 = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|x64.ActiveCfg = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Debug|x64.Build.0 = Debug|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|MSFS.ActiveCfg = Release|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|MSFS.Build.0 = Release|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|Win32.ActiveCfg = Release|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|Win32.Build.0 = Release|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|x64.ActiveCfg = Release|MSFS
+		{A5468B35-BBBD-4C55-97ED-81BFE343B0E4}.Release|x64.Build.0 = Release|MSFS
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

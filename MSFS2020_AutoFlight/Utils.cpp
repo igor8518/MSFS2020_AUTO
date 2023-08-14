@@ -42,14 +42,32 @@ double Utils::GetPathLength(std::vector<TPath>* p) {
 		sWayPoint dsheh = { 0 };
 		dsheh.Lat = p->at(i - 1).Lat;
 		dsheh.Lon = p->at(i - 1).Lon;
-		dsheh.Altitude = 0;
+		dsheh.SAltitudeHi = 0;
 		dsheh.ELat = p->at(i).Lat;
 		dsheh.ELon = p->at(i).Lon;
-		dsheh.EAltitude = 0;
+		dsheh.EAltitudeHi = 0;
 		DOrtoKM(&dsheh);
 		D = D + dsheh.Distance;
 	}
 	return D;
+}
+
+std::string Utils::Unpack(std::vector<double> values) {
+	std::string ret = "";
+	for (int i = 0; i < values.size() * 8; i++) {
+		WORD word = floor(i / 8);
+		BYTE char1 = i % 8;
+		UINT64 fst = values[word];
+		DWORD a1 = char1 * 6;
+		UINT64 a2 = 1 << a1;
+		UINT64 a3 = floor(fst / a2);
+		BYTE a4 = a3 & 0x3f;
+		BYTE code = UINT64(floor(double(values[word]) / double((pow(2,(char1 * 6)))))) & 0x3f;
+		if (code > 0) {
+			ret += char(code + 31);
+		}
+	}
+	return ret;
 }
 
 double Utils::GetRWAngle(std::vector<TPath>* p) {
@@ -59,10 +77,10 @@ double Utils::GetRWAngle(std::vector<TPath>* p) {
 	sWayPoint dsheh = { 0 };
 	dsheh.Lat = p->at(p->size() - 2).Lat;
 	dsheh.Lon = p->at(p->size() - 2).Lon;
-	dsheh.Altitude = 0;
+	dsheh.SAltitudeHi = 0;
 	dsheh.ELat = p->at(p->size() - 1).Lat;
 	dsheh.ELon = p->at(p->size() - 1).Lon;
-	dsheh.EAltitude = 0;
+	dsheh.EAltitudeHi = 0;
 	DOrtoKM(&dsheh);
 	D = dsheh.HeadingTrue;
 
@@ -73,10 +91,10 @@ double Utils::GetRWLength(std::vector<TPath>* p) {
 	sWayPoint dsheh = { 0 };
 	dsheh.Lat = p->at(p->size() - 2).Lat;
 	dsheh.Lon = p->at(p->size() - 2).Lon;
-	dsheh.Altitude = 0;
+	dsheh.SAltitudeHi = 0;
 	dsheh.ELat = p->at(p->size() - 1).Lat;
 	dsheh.ELon = p->at(p->size() - 1).Lon;
-	dsheh.EAltitude = 0;
+	dsheh.EAltitudeHi = 0;
 	DOrtoKM(&dsheh);
 	D = dsheh.Distance;
 	return D;
@@ -202,11 +220,11 @@ double Utils::AngleLimitS(double angle, double limit) {
 	}
 	return angle;
 }
-double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentPos) {
+double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentLeg) {
 	sWayPoint Runway;
 	double Dist = 99;
-	Runway.Lat = CurrentPos->Lat;
-	Runway.Lon = CurrentPos->Lon;
+	Runway.Lat = CurrentLeg->Lat;
+	Runway.Lon = CurrentLeg->Lon;
 	for (int i = 0; i < runwayPaths->size(); i++) {
 		Runway.ELat = runwayPaths->at(i).ELat;
 		Runway.ELon = runwayPaths->at(i).ELon;
@@ -222,6 +240,14 @@ double Utils::RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* Cur
 	}
 	return Dist;
 }
+
+double Utils::DecodeLat(DWORD lat) {
+	return  90.0 - lat * (180.0 / (2 * 0x10000000));
+}
+double Utils::DecodeLon(DWORD lon) {
+	return lon * (360.0 / (3 * 0x10000000)) - 180.0;
+}
+
 
 
 

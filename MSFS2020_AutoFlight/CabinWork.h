@@ -4,13 +4,24 @@
 #include "Utils.h"
 
 
+enum GSServices {
+	REQUEST_DEBOARDING,
+	REQUEST_CATERING_SERVICE,
+	REQUEST_REFUELING,
+	REQUEST_BOARDING,
+	REQUEST_DEPARTING,
+	OPERATE_JETWAYS,
+	OPERATE_STAIRS,
+};
+
 class CabinWork : public QObject {
   Q_OBJECT
 public:
   CabinWork(HANDLE hSimConnect);
   SimData* DataT;
-  
+  bool Work = false;
 private:
+  QTimer* Timer;
   HANDLE HSimConnect;
   double Flaps = 0;
   double Gears = 1;
@@ -28,11 +39,12 @@ private:
   double Heading = 0;
   double AltMode = 0;
   double Alt = 100;
+  double AltTest = 0;
   double VS = 0;
   
   bool SetDataChanged = false;
 
-  QTimer* Timer;
+  
 
   void SetATHR(DWORD onoff);
   void EngineModeSelector(DWORD mode);
@@ -99,26 +111,29 @@ private:
   void TOConfig();
   void TcasMode(DWORD mode);
   void TcasTraffic(DWORD mode);
+  void AltRptg(DWORD onoff);
+  void TransponderMode(DWORD mode);
   void Pack(DWORD num, DWORD onoff);
 
-  double SetData(DWORD var, double val, char* unit = "");
-  double SetDataL(DWORD var, double val, char* unit = "");
+  double SetData(DWORD var, double val, const char* unit = "");
+  double SetDataL(DWORD var, double val, const char* unit = "");
   DWORD SendEvent(DWORD EventID, long dwData);
-  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+  DWORD SendEvent2(DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
 
 signals:
   void SendText(QString s, bool sendSim);
   void SendLog(QString s);
-  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
+  void SetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
-  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, char* unit = "");
+  void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
   void SendCommand(DWORD command, double parameter1, double parameter2);
 
 public slots:
   void TimerProc();
   void SetDataChange(DWORD var, DWORD sender); //Direct
   void ReceiveCommand(DWORD command, double parameter1, double parameter2);
+  HRESULT GSXServicesRequest(GSServices sr);
   void CLPreliminaryCocpitPrep(int* Status);
   void CLCocpitPreparation(int* Status);
   void CLBeforeStart(int* Status);
@@ -126,7 +141,11 @@ public slots:
   void CLAfterTakeoff(int* Status);
   void CLLanding(int* Status);
   void CLAfterLanding(int* Status);
-  void CLParking(int* Status); 
+  void CLParking(int* Status);
+  void SetTimer(DWORD mode);
+
+  void SetCabinLight(DWORD value);
+
   void CLAfterStart(int* Status);
   void CLBeforeTaxi(int flightLevel, int heading, int* Status);
   void CLBeforeTakeoff(int* Status);

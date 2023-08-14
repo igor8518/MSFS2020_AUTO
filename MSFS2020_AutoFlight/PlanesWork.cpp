@@ -113,6 +113,16 @@ void PlanesWork::PushbackSpeedSet(double setSpeed, DWORD speed) { // Transfer to
 	SetData(VELOCITY_BODY_Z, speeds);
 }
 
+double PlanesWork::PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral) {
+
+	double P = err * kp;
+	*integral = constrain(*integral + (err * dt * ki), -bi, bi);
+	double I = *integral;
+	double D = constrain(((err - *prevErr) / dt) * kd, -bd, bd);
+	*prevErr = err;
+	return P + I + D;
+}
+
 void PlanesWork::ThrottleSet(double pos, DWORD speed) { // Transfer to mainlogic and logarifmic set
 	if (TTAS >= SET_THROTTLE) {
 		static double  time_constant = 1.0;
@@ -121,20 +131,31 @@ void PlanesWork::ThrottleSet(double pos, DWORD speed) { // Transfer to mainlogic
 		static QDateTime Start = QDateTime::currentDateTime();
 		double dt = (double)Start.msecsTo(QDateTime::currentDateTime()) / 1000;
 		Start = QDateTime::currentDateTime();
-		
+		double CurrSpeed = DataT->GData.GROUND_VELOCITY;
+		double SpeedRel = _GSpeed - CurrSpeed;
 		static double integral = 0, prevErr = 0;
 	
 		static double throttle = _inThrottle;
 		if (dt != 0) {
-			_outThrottle = computePID(throttle, _inThrottle, _PInThrottleOutThrottle, _IInThrottleOutThrottle, _DInThrottleOutThrottle, dt, -16383 - dTh, 16383 - dTh, &integral, &prevErr);
+			//_outThrottle = computePID(throttle, _inThrottle, _PInThrottleOutThrottle, _IInThrottleOutThrottle, _DInThrottleOutThrottle, dt, -16383 - dTh, 16383 - dTh, &integral, &prevErr);
+			_outThrottle += PID(dt, SpeedRel, _PInThrottleOutThrottle*5, _IInThrottleOutThrottle * 5, _DInThrottleOutThrottle * 5, _IBInThrottleOutThrottle, _DBInThrottleOutThrottle, &prevErr, &integral) * 1;
 		}
 		else {
 			_outThrottle = _inThrottle;
 		}
 		throttle = _outThrottle;
 		_outThrottle = _inThrottle;
-		//_outThrottle = lagfilter(_inThrottle, dt, &time_constant, &prev_in, &prev_out);
-		emit SendEvent(KEY_THROTTLE_SET, int(_outThrottle));
+		double initParameter;
+		double brakeParameter;
+		//_outThrottle = constrain(_outThrottle, -16383, 16383);
+		//initParameter = constrain(_outThrottle, -16383 - dTh, 16383 - dTh); //-13130
+		initParameter = constrain(_outThrottle, -14000, 16000); //-13130
+		brakeParameter = constrain(-_outThrottle, 0, 16383);
+		//_outThrottle = lagfilter(initParameter, dt, &time_constant, &prev_in, &prev_out);
+		//emit SendEvent(KEY_THROTTLE_SET, int(_outThrottle));
+		emit SendEvent(KEY_THROTTLE_SET, int(initParameter));
+		//emit SendEvent(KEY_AXIS_LEFT_BRAKE_SET, brakeParameter * 2 - 16383);
+		//emit SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, brakeParameter * 2 - 16383);
 		//emit SendEvent(KEY_THROTTLE_SET, -2500);
 		//emit SendEvent(KEY_TH, -16383);
 		//SetDataL(A32NX_3D_THROTTLE_LEVER_POSITION_1, ((_outThrottle / 32768) + 0.5)*100);
@@ -207,7 +228,7 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		}
 		rudder = _outRudder;
 		//_outThrottle = _inThrottle;
-		if (DataT->GData.INDICATED_ALTITUDE < 1000) {
+		if (DataT->GData.INDICATED_ALTITUDE < 3000) {
 			emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
 		}
 	}
@@ -346,6 +367,8 @@ void PlanesWork::GSpeedSet(double pos, double Tr) {
 		double dS = speed - endSpeed;
 		double dA = (dS / 5) - speedA;
 		double dThrust = dA;
+
+
 		if (dThrust < -5) {
 			dThrust = -5;
 		}
@@ -569,14 +592,14 @@ void PlanesWork::PitchTrimSet(double deg, DWORD speed) { // Transfer to mainlogi
 	emit SendEvent(KEY_ELEVATOR_TRIM_SET, int((ElevatorTrim + 4) / 17.5 * 16383));
 }
 
-/*double PlanesWork::GetData(DWORD var, char* unit) {
+/*double PlanesWork::GetData(DWORD var, const char* unit) {
 	double lVar;
 	emit GetDataSignal(PLANESWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
 	GetDataChanged = false;
 	return lVar;
 }*/
-double PlanesWork::GetDataL(DWORD var, char* unit) {
+double PlanesWork::GetDataL(DWORD var, const char* unit) {
 	double lVar;
 	emit GetDataSignalL(PLANESWORK_ID, var, &lVar, unit);
 	while (!GetDataChanged);
@@ -584,20 +607,20 @@ double PlanesWork::GetDataL(DWORD var, char* unit) {
 	return lVar;
 }
 
-double PlanesWork::SetData(DWORD var, double val, char* unit) {
+double PlanesWork::SetData(DWORD var, double val, const char* unit) {
 	emit SetDataSignal(PLANESWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
 	return  val;
 }
-double PlanesWork::SetDataL(DWORD var, double val, char* unit) {
+double PlanesWork::SetDataL(DWORD var, double val, const char* unit) {
 	emit SetDataSignalL(PLANESWORK_ID, var, &val, unit);
 	while (!SetDataChanged);
 	SetDataChanged = false;
 	return  val;
 }
 
-/*double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, char* unit) {
+/*double PlanesWork::SetGetData(DWORD var1, DWORD var2, double val, const char* unit) {
 	double lVar;
 	emit SetGetDataSignal(PLANESWORK_ID, var1, var2, &lVar, unit);
 	while (!SetGetDataChanged);
@@ -617,8 +640,8 @@ DWORD PlanesWork::SendEvent(DWORD EventID, long dwData)
 {
 	SendEventSignal(PLANESWORK_ID, EventID, dwData);
 	return 0;
-}
-DWORD PlanesWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, char* unit)
+	}
+DWORD PlanesWork::SendEvent2(DWORD EventID, long dwData, DWORD var, double val, const char* unit)
 {
 	SendEventSignal2(PLANESWORK_ID, EventID, dwData, var, val, unit);
 	return 0;

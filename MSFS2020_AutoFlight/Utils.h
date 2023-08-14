@@ -18,6 +18,7 @@ public slots:
   static double DegToRad(double D);
   void AddLog(QString s);
   static double GetPathLength(std::vector<TPath>* p);
+  static std::string Utils::Unpack(std::vector<double> values);
   static double GetRWAngle(std::vector<TPath>* p);
   static double GetRWLength(std::vector<TPath>* p);
   static SIMCONNECT_DATA_LATLONALT GetDALatLon(double lat, double lon, double ang, double dist);
@@ -29,7 +30,9 @@ public slots:
   static double Constrain360(double angle);
   static double GetFixDA(double da, double angle);
   static double AngleLimitS(double angle, double limit);
-  static double RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentPos);
+  static double RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentLeg);
+  static double DecodeLat(DWORD lat);
+  static double DecodeLon(DWORD lon);
   //static double CalcToNewWay(bool changeWay, std::vector<sWayPoint>* wayPoints, sWayPoint* currentPos, int currentWay);
   //void DrawAirport(IAirportData* PAirportData, double Lat, double Lon, double Hed);
 private:

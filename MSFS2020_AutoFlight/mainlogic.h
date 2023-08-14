@@ -11,20 +11,49 @@
 #include "PlanesWork.h"
 #include "Utils.h"
 
+class QTableViewModel : public QAbstractListModel {
+public:
+    QTableViewModel(QObject* parrent = nullptr);
+    int rowCount(const QModelIndex&) const;
+    int columnCount(const QModelIndex& parrent) const;
+    QVariant data(const QModelIndex& index, int role) const;
+    void populate(std::vector<sWayPoint>* newValues);
+private:
+    std::vector<sWayPoint>* values;
+};
+
+template <typename T, typename U>
+struct CompareByMember {
+    // This is a pointer-to-member, it represents a member of class T
+    // The data member has type U
+    U T::* field;
+    CompareByMember(U T::* f) : field(f) {}
+    bool operator()(const T& lhs, const T& rhs) {
+        return lhs.*field < rhs.*field;
+    }
+};
 //#include "WriteStream.h"
 class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    bool firstLand = false;
+    int DTForLanding = 0;
+    std::vector<TPath> DeparturePath;
+    std::vector<TPath> DestinationPath;
     SimData* data = NULL;
   MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
+  IAirport* Departure = NULL;
+  IAirport* Destination = NULL;
+  QTableViewModel* ModelTable;
   std::vector<QString>* LogArray = new std::vector<QString>();
   void Log(QString log);
   Utils* utils;
   HANDLE HSimConnect;
   DWORD Mode = 0;
-  DWORD CurrentWay = 0;
+  bool InTimer = false;
+  DWORD CurrentWayIndex = 0;
   DWORD FlightPhase;
   bool STAR = false;
   BOOL Quit = FALSE;
@@ -36,13 +65,21 @@ public:
     "GATE_A", "GATE_B", "GATE_C", "GATE_D", "GATE_E", "GATE_F", "GATE_G", "GATE_H", "GATE_I", "GATE_J", "GATE_K", "GATE_L", "GATE_M", "GATE_N", "GATE_O", "GATE_P", "GATE_Q", "GATE_R", "GATE_S", "GATE_T",
     "GATE_U", "GATE_V", "GATE_W", "GATE_X", "GATE_Y", "GATE_Z" };
   double minDCommon = 10000;
-  std::vector<sWayPoint>* WayPoints = NULL;
+  std::vector<sWayPoint>* Legs = NULL;
+  //std::vector<sWayPoint>* QLegs = NULL;
   static void CALLBACK FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* mainLogic);
   Ui::MSFS2020_AutoFlightClass* GetUi();
 signals:
+  void PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndewx);
+  void PlotPoints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex);
+  void PlotRealPath(double flyPoint, double planeAlt, double commonDistance);
+  void PlotCircle(double dist, double alt, double common);
+  void SelectRow(int Row);
   void SendText(QString s, bool sendSim);
   void SendLog(QString s);
   void ButtonModify(QPushButton* button, QString text, QString style);
+  void StartButtonEnabled(bool enabled);
+  void ConnectButtonEnabled(bool enabled);
   void SetDataReg(unsigned int index, double data);
   void SetDataSetReg(unsigned int index, double data);
   void CLPreliminaryCocpitPrep(int* Status);
@@ -58,20 +95,22 @@ signals:
   void CLAfterLanding(int* Status);
   void CLParking(int* Status);
   void CabinReport();
-  
+  void ReplotGraphs();
   
 
-  void RegisterVar(DWORD DefaultParameter, char* unit = "");
-  void GetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void GetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
+  void RegisterVar(DWORD DefaultParameter, const char* unit = "");
+  void GetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void GetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
   void GetDataStringSignal(DWORD sender, DWORD var, std::string* val);
-  void SetDataSignal(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetDataSignalL(DWORD sender, DWORD var, double* val, char* unit = "");
-  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, char* unit = "");
+  void SetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetDataSignalL(DWORD sender, DWORD var, double* val, const char* unit = "");
+  void SetGetDataSignal(DWORD sender, DWORD varSet, DWORD varGet, double* val, const char* unit = "");
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
 
   void SendCommand(DWORD command, double parameter1, double parameter2);
 private slots:
+    void ChangeCurrentLegIndex(int currentLegIndex);
+    //void on_ChangeRow(QItemSelection Row, QItemSelection prev);
   void TimerProc();
   void Connect();
   void Disconnect();
@@ -86,25 +125,32 @@ private slots:
   double AltPitchWithPos(double TargetValue);
   double PBHeadWithWay(sWayPoint* Way, bool PB = false);
   double ManHeadWithWay(sWayPoint* Way);
+
+  double GetAngleFront(double frontOut, bool nose);
+
+  double PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral);
+
   void ManPitchWithFD(double NPitch);
   void ManBankWithFD(double NNBank);
   double BankWithHead(double Heading);
   double AltBankWithPos(double TargetValue);
-  double GetDescentAngle(std::vector<sWayPoint>* Way);
+  double GetDescentAngle();
   float GetAngleToDesc(float alt);
   double ManVSWithAngle(double GS);
-  double ManVSWithGlide(sWayPoint* Way, double GS, double TAlt, double BiasDist = 0);
+  double GetVerticalSpeedForGlide(sWayPoint* Way, double GS, double TAlt, double BiasDist = 0);
+  void SendDataPMDG(DWORD val);
+  void StartStopSim();
   bool SetTimeOff(int IDREQ, int TimeOffset);
 private:
     bool Approach = FALSE;
     double flyPoint;
-    WriteStream* Flight;
+    WriteStream* Flight = NULL;
     double CommonDistance = 0;
-    double ElepsedDistance = 0;
-    double LeaveDistance = 0;
-    double lastlat;
-    double lastalt;
-    double lastlon;
+    double TraveledDistance = 0;
+    double GRemainingDistance = 0;
+    double lastlat = 0;
+    double lastalt = 0;
+    double lastlon = 0;
   bool abortLanding = false;
   bool abortLanding2 = false;
   bool flare = false;
@@ -120,8 +166,10 @@ private:
   std::vector<sWayPoint> RunWaysPathsDest;
   DWORD Taxiway = 0;
   double speed = 0;
+  int GraphNums = 0;
   double NPitchWork = 0;
   double AvgCounter = 0;
+  double Pitch50 = 8518;
   double AvgMax = 0;
   double AvgPitch = 0;
   bool GetDataChanged = false;
@@ -129,10 +177,11 @@ private:
   bool SetGetDataChanged = false;
   IAirportData* AirportData = NULL;
   std::vector<bool> DataChanged = std::vector<bool>(CVars, true);
-  //double GetData(DWORD DefaultParameter, char* unit = "");
-  double GetDataL(DWORD DefaultParameter, char* unit = "");
-  double SetData(DWORD var, double val, char* unit = "");
-  double SetDataL(DWORD var, double val, char* unit = "");
+  
+  //double GetData(DWORD DefaultParameter, const char* unit = "");
+  double GetDataL(DWORD DefaultParameter, const char* unit = "");
+  double SetData(DWORD var, double val, const char* unit = "");
+  double SetDataL(DWORD var, double val, const char* unit = "");
   std::string GetDataString(DWORD var);
   DWORD SendEvent(DWORD EventID, DWORD dwData);
   Ui::MSFS2020_AutoFlightClass* ui;
@@ -158,11 +207,23 @@ private:
   QJsonDocument document;
   QNetworkAccessManager* mgr;
   QJsonArray ja;
-  sWayPoint CurrentPos;
+  sWayPoint CurrentLeg;
   double RudWithHead(double Heading);
+  double CalcVelocity(double last, double current, double dt);
+  double LimitVal(double val, double min, double max);
   std::string AtcRwy = "";
 
-  void AddWayPoint(double lon, double lat, double alt, QString pointType, QString PointName, double heading, int fixAlt, double speed, double radial, QJsonObject* fix = NULL);
+  void AddWayPoint(double lon, double lat, double alt, QString pointType, QString PointName, double heading, int fixAlt, double speed, double radial, double altLo, QJsonObject* fix = NULL);
+
+  void ChangeFlightPhaseReport();
+
+  sWayPoint GetCurrentLeg();
+
+  double GetRemainingDistance();
+
+  int GetOrigRunwayIndex();
+
+  int GetDestRunwayIndex();
   
 
   QString SimBriefSID = "";
@@ -221,3 +282,4 @@ private:
   "GATE",
   };
 };
+

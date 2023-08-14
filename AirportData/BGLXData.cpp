@@ -84,6 +84,12 @@ std::vector<BGLXData::Record>* BGLXData::GetAirportRecordHierarhy(DWORD Offset, 
 			GetAirportRecordHierarhy(CurrentOffset, Records, level + 1);
 			break;
 		}
+		case 0xce:
+		{
+			GetAirportRecordHierarhy(CurrentOffset + sizeof(RunwayInfoMSFS), Records, level + 1);
+			CurrentOffset = CurrentOffset + PBGLData->SizeOfRecord;
+			break;
+		}
 		default:
 		{
 			CurrentOffset = CurrentOffset + PBGLData->SizeOfRecord;
