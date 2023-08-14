@@ -37,6 +37,8 @@ class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    bool firstLand = false;
+    int DTForLanding = 0;
     std::vector<TPath> DeparturePath;
     std::vector<TPath> DestinationPath;
     SimData* data = NULL;

@@ -148,7 +148,8 @@ void PlanesWork::ThrottleSet(double pos, DWORD speed) { // Transfer to mainlogic
 		double initParameter;
 		double brakeParameter;
 		//_outThrottle = constrain(_outThrottle, -16383, 16383);
-		initParameter = constrain(_outThrottle, -16383 - dTh, 16383 - dTh);
+		//initParameter = constrain(_outThrottle, -16383 - dTh, 16383 - dTh); //-13130
+		initParameter = constrain(_outThrottle, -14000, 16000); //-13130
 		brakeParameter = constrain(-_outThrottle, 0, 16383);
 		//_outThrottle = lagfilter(initParameter, dt, &time_constant, &prev_in, &prev_out);
 		//emit SendEvent(KEY_THROTTLE_SET, int(_outThrottle));

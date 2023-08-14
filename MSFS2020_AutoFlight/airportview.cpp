@@ -146,7 +146,26 @@ void AirportView::update() {
 				types.push_back(TPath);
 			}
 		}
-
+		
+		if (mainlogic->DeparturePath.size() >= 2) {
+			for (int i = 0; i < mainlogic->DeparturePath.size() - 1; i++) {
+				QColor color;
+				if (mainlogic->DeparturePath[i].Type != 11) {
+					color.setRgba(QColor("green").rgba());
+				}
+				else {
+					color.setRgba(QColor("red").rgba());
+				}
+				QPen apen = QPen(color);
+				apen.setWidth(5);
+				painter->setPen(apen);
+				painter->drawLine(QLineF(
+					(((mainlogic->DeparturePath[i].Lon - MinLon) * drawRate * deltaLat) + (((dLon * drawRate) - width) / 2.0)),
+					(height - ((mainlogic->DeparturePath[i].Lat - MinLat) * drawRate) + (((dLat * drawRate) - height) / 2.0)),
+					(((mainlogic->DeparturePath[i + 1].Lon - MinLon) * drawRate * deltaLat) + (((dLon * drawRate) - width) / 2.0)),
+					(height - ((mainlogic->DeparturePath[i + 1].Lat - MinLat) * drawRate) + (((dLat * drawRate) - height) / 2.0))));
+			}
+		}
 	}
 
 	painter->end();

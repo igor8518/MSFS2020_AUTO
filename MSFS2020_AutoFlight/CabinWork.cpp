@@ -25,11 +25,12 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 {
 	if (*Status != 2) {
 		*Status = 1;
+		ParkBrake = 1;
+		ParkingBrakeSet(ParkBrake);
 		CabinLight(3);
 		SetCabinLight(0);
 		//WindowsAndDoors(5, 1);
 		//WindowsAndDoors(2, 1);
-		ParkingBrakeSet(1);
 		SeatBeltSign(0);
 		GSXServicesRequest(OPERATE_JETWAYS);
 		Sleep(2000);
@@ -90,7 +91,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		ADIRS(1, 1);
 		ADIRS(2, 1);
 		NavLight(1);
-		NoSmokeSign(1);
+		NoSmokeSign(0);
 		EmerExitSign(1);
 		SeatBeltSign(1);
 		Sleep(3000);
@@ -114,7 +115,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		GSXServicesRequest(REQUEST_REFUELING);
 		while (DataT->AllData.FSDT_GSX_FUELHOSE_CONNECTED != 1);
 		SetDataL(A32NX_INITFLIGHT_STATE, 1);
-		while (DataT->AllData.FSDT_GSX_REFUELING_STATE != 6);
+		while (DataT->AllData.FSDT_GSX_REFUELING_STATE != 1);
 
 		Sleep(3000);
 		SetCabinLight(100);
@@ -223,7 +224,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		IrsAligned();
 		while (DataT->AllData.A32NX_INITFLIGHT_STATE != 20);
 		while (DataT->AllData.FSDT_GSX_BOARDING_STATE != 6 ||
-			DataT->AllData.FSDT_GSX_REFUELING_STATE != 6 ||
+			DataT->AllData.FSDT_GSX_REFUELING_STATE != 1 ||
 			DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
 		//SendEvent(KEY_TOGGLE_JETWAY, 0);
 		//Sleep(30000);
@@ -283,8 +284,8 @@ void CabinWork::CLEngineStart(int* Status) {
 		Sleep(2000);
 		FuelPump(2, 1);
 		FuelPump(5, 1);
-		FuelPump(1, 1);
-		FuelPump(4, 1);
+		FuelPump(9, 1);
+		FuelPump(10, 1);
 		FuelPump(3, 1);
 		FuelPump(6, 1);
 		EngineModeSelector(2);
@@ -391,8 +392,13 @@ void CabinWork::CLBeforeTakeoff(int* Status) {
 	if (*Status != 2) {
 		*Status = 1;
 		APUSet(0);
-		SetCabinLight(1);
+		SetCabinLight(0);
 		Sleep(2000);
+		EngineModeSelector(2);
+		TcasMode(2);
+		TcasTraffic(2);
+		AltRptg(1);
+		TransponderMode(1);
 		CabinReport();
 		Sleep(2000);
 		TOConfig();
@@ -400,11 +406,7 @@ void CabinWork::CLBeforeTakeoff(int* Status) {
 		//Brake temperature check
 		//Takeoff line up clearance
 		//Approach path clear of traffic
-		EngineModeSelector(2);
-		TcasMode(2);
-		TcasTraffic(1);
-		AltRptg(1);
-		TransponderMode(2);
+		
 		Pack(0, 1);
 		Pack(1, 1);
 		
@@ -438,7 +440,7 @@ void CabinWork::CLLanding(int* Status) {
 		LandingLight(1);
 		EngineModeSelector(2);
 		CabinReport();
-		SetCabinLight(1);
+		SetCabinLight(0);
 		*Status = 2;
 	}
 }
@@ -450,12 +452,12 @@ void CabinWork::CLAfterLanding(int* Status) {
 		LandingLight(0);
 		EngineModeSelector(1);
 		TcasMode(0);
-		TcasTraffic(2);
+		TcasTraffic(0);
 		AltRptg(0);
 		TransponderMode(0);
 		APUSet(1);
 		WxrMode(0);
-		SetCabinLight(5);
+		SetCabinLight(1);
 		//Predective weather off
 		*Status = 2;
 	}
@@ -478,8 +480,8 @@ void CabinWork::CLParking(int* Status) {
 		CabinLight(2);
 		FuelPump(2, 0);
 		FuelPump(5, 0);
-		FuelPump(1, 0);
-		FuelPump(4, 0);
+		FuelPump(9, 0);
+		FuelPump(10, 0);
 		FuelPump(3, 0);
 		FuelPump(6, 0);
 		CabinLight(2);
@@ -634,8 +636,8 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
 	if (num < 7) {
 		switch (num) {
-		case 1: {
-			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH1 != onoff) {
+		case 9: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH9 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
 			}
 			break;
@@ -652,8 +654,8 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 			}
 			break;
 		}
-		case 4: {
-			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH4 != onoff) {
+		case 10: {
+			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH10 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
 			}
 			break;
@@ -756,24 +758,31 @@ void CabinWork::CabinLight(DWORD mode) {
 
 
 void CabinWork::ParkingBrakeSet(DWORD onoff) {
-	if (DataT->AllData.A32NX_PARK_BRAKE_LEVER_POS != onoff) {
-		ParkBrake = onoff;
-		SetDataL(A32NX_PARK_BRAKE_LEVER_POS, onoff);
+	if (ParkBrake >= 0) {
+		if (DataT->AllData.A32NX_PARK_BRAKE_LEVER_POS != onoff) {
+			ParkBrake = onoff;
+			SetDataL(A32NX_PARK_BRAKE_LEVER_POS, onoff);
+		}
+		else {
+			ParkBrake = -1;
+		}
 	}
 }
 
 
 void CabinWork::FlapsSet(DWORD pos) {
-	
-	for (int i = DataT->GData.FLAPS_HANDLE_INDEX; i != pos; ) {
-		Sleep(60);
-		i = (DataT->AllData.A32NX_FLAPS_HANDLE_INDEX);
-		if (i < pos) {
-			emit SendEvent(KEY_FLAPS_UP + i + 1, 0);
+	if (Flaps >= 0) {
+		for (int i = DataT->GData.FLAPS_HANDLE_INDEX; i != pos; ) {
+			Sleep(60);
+			i = (DataT->AllData.A32NX_FLAPS_HANDLE_INDEX);
+			if (i < pos) {
+				emit SendEvent(KEY_FLAPS_UP + i + 1, 0);
+			}
+			else if (i > pos) {
+				emit SendEvent(KEY_FLAPS_UP + i - 1, 0);
+			}
 		}
-		else if (i>pos) {
-			emit SendEvent(KEY_FLAPS_UP + i - 1, 0);
-		}
+		Flaps = -1;
 	}
 }
 
@@ -796,13 +805,17 @@ long CabinWork::IncDec16384_100(double curr, bool dir) {
 
 
 void CabinWork::SpoilersSet(double pos) {
-	if (Spoilers < 0) {
-		emit SendEvent(KEY_SPOILERS_SET, 0);
-		emit SendEvent(KEY_SPOILERS_ARM_ON, 0);
-	}
-	else {
-		emit SendEvent(KEY_SPOILERS_ARM_OFF, 0);
-		emit SendEvent(KEY_SPOILERS_SET, 0);
+	if (Spoilers > -2) {
+		if (Spoilers < 0) {
+			emit SendEvent(KEY_SPOILERS_SET, 0);
+			emit SendEvent(KEY_SPOILERS_ARM_ON, 0);
+			Spoilers = -2;
+		}
+		else {
+			emit SendEvent(KEY_SPOILERS_ARM_OFF, 0);
+			emit SendEvent(KEY_SPOILERS_SET, 0);
+			Spoilers = -2;
+		}
 	}
 }
 
@@ -822,8 +835,13 @@ void CabinWork::XBleedSet(DWORD mode) {
 
 
 void CabinWork::GearSet(DWORD pos) {
-	if (DataT->GData.GEAR_HANDLE_POSITION != pos) {
-		SendEvent(KEY_GEAR_SET, pos);
+	if (Gears >= 0) {
+		if (DataT->GData.GEAR_HANDLE_POSITION != pos) {
+			SendEvent(KEY_GEAR_SET, pos);
+		}
+		else {
+			Gears = -1;
+		}
 	}
 }
 
@@ -866,7 +884,7 @@ void CabinWork::NavLight(DWORD onoff) {
 			SetData(LIGHT_NAV, onoff);
 		}
 		if (DataT->GData.LIGHT_LOGO != onoff) {
-			SetData(LIGHT_NAV, onoff);
+			SetData(LIGHT_LOGO, onoff);
 		}
 	}
 }
@@ -1426,7 +1444,7 @@ void CabinWork::VSSel(double VS) {
 		}
 		Sleep(60);
 	}
-	SendEvent(A32NX_FCU_VS_PULL, 1);
+	
 }
 
 
@@ -1708,11 +1726,16 @@ void CabinWork::TimerProc() {
 				HeadingMode = -1;
 				//HdgSel(Heading);
 			}
-			if (Alt < 100) {
-				AltSet(100);
+			if (Alt < 0) {
+				
+			}
+			else if (Alt >= 100) {
+				AltSet(Alt);
+				Alt = -1;
 			}
 			else {
-				AltSet(Alt);
+				AltSet(100);
+				Alt = -1;
 			}
 			if (SpeedMode == 1) {
 				SendEvent(A32NX_FCU_SPD_PUSH, 1);
@@ -1731,7 +1754,11 @@ void CabinWork::TimerProc() {
 				AltMode = -1;
 			}
 			else if (AltMode == 3) {
-				VSSel(VS);
+				if (VS != -10000) {
+					VSSel(VS);
+					SendEvent(A32NX_FCU_VS_PULL, 1);
+					VS = -10000;
+				}
 			}
 			else if (AltMode == 5) {
 				SendEvent(A32NX_FCU_ALT_PUSH, 1);

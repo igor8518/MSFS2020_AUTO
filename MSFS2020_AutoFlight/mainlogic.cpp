@@ -624,7 +624,7 @@ VOID MainLogic::TimerProc()
 			Mode = PREPARE;
 			if (data->GData.SIM_ON_GROUND != 1) {
 				SendCommand(GEAR_SET, 0, 0);
-				SendCommand(SET_THROTTLE, 3900, 0);
+				SendCommand(SET_THROTTLE, 4000, 0);
 				SendCommand(PARKBRAKE_SET, 0, 0);
 				Mode = FILLWAY;	
 			}
@@ -1088,7 +1088,7 @@ VOID MainLogic::TimerProc()
 			StartButtonEnabled(true);
 			if (data->GData.SIM_ON_GROUND != 1) {
 				SendCommand(GEAR_SET, 0, 0);
-				SendCommand(SET_THROTTLE, 3900, 0);
+				SendCommand(SET_THROTTLE, 4000, 0);
 				SendCommand(PARKBRAKE_SET, 0, 0);
 				Mode = TAKEOFF;
 			}
@@ -1145,7 +1145,7 @@ VOID MainLogic::TimerProc()
 				
 			}
 			if (SIDPoint == 0) {
-				//SendCommand(SET_THROTTLE, 8193, 0);
+				//SendCommand(SET_THROTTLE, 9000, 0);
 				Mode = FILLWAY;
 			}
 			else {
@@ -1563,7 +1563,7 @@ VOID MainLogic::TimerProc()
 	if (Mode == TAKEOFF) {
 		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
 		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
-		//SendCommand(SET_THROTTLE, 3900, 0);
+		//SendCommand(SET_THROTTLE, 4000, 0);
 		SendCommand(SET_ATHR, 1, 0);
 		double NPitch = (data->AllData.A32NX_FLIGHT_DIRECTOR_PITCH + data->GData.PLANE_PITCH_DEGREES);
 		double NBank = data->AllData.A32NX_FLIGHT_DIRECTOR_BANK;
@@ -1595,8 +1595,8 @@ VOID MainLogic::TimerProc()
 				SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, -16383);
 
 				//TO DO From weight and runway lenght calc engine mode
-				SendCommand(SET_THROTTLE, 8192, 0); // FLEX
-				//SendCommand(SET_THROTTLE, 16383, 0); // TO GA
+				SendCommand(SET_THROTTLE, 9000, 0); // FLEX
+				//SendCommand(SET_THROTTLE, 16000, 0); // TO GA
 				TOGA = TRUE;
 			}
 		}
@@ -1664,11 +1664,11 @@ VOID MainLogic::TimerProc()
 
 			if (TOGA) {
 				if (data->AllData.A32NX_AUTOTHRUST_MODE_MESSAGE) {
-					SendCommand(SET_THROTTLE, 3900, 0);
+					SendCommand(SET_THROTTLE, 4000, 0);
 				}
 				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE == 2) {
 					
-					SendCommand(SET_THROTTLE, 3900, 0);
+					SendCommand(SET_THROTTLE, 4000, 0);
 					TOGA = false;
 					Mode = CRUISE;
 					if (afterTakeoff == 0) {
@@ -2033,12 +2033,12 @@ VOID MainLogic::TimerProc()
 					Mode = TAXIIN;
 				}
 				else if (IAS > 60) {
-					SendCommand(SET_THROTTLE, -13000, 0);
+					SendCommand(SET_THROTTLE, -14000, 0);
 					SendCommand(SET_AILERON, 0, 0);
 					SendCommand(SET_ELEVATOR, 0, 0);
 				}
 				else if (IAS > 40) {
-					SendCommand(SET_THROTTLE, -2500, 0);
+					SendCommand(SET_THROTTLE, -3500, 0);
 				}
 				
 				else {
@@ -2059,7 +2059,10 @@ VOID MainLogic::TimerProc()
 		}
 		
 		double HeadingRel;
+		
 		if (SimOnGround == 0) {
+			firstLand = true;
+			DTForLanding++;
 			/*if (GroundAltitude > 30) {
 				NPitchWork = FlightDirectorPitch;
 				if (IndicatedAltitude < 1000) {
@@ -2086,16 +2089,25 @@ VOID MainLogic::TimerProc()
 			if (GroundAltitude > 100) {
 				ManPitchWithFD(FlightDirectorPitch);
 			}
-			else if (GroundAltitude > 70) {
+			else if (GroundAltitude > 30) {
+				if ((DTForLanding % 10) == 0) {
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+				}
 				//ManPitchWithFD(Pitch50);
 				ManPitchWithFD(-2.5);
 			}
-			else if (GroundAltitude > 50) {
+			else if (GroundAltitude > 20) {
+				if ((DTForLanding % 10) == 0) {
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+				}
 				//ManPitchWithFD(Pitch50);
-				ManPitchWithFD(-3.5);
+				ManPitchWithFD(-3.0);
 			}
 			else {
 				//ManPitchWithFD(Pitch50 - 2.0);
+				if ((DTForLanding % 10) == 0) {
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+				}
 				ManPitchWithFD(-4.0);
 			}
 			
@@ -2105,7 +2117,10 @@ VOID MainLogic::TimerProc()
 
 		}
 		else {
-
+			if (firstLand) {
+				emit SendLog("VS: " + QString::number(VerticalSpeed) + "; Pitch: " + QString::number(Pitch) + "; IAS: " + QString::number(IAS));
+				firstLand = false;
+			}
 			if (GAS < 100) {
 				SendCommand(SET_ELEVATOR, 0, 0);
 				SendCommand(SET_AILERON, 0, 0);
@@ -3519,14 +3534,22 @@ double MainLogic::RudWithHead(double Heading) {
 
 	double parameter = HeadingRel / 4; //-45.0 - +45.0
 	double rud = data->GData.RUDDER_PEDAL_POSITION * 16383;
-	double rudPID;
+	double rudPID = 0;
 	int intParameter;
 	if (!data->GData.SIM_ON_GROUND) {
 		integral = 0;
 		//rudPID = 0;
 	}
 	else {
-		rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+		if (data->GData.GROUND_VELOCITY < 0.5) {
+			rudPID = 0;
+		}
+		else if (data->GData.GROUND_VELOCITY < 3) {
+			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / (data->GData.GROUND_VELOCITY / 4), data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+		}
+		else {
+			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / 2, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+		}
 	}
 	if (data->GData.GROUND_VELOCITY > 5) {
 
