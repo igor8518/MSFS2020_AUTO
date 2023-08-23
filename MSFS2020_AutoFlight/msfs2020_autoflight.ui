@@ -395,7 +395,7 @@
    <widget class="QPushButton" name="BOpenAirport">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>1030</x>
       <y>440</y>
       <width>151</width>
       <height>23</height>
@@ -631,8 +631,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>BOpenAirport</sender>
+   <signal>clicked()</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_OpenAirport()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1105</x>
+     <y>484</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>663</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
+  <slot>on_OpenAirport()</slot>
   <slot>on_ButtonConnect()</slot>
   <slot>on_PMDGButton()</slot>
   <slot>on_startButton()</slot>

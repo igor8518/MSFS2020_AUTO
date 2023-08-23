@@ -37,6 +37,8 @@ class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    bool pushbackMode = false;
+    bool prevPushbackMode = false;
     bool firstLand = false;
     int DTForLanding = 0;
     std::vector<TPath> DeparturePath;
@@ -44,11 +46,11 @@ public:
     SimData* data = NULL;
   MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainOblect, QObject* parent = Q_NULLPTR);
   ~MainLogic();
+  void Log(QString log, bool findPrevions);
   IAirport* Departure = NULL;
   IAirport* Destination = NULL;
   QTableViewModel* ModelTable;
   std::vector<QString>* LogArray = new std::vector<QString>();
-  void Log(QString log);
   Utils* utils;
   HANDLE HSimConnect;
   DWORD Mode = 0;

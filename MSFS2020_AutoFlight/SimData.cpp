@@ -442,10 +442,10 @@ SimData::SimData(HANDLE hSimConnect) {
 	AddData(HSimConnect, CIRCUIT_SWITCH_ON80);
 	AddData(HSimConnect, EXTERNAL_POWER_AVAILABLE1);
 	AddData(HSimConnect, EXTERNAL_POWER_ON1);
-	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH1);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH9);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
-	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH4);
+	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH10);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH5);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH6);
 	AddData(HSimConnect, LIGHT_POTENTIOMETER7);
@@ -482,6 +482,8 @@ SimData::SimData(HANDLE hSimConnect) {
 	AddData(HSimConnect, CABIN_SEATBELTS_ALERT_SWITCH);
 	AddData(HSimConnect, TOTAL_WEIGHT, "kg");
 	AddData(HSimConnect, YOKE_Y_POSITION);
+	AddData(HSimConnect, PUSHBACK_STATE);
+	AddData(HSimConnect, PUSHBACK_ATTACHED);
 	
 
 	connect(Timer, SIGNAL(timeout()), this, SLOT(TimerProc()));
@@ -517,6 +519,7 @@ unsigned int SimData::GetRegisteredVarsSetGetCount()
 
 
 void SimData::SendEvent(DWORD sender, DWORD EventID, long dwData) {
+	//emit SendLog("Send event " + QString(EventString[EventID]) + " with " + QString::number(dwData));
 	RegisterEvent((CLIENTEVENTS)EventID);
 	SUCC(SimConnect_TransmitClientEvent(HSimConnect, SIMCONNECT_OBJECT_ID_USER, EventID, dwData, SIMCONNECT_GROUP_PRIORITY_HIGHEST, SIMCONNECT_EVENT_FLAG_GROUPID_IS_PRIORITY));
 	// Test
@@ -648,6 +651,7 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 
 void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 {
+	//emit SendLog("Set " + QString(EventString[var]) + " to " + QString::number(*val));
 	int f = 100000;
 	//RegisterVarGet(sender, var, unit);
 	//ExportData.version = false;
@@ -662,6 +666,7 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 			f = 100000;
 		}*/
 		SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
+		Sleep(1);
 	};
 	//ExportData.version = false;
 	Version++;
@@ -682,7 +687,9 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 			SimConnect_SetClientData(HSimConnect, A32NX_CONTROL_ID, A32NX_CONTROL_DEFINITION, 0, 0, sizeof(Control), &Control);
 			f = 100000;
 		}*/
+		
 		SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
+		Sleep(1);
 	};
 	//ExportData.Changed = false;
 	Version++;
@@ -696,6 +703,7 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 
 void SimData::SetData(DWORD sender, DWORD var, double* val, const char* unit)
 {
+	emit SendLog("Set " + QString(SimVarsText[var]) + " to " + QString::number(*val));
 	Context c;
 	if (RegVarsSet->size() > 0) {
 		SUCC(SimConnect_RequestDataOnSimObject(HSimConnect, sender + 1, 15 + 1, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE));

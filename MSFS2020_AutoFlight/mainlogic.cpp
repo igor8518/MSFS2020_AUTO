@@ -112,9 +112,15 @@ MainLogic::~MainLogic()
 	delete MainTimer;
 }
 
-void MainLogic::Log(QString log)
+void MainLogic::Log(QString log, bool findPrevions = true)
 {
-	if (std::find(LogArray->begin(), LogArray->end(), log) == LogArray->end()) {
+	if (findPrevions) {
+		if (std::find(LogArray->begin(), LogArray->end(), log) == LogArray->end()) {
+			emit SendLog(log);
+			LogArray->push_back(log);
+		}
+	}
+	else {
 		emit SendLog(log);
 		LogArray->push_back(log);
 	}
@@ -669,7 +675,7 @@ VOID MainLogic::TimerProc()
 			if (Connected) {
 				Legs->clear();
 				//TO DO Only tests
-				DWORD nearTaxiwayPointIndex = 325;
+				DWORD nearTaxiwayPointIndex = 324;
 				if (data->GData.SIM_ON_GROUND) {
 					nearTaxiwayPointIndex = AirportData->GetNearTaxiwayPoint(data->GData.PLANE_LATITUDE, data->GData.PLANE_LONGITUDE);
 				}
@@ -714,6 +720,18 @@ VOID MainLogic::TimerProc()
 
 
 					RunwayWaysOrig1 = RunwayWaysOrig->at(rrr).at(RunwayWaysOrig->at(rrr).size() - 1);
+					//TEST PUSHFORWARD IN UUEE FROM 59 TO 6L
+					for (int y = 0; y < RunwayWaysOrig->at(rrr).size(); y++) {
+						if (RunwayWaysOrig->at(rrr).at(y).Type != 11) {
+							if (RunwayWaysOrig->at(rrr).at(y).name == "A") {
+								break;
+							}
+							else {
+								RunwayWaysOrig->at(rrr).at(y).Type = 12;
+							}
+						}
+					}
+					//END TEST
 					DeparturePath = RunwayWaysOrig->at(rrr);
 					if (data->GData.SIM_ON_GROUND) {
 						for (int i = 0; i < RunwayWaysOrig->at(rrr).size() - 1; i++) {
@@ -1171,19 +1189,32 @@ VOID MainLogic::TimerProc()
 		if (beforeStart == 2) {
 			Log("End before start");
 		}
+		while (data->AllData.FSDT_GSX_DEPARTURE_STATE < 0);
+		if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6 || data->AllData.FSDT_GSX_DEPARTURE_STATE == 1) {
+			Log("mode: PUSHBACK, GSX Departure = 1");
 			CurrentLeg = Legs->at(CurrentWayIndex);
-			if (CurrentLeg.Type == TYPE_PATHS[11]) {
+			if (CurrentLeg.Type == TYPE_PATHS[11] || CurrentLeg.Type == TYPE_PATHS[12]) {
 				if (Mode == STARTPUSHBACK) {
-					/*if (data->GData.PUSHBACK_AVAILABLE);
-					//SendEvent(KEY_PARKING_BRAKES, 1);
-					SendEvent(KEY_PUSHBACK_SET, 1);
-					while (data->GData.GROUND_VELOCITY < 0.02);
+					Log("mode: STARTPUSHBACK");
+					if (data->GData.PUSHBACK_AVAILABLE); {
+						//SendEvent(KEY_PARKING_BRAKES, 1);
+						SendEvent(KEY_PUSHBACK_SET, 1);
+						Log("Pushback toggle");
+					}
+					SetDataL(A32NX_PUSHBACK_SYSTEM_ENABLED, 1);
+					Log("Pushback enable on a32nx");
+					//while (data->GData.GROUND_VELOCITY < 0.02);
+					Log("Wait while tug connected");
+					while (data->GData.PUSHBACK_STATE == 3);
+					Log("Tug connect");
 					SetData(PUSHBACK_WAIT, 1);
 					Sleep(60000);
 					//SendEvent(KEY_PARKING_BRAKES, 0);
 					SendCommand(PARKBRAKE_SET, 0, 0);
-					SetData(PUSHBACK_WAIT, 0);*/
-					if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 5) {
+					Log("Release parking brakes");
+					SetData(PUSHBACK_WAIT, 0);
+					Mode = PUSHBACK;
+					/*if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 5) {
 						SetDataL(FSDT_GSX_MENU_CHOICE, 1);
 						while (data->GData.GROUND_VELOCITY < 0.02) {
 							data->AllData.FSDT_GSX_MENU_CHOICE = 1;
@@ -1193,11 +1224,28 @@ VOID MainLogic::TimerProc()
 						}
 						Mode = PUSHBACK;
 						Log("Start pushback");
-					}
-					
+					}*/
+
 				}
 				//emit SendCommand(SET_PUSHBACK_SPEED, 5, 10);
-				//SetData(GROUND_VELOCITY, 5);
+				if (CurrentLeg.Type == TYPE_PATHS[11]) {
+					pushbackMode = false;
+				}
+				else {
+					pushbackMode = true;
+				}
+				if (pushbackMode != prevPushbackMode) {
+					SetDataL(A32NX_PUSHBACK_SPD_FACTOR, 0);
+					prevPushbackMode = pushbackMode;
+					Sleep(5000);
+				}
+				if (CurrentLeg.Type == TYPE_PATHS[11]) {
+					SetDataL(A32NX_PUSHBACK_SPD_FACTOR, -0.2);
+				}
+				else {
+					SetDataL(A32NX_PUSHBACK_SPD_FACTOR, 0.6);
+				}
+				Log("Set pushback speed");
 				CurrentLeg.Lat = data->GData.PLANE_LATITUDE;
 				CurrentLeg.Lon = data->GData.PLANE_LONGITUDE;
 				Utils::DOrtoKM(&CurrentLeg);
@@ -1225,45 +1273,57 @@ VOID MainLogic::TimerProc()
 				else {
 					double HeadingRel = PBHeadWithWay(&Legs->at(CurrentWayIndex), true);
 				}
-				
+
 				if (data->GData.GROUND_VELOCITY < 0.05) {
-					SendCommand(PARKBRAKE_SET, 1, 0);
+					//SendCommand(PARKBRAKE_SET, 1, 0);
 				}
-				if ((data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) || 
+				/*if ((data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) ||
 					data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					Mode = ENGINESTART;
 					Log("End pushback");
-				}
+				}*/
 			}
 			else {
 				if (Mode == PUSHBACK) {
-					
-					/*SetData(PUSHBACK_WAIT, 1);
+					Log("mode: PUSHBACK");
+					//SetData(PUSHBACK_WAIT, 1);
 					//emit SendCommand(SET_PUSHBACK_SPEED, 0, 10);
 					//SetData(GROUND_VELOCITY, 0);
-					SendEvent(KEY_PUSHBACK_SET, 0);
+					//SendEvent(KEY_PUSHBACK_SET, 0);
+					Log("Wait while pushback stopped");
 					while (data->GData.GROUND_VELOCITY > 0.005) {
 						SetData(PUSHBACK_WAIT, 1);
-						SetData(GROUND_VELOCITY, 0);
+						SetDataL(A32NX_PUSHBACK_SPD_FACTOR, 0);
+						//SetData(GROUND_VELOCITY, 0);
 					};
-					SetData(PUSHBACK_WAIT, 1);*/
+					SetData(PUSHBACK_WAIT, 1);
+					Log("Pushback tug wait");
 					//SendEvent(KEY_PARKING_BRAKES, 1);
-					
+					SendCommand(PARKBRAKE_SET, 1, 0);
+					Log("Set parking brake");
 					//SendEvent(KEY_PUSHBACK_SET, 1);
+					Log("Pushback disable on a32nx");
+					SetDataL(A32NX_PUSHBACK_SYSTEM_ENABLED, 0);
+					
+					SendEvent(KEY_PUSHBACK_SET, 1);
+					Log("Pushback toggle");
 				}
-				if (data->GData.GROUND_VELOCITY < 1.5) {
+				/*if (data->GData.GROUND_VELOCITY < 1.5) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 				}
 				if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					Mode = ENGINESTART;
 					Log("End pushback");
-				}
+				}*/
+				Log("End pushback");
+				Mode = ENGINESTART;
 				Sleep(30000);
 				//brakes = { 0.0,0.0 };
 				//SimConnect_SetDataOnSimObject(hSimConnect, DEF_BRAKE, 0, 0, 0, sizeof(brakes), &brakes.LBrake);
 			}
+		}
 	}	
 	if (Mode == ENGINESTART) {
 		
@@ -1315,8 +1375,8 @@ VOID MainLogic::TimerProc()
 		//double HeadingRel = RudWithHead(data->GData.PLANE_HEADING_DEGREES_TRUE + NoseFront);
 		double DCommon = Utils::DToType(CurrentWayIndex, Legs, "RUNWAY", &CurrentLeg, Utils::Constrain180(CurrentLeg.EndHeadingTrue-data->GData.PLANE_HEADING_DEGREES_TRUE));
 		
-		SetDataL(AI_ANGLE_HEAD, AngleFront);
-		SetDataL(AI_ANGLE_HEAD, NoseFront);
+		//SetDataL(AI_ANGLE_HEAD, AngleFront);
+		//SetDataL(AI_ANGLE_HEAD, NoseFront);
 		double DToRunway = 1;
 		if (Mode == TAXIOUT) {
 			DToRunway = Utils::DToRunway(CurrentWayIndex, Legs, &CurrentLeg);
@@ -3395,7 +3455,13 @@ double MainLogic::PBHeadWithWay(sWayPoint* Way, bool PB) {
 	EangleRel = a * 1000;
 	EangleRel = Utils::AngleLimitS(EangleRel, 60);
 	double EangleRel2 = EangleRel;
-	EangleRel = Utils::Constrain180(EndHead + EangleRel + 180.0);
+	if (pushbackMode) {
+		EangleRel = Utils::Constrain180(EndHead + EangleRel);
+	}
+	else {
+		EangleRel = Utils::Constrain180(EndHead + EangleRel + 180.0);
+	}
+	
 	CHAR s[256];
 	
 	HeadingRel = RudWithHead(EangleRel);
@@ -3544,17 +3610,17 @@ double MainLogic::RudWithHead(double Heading) {
 		if (data->GData.GROUND_VELOCITY < 0.5) {
 			rudPID = 0;
 		}
-		else if (data->GData.GROUND_VELOCITY < 3) {
+		else if (data->GData.GROUND_VELOCITY < 5) {
 			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / (data->GData.GROUND_VELOCITY / 4), data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
 		}
 		else {
-			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / 2, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / 1.5, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
 		}
 	}
 	if (data->GData.GROUND_VELOCITY > 5) {
 
 		if (data->GData.AIRSPEED_INDICATED > 60) {
-			rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 5)); //50
+			rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2)); //50
 			//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral) * 16383;
 			//intParameter = -Utils::Constrain(rud, -3000, 3000);
 			intParameter = -Utils::Constrain(rud, -16383, 16383);
@@ -3587,8 +3653,12 @@ double MainLogic::RudWithHead(double Heading) {
 		intParameter = -Utils::Constrain(rudPID, -16383, 16383);
 	}
 	if (Mode == PUSHBACK || Mode == STARTPUSHBACK) {
-		intParameter = -intParameter;
-		SendEvent(KEY_TUG_HEADING, (0xFFFFFFFF / 360) * Heading);
+		intParameter = -Utils::Constrain(rudPID, -16383, 16383);
+		if (!pushbackMode) {
+			intParameter = -intParameter;
+		}
+		//SendEvent(KEY_TUG_HEADING, (0xFFFFFFFF / 360) * Heading);
+		SetDataL(A32NX_PUSHBACK_HDG_FACTOR, double(-intParameter / 16383.0));
 	}
 	SendCommand(SET_RUDDER, intParameter, 0);
 

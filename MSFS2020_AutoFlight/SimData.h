@@ -35,7 +35,7 @@ private:
 	DWORD Sender;
 	
 	double SendVars[100];
-	INT LVars[1100];
+	INT LVars[1000];
 	HANDLE HSimConnect;
 	BOOL Quit;
 	bool isPMDG737;
@@ -1507,6 +1507,7 @@ private:
 		"CIRCUIT SWITCH ON:20",
 		"CIRCUIT SWITCH ON:18",
 		"CIRCUIT SWITCH ON:19",
+		"PUSHBACK ATTACHED",
 	};
 	const char* SimUnitsText[CVars] = {
 			"Bool",
@@ -2977,6 +2978,8 @@ private:
 			"Bool",
 			"bool",
 			"bool",
+
+			"enum"
 	};
 	const unsigned short SimVarsSettable[CVars] = {
 			0,
@@ -4446,6 +4449,7 @@ private:
 			1,
 			1,
 			1,
+			0,
 	};
 	const char* EventString[1700] = {
 		"",
@@ -6526,9 +6530,9 @@ private:
 					"AutoFlight.FSDT_GSX_AIRCRAFT_SERVICE_3_TOGGLE",
 					"AutoFlight.FSDT_GSX_AIRCRAFT_MAINCARGO_TOGGLE",
 
-					"AutoFlight.FSDT_GSX_DEICING_STATE",
-					"AutoFlight.FSDT_GSX_DEICING_TYPE",
-					"AutoFlight.FSDT_GSX_DEICING_CONCENTRATION",
+					//"AutoFlight.FSDT_GSX_DEICING_STATE",
+					//"AutoFlight.FSDT_GSX_DEICING_TYPE",
+					//"AutoFlight.FSDT_GSX_DEICING_CONCENTRATION",
 					"AutoFlight.FSDT_GSX_NUMPASSENGERS",
 					"AutoFlight.FSDT_GSX_NUMPASSENGERS_BOARDING",
 					"AutoFlight.FSDT_GSX_NUMPASSENGERS_BOARDING_TOTAL",

@@ -150,11 +150,14 @@ void AirportView::update() {
 		if (mainlogic->DeparturePath.size() >= 2) {
 			for (int i = 0; i < mainlogic->DeparturePath.size() - 1; i++) {
 				QColor color;
-				if (mainlogic->DeparturePath[i].Type != 11) {
-					color.setRgba(QColor("green").rgba());
+				if (mainlogic->DeparturePath[i].Type == 11) {
+					color.setRgba(QColor("red").rgba());
+				}
+				else if (mainlogic->DeparturePath[i].Type == 12){
+					color.setRgba(QColor("purple").rgba());
 				}
 				else {
-					color.setRgba(QColor("red").rgba());
+					color.setRgba(QColor("green").rgba());
 				}
 				QPen apen = QPen(color);
 				apen.setWidth(5);

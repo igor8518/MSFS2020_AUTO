@@ -457,7 +457,7 @@ namespace PMDG_TEST
 					if (abs(RAngle) > (90.0)) {
 						int i = 1;
 						rPath[0].Type = 11;
-						while (true) {
+						while (i < path.size()) {
 							PMDG_TEST::SIMMATH::DSHEH dshehS = {
 								DecodeLat(tpoints->at(path[i - 1]).Lat),
 								DecodeLon(tpoints->at(path[i - 1]).Lon), 0.0,
@@ -469,7 +469,11 @@ namespace PMDG_TEST
 							int index = tpaths->size();
 							for (int j = 0; j < tpaths->size(); j++) {
 								if ((tpaths->at(j).IndexStartPoint == path[i]) &&
-									((tpaths->at(j).Type & 0xf) != 0x3) &&
+									((tpaths->at(j).Type & 0xf) != 0x3) && 
+									((tpaths->at(j).Type & 0xf) != 0x6) &&
+									((tpaths->at(j).Type & 0xf) != 0x5) &&
+									((tpaths->at(j).Type & 0xf) != 0x7) &&
+									(path.size() > (i+1)) &&
 									//((tpaths->at(j).IndexEndPoint) != path[i - 1]) &&
 									//((tpaths->at(j).IndexEndPoint) != path[i + 1])) {
 									((tpaths->at(j).End) != path[i - 1]) &&

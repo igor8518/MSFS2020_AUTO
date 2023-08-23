@@ -370,7 +370,8 @@ void CabinWork::CLBeforeTaxi(int flightLevel, int heading, int* Status) {
 		//FMGS FlightPlan
 		//FMGS InitialClimb
 		//AltSet(flightLevel);
-		Alt = flightLevel;
+		//Alt = flightLevel;
+		Alt = DataT->AllData.AIRLINER_CRUISE_ALTITUDE;
 		//HdgSel(heading);
 		Heading = heading;
 		//SpeedSel(250);
@@ -634,7 +635,7 @@ void CabinWork::APUOff() {
 
 void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
-	if (num < 7) {
+	if (num < 11) {
 		switch (num) {
 		case 9: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH9 != onoff) {
