@@ -2,6 +2,7 @@
 #ifndef SIMDATA_H
 #define SIMDATA_H
 #include "Structs.h"
+#include "WasmModuleClient.h"
 
 
 
@@ -9,20 +10,150 @@ class SimData : public QObject {
   Q_OBJECT
 public:
 	IAirportData* AirportData;
-  SimData(HANDLE hSimConnect);
+	SimData(HANDLE hSimConnect, WasmModuleClientData clientData, WasmModuleClientData runtimeData);
+	void AddLocalData(std::string LVarName, int priority);
+	void RegisterLVars();
 	~SimData();
 	static void FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void* data);
+	void RefreshLVarsList();
+	static void InitializeClientDataAreas(HANDLE HSimConnect, WasmModuleClientData clientData);
 	int AddData(HANDLE hSimConnect, DWORD simData, const char* unitName);
+	
 	QTimer* Timer;
 	 sExportData ExportData;
-	 sAllData AllData;
 	 sGData GData;
 
 	INT64 VerAll;
 	DWORD Version;
 	 A32NX_Control Control;
 	 QStringList menu;
+	 std::vector<std::string> dLVars;
+	 std::vector<StringSimVar> StringSimVars;
+	 std::vector<SimVar> SimVars;
 	 bool NewGSXQuestion = false;
+	 std::string ResponseStatus = "NEW";
+	 uint MaxClientDataDefinition = 0;
+	 std::vector<sVar> AllData = {
+		{"A320_Neo_MFD_NAV_MODE_1",								1, 	 999.99999999},
+		{"A320_Neo_MFD_NAV_MODE_2",								1, 	 999.99999999},
+		{"A320_Neo_MFD_Range_1",								1, 	 999.99999999},
+		{"A320_Neo_MFD_Range_2",								1, 	 999.99999999},
+		{"A32NX_ADIRS_ADIRU_1_STATE",							1, 	 999.99999999},
+		{"A32NX_ADIRS_ADIRU_2_STATE",							1, 	 999.99999999},
+		{"A32NX_ADIRS_ADIRU_3_STATE",							1, 	 999.99999999},
+		{"A32NX_APU_FLAP_OPEN_PERCENTAGE",						1, 	 999.99999999},
+		{"A32NX_AUTOBRAKES_ARMED_MODE",							1, 	 999.99999999},
+		{"A32NX_AUTOBRAKES_ARMED_MODE_SET",						1, 	 999.99999999},
+		{"A32NX_AUTOPILOT_1_ACTIVE",							1, 	 999.99999999},
+		{"A32NX_AUTOPILOT_ACTIVE",								1, 	 999.99999999},
+		{"A32NX_AUTOPILOT_HEADING_SELECTED",					1, 	 999.99999999},
+		{"A32NX_AUTOPILOT_VS_SELECTED",							1, 	 999.99999999},
+		{"A32NX_AUTOTHRUST_MODE",								1, 	 999.99999999},
+		{"A32NX_AUTOTHRUST_MODE_MESSAGE",						1, 	 999.99999999},
+		{"A32NX_BTN_TOCONFIG",									1, 	 999.99999999},
+		{"A32NX_CHRONO_ET_SWITCH_POS",							1, 	 999.99999999},
+		{"A32NX_EFIS_L_TO_WPT_IDENT_0",							1, 	 999.99999999},
+		{"A32NX_EFIS_L_TO_WPT_IDENT_1",							1, 	 999.99999999},
+		{"A32NX_EFIS_R_TO_WPT_IDENT_0",							1, 	 999.99999999},
+		{"A32NX_EFIS_R_TO_WPT_IDENT_1",							1, 	 999.99999999},
+		{"A32NX_ENGINE_STATE:1",								1, 	 999.99999999},
+		{"A32NX_ENGINE_STATE:2",								1, 	 999.99999999},
+		{"A32NX_EVAC_CAPT_TOGGLE",								1, 	 999.99999999},
+		{"A32NX_EVAC_COMMAND_TOGGLE",							1, 	 999.99999999},
+		{"A32NX_FIRE_TEST_APU",									1, 	 999.99999999},
+		{"A32NX_FIRE_TEST_CARGO",								1, 	 999.99999999},
+		{"A32NX_FIRE_TEST_ENG1",								1, 	 999.99999999},
+		{"A32NX_FIRE_TEST_ENG2",								1, 	 999.99999999},
+		{"A32NX_FLAPS_HANDLE_INDEX",							1, 	 999.99999999},
+		{"A32NX_FLIGHT_DIRECTOR_BANK",							0, 	 999.99999999},
+		{"A32NX_FLIGHT_DIRECTOR_PITCH",							0, 	 999.99999999},
+		{"A32NX_FMGC_FLIGHT_PHASE",								1, 	 999.99999999},
+		{"A32NX_FWC_TOCONFIG",									1, 	 999.99999999},
+		{"A32NX_INITFLIGHT_STATE",								1, 	 999.99999999},
+		{"A32NX_KNOB_OVHD_AIRCOND_PACKFLOW_Position",			1, 	 999.99999999},
+		{"A32NX_KNOB_OVHD_AIRCOND_XBLEED_Position",				1, 	 999.99999999},
+		{"A32NX_MAN_PITOT_HEAT",								1, 	 999.99999999},
+		{"A32NX_MASTER_WARNING",								1, 	 999.99999999},
+		{"A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB",			1, 	 999.99999999},
+		{"A32NX_OVHD_ADIRS_IR_2_MODE_SELECTOR_KNOB",			1, 	 999.99999999},
+		{"A32NX_OVHD_ADIRS_IR_3_MODE_SELECTOR_KNOB",			1, 	 999.99999999},
+		{"A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED",				1, 	 999.99999999},
+		{"A32NX_OVHD_APU_MASTER_SW_PB_IS_ON",					1, 	 999.99999999},
+		{"A32NX_OVHD_APU_START_PB_IS_AVAILABLE",				1, 	 999.99999999},
+		{"A32NX_OVHD_APU_START_PB_IS_ON",						1, 	 999.99999999},
+		{"A32NX_OVHD_COND_PACK_1_PB_IS_ON",						1, 	 999.99999999},
+		{"A32NX_OVHD_COND_PACK_2_PB_IS_ON",						1, 	 999.99999999},
+		{"A32NX_OVHD_ELEC_BAT_1_PB_IS_AUTO",					1, 	 999.99999999},
+		{"A32NX_OVHD_ELEC_BAT_2_PB_IS_AUTO",					1, 	 999.99999999},
+		{"A32NX_OVHD_PNEU_APU_BLEED_PB_IS_ON",					1, 	 999.99999999},
+		{"A32NX_PARK_BRAKE_LEVER_POS",							1, 	 999.99999999},
+		{"A32NX_PFD_MSG_TD_REACHED",							1, 	 999.99999999},
+		{"A32NX_PUSHBACK_HDG_FACTOR",							1, 	 999.99999999},
+		{"A32NX_PUSHBACK_SPD_FACTOR",							1, 	 999.99999999},
+		{"A32NX_PUSHBACK_SYSTEM_ENABLED",						1, 	 999.99999999},
+		{"A32NX_SIDESTICK_POSITION_X",							0, 	 999.99999999},
+		{"A32NX_SIDESTICK_POSITION_Y",							0, 	 999.99999999},
+		{"A32NX_SPEEDS_F",										1, 	 999.99999999},
+		{"A32NX_SPEEDS_GD",										1, 	 999.99999999},
+		{"A32NX_SPEEDS_MANAGED_PFD",							1, 	 999.99999999},
+		{"A32NX_SPEEDS_S",										1, 	 999.99999999},
+		{"A32NX_SWITCH_ATC_ALT",								1, 	 999.99999999},
+		{"A32NX_SWITCH_RADAR_PWS_Position",						1, 	 999.99999999},
+		{"A32NX_SWITCH_TCAS_Position",							1, 	 999.99999999},
+		{"A32NX_SWITCH_TCAS_TRAFFIC_POSITION",					1, 	 999.99999999},
+		{"A32NX_SWITCH_TCAS_Traffic_Position",					1, 	 999.99999999},
+		{"A32NX_TO_CONFIG_FLAPS",								1, 	 999.99999999},
+		{"A32NX_TRANSPONDER_MODE",								1, 	 999.99999999},
+		{"A32NX_TRK_FPA_MODE_ACTIVE",							1, 	 999.99999999},
+		{"AIRLINER_CRUISE_ALTITUDE",							1, 	 999.99999999},
+		{"AIRLINER_THR_RED_ALT",								1, 	 999.99999999},
+		{"AIRLINER_V1_SPEED",									1, 	 999.99999999},
+		{"AIRLINER_V2_SPEED",									1, 	 999.99999999},
+		{"AIRLINER_VR_SPEED",									1, 	 999.99999999},
+		{"AI_PITCH_D",											1, 	 999.99999999},
+		{"AI_PITCH_I",											1, 	 999.99999999},
+		{"AI_PITCH_IB",											1, 	 999.99999999},
+		{"AI_PITCH_ID",											1, 	 999.99999999},
+		{"AI_PITCH_K",											1, 	 999.99999999},
+		{"AI_PITCH_P",											1, 	 999.99999999},
+		{"AI_RUDDER_D",											1, 	 999.99999999},
+		{"AI_RUDDER_I",											1, 	 999.99999999},
+		{"AI_RUDDER_IB",										1, 	 999.99999999},
+		{"AI_RUDDER_ID",										1, 	 999.99999999},
+		{"AI_RUDDER_K",											1, 	 999.99999999},
+		{"AI_RUDDER_P",											1, 	 999.99999999},
+		{"FSDT_GSX_BOARDING_STATE",								1, 	 999.99999999},
+		{"FSDT_GSX_CATERING_STATE",								1, 	 999.99999999},
+		{"FSDT_GSX_COUATL_STARTED",								1, 	 999.99999999},
+		{"FSDT_GSX_DEPARTURE_STATE",							1, 	 999.99999999},
+		{"FSDT_GSX_FUELHOSE_CONNECTED",							1, 	 999.99999999},
+		{"FSDT_GSX_FUEL_COUNTER_MAX",							1, 	 999.99999999},
+		{"FSDT_GSX_MENU_CHOICE",								1, 	 999.99999999},
+		{"FSDT_GSX_MENU_OPEN",									1, 	 999.99999999},
+		{"FSDT_GSX_REFUELING_STATE",							1, 	 999.99999999},
+		{"FSDT_GSX_SIMBRIEF_SUCCESS",							1, 	 999.99999999},
+		{"LANDING_2_RETRACTED",									1, 	 999.99999999},
+		{"LANDING_3_RETRACTED",									1, 	 999.99999999},
+		{"LIGHTING_LANDING_2",									1, 	 999.99999999},
+		{"LIGHTING_LANDING_3",									1, 	 999.99999999},
+		{"PUSH_OVHD_CALLS_ALL",									1, 	 999.99999999},
+		{"PUSH_OVHD_OXYGEN_CREW",								1, 	 999.99999999},
+		{"XMLVAR_A320_WEATHERRADAR_MODE",						1, 	 999.99999999},
+		{"XMLVAR_A320_WeatherRadar_Mode",						1, 	 999.99999999},
+		{"XMLVAR_A320_WeatherRadar_Sys",						1, 	 999.99999999},
+		{"XMLVAR_AirSpeedIsInMach",								1, 	 999.99999999},
+		{"XMLVAR_Autopilot_Altitude_Increment",					1, 	 999.99999999},
+		{"XMLVAR_Baro1_Mode",									1, 	 999.99999999},
+		{"XMLVAR_Baro_Selector_HPA_1",							1, 	 999.99999999},
+		{"XMLVAR_KNOB_OVHD_CABINPRESS_LDGELEV",					1, 	 999.99999999},
+		{"XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed",		1, 	 999.99999999},
+		{"XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG2_Pressed",		1, 	 999.99999999},
+		{"XMLVAR_Momentary_PUSH_OVHD_ANTIICE_WING_Pressed",		1, 	 999.99999999},
+		{"XMLVAR_NAV_AID_SWITCH_L1_State",						1, 	 999.99999999},
+		{"XMLVAR_NAV_AID_SWITCH_L2_State",						1, 	 999.99999999},
+		{"XMLVAR_SWITCH_OVHD_INTLT_EMEREXIT_Position",			1, 	 999.99999999},
+		{"XMLVAR_SWITCH_OVHD_INTLT_NOSMOKING_Position",			1, 	 999.99999999},
+	 };
 	
 private:
 	bool set50;
@@ -37,9 +168,11 @@ private:
 	double SendVars[100];
 	INT LVars[1000];
 	HANDLE HSimConnect;
+	bool _wasmConnected = false;
 	BOOL Quit;
 	bool isPMDG737;
 	bool isA320;
+	
 	const char* SimVarsText[CVars] = {
 	"AUTOPILOT PITCH HOLD",
 	"STRUCT AMBIENT WIND",
@@ -6590,6 +6723,8 @@ private:
 					"AutoFlight.A32NX_PUSHBACK_SYSTEM_ENABLED",
 					"AutoFlight.A32NX_PUSHBACK_SPD_FACTOR",
 					"AutoFlight.A32NX_PUSHBACK_HDG_FACTOR",
+
+
 						
 	};
 	std::vector<bool> RegEvent;
@@ -6602,6 +6737,8 @@ private:
 	void RegisterVarSet(DWORD sender, DWORD var, double val, const char* unit = "");
 	void RegisterEvent(DWORD clientEvent);
 	HRESULT GetAllData();
+	WasmModuleClientData clientData;
+	WasmModuleClientData runtimeData;
 	
 signals:
 	void SendText(QString s, bool sendSim);
@@ -6614,6 +6751,9 @@ signals:
 public slots:
 	void TimerProc();
 	void GetDataString(DWORD sender, DWORD var, std::string* val);
+	FSUIPCOffsetType RegisterSimVar(std::string SimVarName);
+	FSUIPCOffsetType GetSimVar(std::string simVarName, std::string* stringVal, double* floatVal, int priority);
+	void SetDataL2(DWORD sender, DWORD var, double* val, const char* unit = "");
 	//void GetData(DWORD sender, DWORD var, double* val, const char* unit = "");
 	//void GetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");
 	void SetDataL(DWORD sender, DWORD var, double* val, const char* unit = "");

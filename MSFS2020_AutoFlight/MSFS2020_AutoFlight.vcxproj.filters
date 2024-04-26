@@ -65,6 +65,9 @@
     <ClCompile Include="airportview.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WasmModuleClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="msfs2020_autoflight.h">
@@ -106,6 +109,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="globaldata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WasmModuleClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -8,14 +8,14 @@ CabinWork::CabinWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 }
 
 HRESULT CabinWork::GSXServicesRequest(GSServices sr) {
-	if (DataT->AllData.FSDT_GSX_COUATL_STARTED == 1) {
+	if (DataT->AllData[FSDT_GSX_COUATL_STARTED].Value == 1) {
 		SetDataL(FSDT_GSX_MENU_OPEN, 1);
-		DataT->AllData.FSDT_GSX_MENU_OPEN = 1;
-		while (DataT->AllData.FSDT_GSX_MENU_OPEN != 0);
+		//DataT->AllData[FSDT_GSX_MENU_OPEN].Value = 1;
+		while (DataT->AllData[FSDT_GSX_MENU_OPEN].Value != 0);
 		Sleep(2000);
 		SetDataL(FSDT_GSX_MENU_CHOICE, sr);
-		DataT->AllData.FSDT_GSX_MENU_CHOICE = sr;
-		while (DataT->AllData.FSDT_GSX_MENU_CHOICE != -2);
+		//DataT->AllData[FSDT_GSX_MENU_CHOICE].Value = sr;
+		while (DataT->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
 		return 0;
 	}
 }
@@ -100,22 +100,22 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		//SendEvent(KEY_REQUEST_CATERING, 0);
 		GSXServicesRequest(REQUEST_CATERING_SERVICE);
 		SetDataL(FSDT_GSX_FUEL_COUNTER_MAX, 99999.0);
-		while (DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
+		while (DataT->AllData[FSDT_GSX_CATERING_STATE].Value != 6);
 		Sleep(3000);
 		//SendEvent(KEY_REQUEST_FUEL, 0);
-		while ((DataT->AllData.FSDT_GSX_SIMBRIEF_SUCCESS != 0) && 
-			(DataT->AllData.FSDT_GSX_SIMBRIEF_SUCCESS != 1)) {
+		while ((DataT->AllData[FSDT_GSX_SIMBRIEF_SUCCESS].Value != 0) && 
+			(DataT->AllData[FSDT_GSX_SIMBRIEF_SUCCESS].Value != 1)) {
 			SetDataL(FSDT_GSX_MENU_CHOICE, 14);
-			DataT->AllData.FSDT_GSX_MENU_CHOICE = 14;
-			while (DataT->AllData.FSDT_GSX_MENU_CHOICE != -2);
+			DataT->AllData[FSDT_GSX_MENU_CHOICE].Value = 14;
+			while (DataT->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
 			Sleep(10000);
 		}
 		SeatBeltSign(0);
 		
 		GSXServicesRequest(REQUEST_REFUELING);
-		while (DataT->AllData.FSDT_GSX_FUELHOSE_CONNECTED != 1);
+		while (DataT->AllData[FSDT_GSX_FUELHOSE_CONNECTED].Value != 1);
 		SetDataL(A32NX_INITFLIGHT_STATE, 1);
-		while (DataT->AllData.FSDT_GSX_REFUELING_STATE != 1);
+		while (DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 1);
 
 		Sleep(3000);
 		SetCabinLight(100);
@@ -181,7 +181,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		//FCUCheck
 		SpeedMachMode(0);
 		HdgVsTrkFpa(0);
-		Alt = DataT->AllData.AIRLINER_CRUISE_ALTITUDE;
+		Alt = DataT->AllData[AIRLINER_CRUISE_ALTITUDE].Value;
 		//LATERAL CONSOLE
 		//Oxygwn mask
 		CrewSupply(0);
@@ -222,10 +222,10 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		WxrSys(0);
 		//FMGSAirfieldData
 		IrsAligned();
-		while (DataT->AllData.A32NX_INITFLIGHT_STATE != 20);
-		while (DataT->AllData.FSDT_GSX_BOARDING_STATE != 6 ||
-			DataT->AllData.FSDT_GSX_REFUELING_STATE != 1 ||
-			DataT->AllData.FSDT_GSX_CATERING_STATE != 6);
+		while (DataT->AllData[A32NX_INITFLIGHT_STATE].Value != 20);
+		while (DataT->AllData[FSDT_GSX_BOARDING_STATE].Value != 6 ||
+			DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 3 ||
+			DataT->AllData[FSDT_GSX_CATERING_STATE].Value != 6);
 		//SendEvent(KEY_TOGGLE_JETWAY, 0);
 		//Sleep(30000);
 		//FMGSAtcClereance
@@ -272,8 +272,8 @@ void CabinWork::CLBeforeStart(int* Status) {
 	GSXServicesRequest(REQUEST_DEPARTING);
 	Sleep(3000);
 	SetDataL(FSDT_GSX_MENU_CHOICE, 0);
-	DataT->AllData.FSDT_GSX_MENU_CHOICE = 0;
-	while (DataT->AllData.FSDT_GSX_MENU_CHOICE != -2);
+	DataT->AllData[FSDT_GSX_MENU_CHOICE].Value = 0;
+	while (DataT->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
 	*Status = 2;
 }
 
@@ -313,7 +313,7 @@ void CabinWork::CLAfterStart(int* Status) {
 		Spoilers = -1;
 		emit SendCommand(SET_RUDDER_TRIM, 0, 10);
 		Flaps = 2;
-		emit SendCommand(SET_PITCH_TRIM, 2, 10);
+		emit SendCommand(SET_PITCH_TRIM, 0, 10);
 		//ECAMStatusPageCheck
 		EngineAntiIce(1, 1);
 		EngineAntiIce(2, 1);
@@ -371,7 +371,7 @@ void CabinWork::CLBeforeTaxi(int flightLevel, int heading, int* Status) {
 		//FMGS InitialClimb
 		//AltSet(flightLevel);
 		//Alt = flightLevel;
-		Alt = DataT->AllData.AIRLINER_CRUISE_ALTITUDE;
+		Alt = DataT->AllData[AIRLINER_CRUISE_ALTITUDE].Value;
 		//HdgSel(heading);
 		Heading = heading;
 		//SpeedSel(250);
@@ -585,8 +585,20 @@ void CabinWork::Wiper(DWORD num, DWORD mode) {
 }
 
 
-void CabinWork::BatterySwitch(DWORD num, DWORD onoff) {		
-	SetDataL(A32NX_OVHD_ELEC_BAT_1_PB_IS_AUTO + num - 1, onoff);
+void CabinWork::BatterySwitch(DWORD num, DWORD onoff) {	
+	switch (num) {
+	case 1:
+	{
+		SetDataL(A32NX_OVHD_ELEC_BAT_1_PB_IS_AUTO, onoff);
+		break;
+	}
+	case 2:
+	{
+		SetDataL(A32NX_OVHD_ELEC_BAT_2_PB_IS_AUTO, onoff);
+		break;
+	}
+	}
+	
 }
 
 
@@ -608,22 +620,21 @@ void CabinWork::ExternalPower(DWORD onoff) {
 
 void CabinWork::APUSet(DWORD onoff) {
 	if (onoff == 1) {
-		if ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) != 1) {
-			
+		if (DataT->AllData[A32NX_OVHD_APU_START_PB_IS_AVAILABLE].Value != 1) {		
 				if (SetDataL(A32NX_OVHD_APU_MASTER_SW_PB_IS_ON, 1.0) == 1) {
-					while ((DataT->AllData.A32NX_APU_FLAP_OPEN_PERCENTAGE) != 100);
+					while (DataT->AllData[A32NX_APU_FLAP_OPEN_PERCENTAGE].Value != 100);
 						if (SetDataL(A32NX_OVHD_APU_START_PB_IS_ON, 1.0)) {
-							while ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) != 1);
+							while (DataT->AllData[A32NX_OVHD_APU_START_PB_IS_AVAILABLE].Value != 1);
 						}
 				}
 			
 		}
 	}
 	else {
-		if ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_AVAILABLE) == 1) {
+		if (DataT->AllData[A32NX_OVHD_APU_START_PB_IS_AVAILABLE].Value == 1) {
 			SetDataL(A32NX_OVHD_APU_MASTER_SW_PB_IS_ON, 0.0);
 		}
-		while ((DataT->AllData.A32NX_APU_FLAP_OPEN_PERCENTAGE) > 0.1);
+		while (DataT->AllData[A32NX_APU_FLAP_OPEN_PERCENTAGE].Value > 0.1);
 	}
 }
 
@@ -680,14 +691,14 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 
 
 void CabinWork::APUFireTest() {
-	if ((DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) != 1) {
+	if ((DataT->AllData[A32NX_OVHD_APU_START_PB_IS_ON].Value) != 1) {
 		SetDataL(A32NX_FIRE_TEST_APU, 1);
-		while (!(DataT->AllData.A32NX_MASTER_WARNING)) {
+		while (!(DataT->AllData[A32NX_MASTER_WARNING].Value)) {
 			
 		}
 		Sleep(2000);
 		SetDataL(A32NX_FIRE_TEST_APU, 0);
-		while ((DataT->AllData.A32NX_MASTER_WARNING));
+		while ((DataT->AllData[A32NX_MASTER_WARNING].Value));
 		Sleep(1000);
 	}
 }
@@ -702,7 +713,7 @@ void CabinWork::SetCabinLight(DWORD value) {
 }
 
 void CabinWork::CabinLight(DWORD mode) {
-	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || mode == 0)
+	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData[A32NX_OVHD_APU_START_PB_IS_ON].Value) || mode == 0)
 	{
 		switch (mode) {
 		case 0: {
@@ -760,7 +771,7 @@ void CabinWork::CabinLight(DWORD mode) {
 
 void CabinWork::ParkingBrakeSet(DWORD onoff) {
 	if (ParkBrake >= 0) {
-		if (DataT->AllData.A32NX_PARK_BRAKE_LEVER_POS != onoff) {
+		if (DataT->AllData[A32NX_PARK_BRAKE_LEVER_POS].Value != onoff) {
 			ParkBrake = onoff;
 			SetDataL(A32NX_PARK_BRAKE_LEVER_POS, onoff);
 		}
@@ -775,7 +786,7 @@ void CabinWork::FlapsSet(DWORD pos) {
 	if (Flaps >= 0) {
 		for (int i = DataT->GData.FLAPS_HANDLE_INDEX; i != pos; ) {
 			Sleep(60);
-			i = (DataT->AllData.A32NX_FLAPS_HANDLE_INDEX);
+			i = (DataT->AllData[A32NX_FLAPS_HANDLE_INDEX].Value);
 			if (i < pos) {
 				emit SendEvent(KEY_FLAPS_UP + i + 1, 0);
 			}
@@ -822,14 +833,14 @@ void CabinWork::SpoilersSet(double pos) {
 
 
 void CabinWork::ProbeWindowHeat(DWORD onoff) {
-	if ((DataT->AllData.A32NX_MAN_PITOT_HEAT) != onoff) {
+	if ((DataT->AllData[A32NX_MAN_PITOT_HEAT].Value) != onoff) {
 		SetDataL(A32NX_MAN_PITOT_HEAT, onoff);
 	}
 }
 
 
 void CabinWork::XBleedSet(DWORD mode) {
-	if ((DataT->AllData.A32NX_KNOB_OVHD_AIRCOND_XBLEED_Position) != mode) {
+	if ((DataT->AllData[A32NX_KNOB_OVHD_AIRCOND_XBLEED_Position].Value) != mode) {
 		SetDataL(A32NX_KNOB_OVHD_AIRCOND_XBLEED_Position, mode);
 	}
 }
@@ -848,38 +859,50 @@ void CabinWork::GearSet(DWORD pos) {
 
 
 void CabinWork::EvacCapt(DWORD mode) {
-	if ((DataT->AllData.A32NX_EVAC_CAPT_TOGGLE) != mode) {
+	if ((DataT->AllData[A32NX_EVAC_CAPT_TOGGLE].Value) != mode) {
 		SetDataL(A32NX_EVAC_CAPT_TOGGLE, mode);
 	}
 }
 
 
 void CabinWork::ADIRS(DWORD num, DWORD mode) {
-	double var=0;
+	double var;
 	switch (num) {
 	case 0: {
-		var = DataT->AllData.A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB;
+		var = DataT->AllData[A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB].Value;
+		if (var != mode) {
+			SetDataL(A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB, mode);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 1);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 0);
+		}
 		break;
 	}
 	case 1: {
-		var = DataT->AllData.A32NX_OVHD_ADIRS_IR_2_MODE_SELECTOR_KNOB;
+		var = DataT->AllData[A32NX_OVHD_ADIRS_IR_2_MODE_SELECTOR_KNOB].Value;
+		if (var != mode) {
+			SetDataL(A32NX_OVHD_ADIRS_IR_2_MODE_SELECTOR_KNOB, mode);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 1);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 0);
+		}
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.A32NX_OVHD_ADIRS_IR_3_MODE_SELECTOR_KNOB;
+		var = DataT->AllData[A32NX_OVHD_ADIRS_IR_3_MODE_SELECTOR_KNOB].Value;
+		if (var != mode) {
+			SetDataL(A32NX_OVHD_ADIRS_IR_3_MODE_SELECTOR_KNOB, mode);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 1);
+			while ((DataT->AllData[A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED].Value) != 0);
+		}
+		var = DataT->AllData[A32NX_OVHD_ADIRS_IR_3_MODE_SELECTOR_KNOB].Value;
 		break;
 	}
 	}
-	if (var != mode) {
-		SetDataL(A32NX_OVHD_ADIRS_IR_1_MODE_SELECTOR_KNOB + num, mode);
-		while ((DataT->AllData.A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED) != 1);
-		while ((DataT->AllData.A32NX_OVHD_ADIRS_ON_BAT_IS_ILLUMINATED) != 0);
-	}
+	
 }
 
 
 void CabinWork::NavLight(DWORD onoff) {
-	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData.A32NX_OVHD_APU_START_PB_IS_ON) || onoff != 1)
+	if (DataT->GData.EXTERNAL_POWER_ON1 || (DataT->AllData[A32NX_OVHD_APU_START_PB_IS_ON].Value) || onoff != 1)
 	{
 		if (DataT->GData.LIGHT_NAV != onoff) {
 			SetData(LIGHT_NAV, onoff);
@@ -892,14 +915,14 @@ void CabinWork::NavLight(DWORD onoff) {
 
 
 void CabinWork::NoSmokeSign(DWORD mode) {
-	if ((DataT->AllData.XMLVAR_SWITCH_OVHD_INTLT_NOSMOKING_Position) != mode) {
+	if ((DataT->AllData[XMLVAR_SWITCH_OVHD_INTLT_NOSMOKING_Position].Value) != mode) {
 		SetDataL(XMLVAR_SWITCH_OVHD_INTLT_NOSMOKING_Position, mode);
 	}
 }
 
 
 void CabinWork::EmerExitSign(DWORD mode) {
-	if ((DataT->AllData.XMLVAR_SWITCH_OVHD_INTLT_EMEREXIT_Position) != mode) {
+	if ((DataT->AllData[XMLVAR_SWITCH_OVHD_INTLT_EMEREXIT_Position].Value) != mode) {
 		SetDataL(XMLVAR_SWITCH_OVHD_INTLT_EMEREXIT_Position, mode);
 	}
 }
@@ -914,31 +937,46 @@ void CabinWork::SeatBeltSign(DWORD mode) {
 
 void CabinWork::LandingElevation(double pos) {
 	pos = pos * 100;
-	if ((DataT->AllData.XMLVAR_KNOB_OVHD_CABINPRESS_LDGELEV) != pos) {
+	if ((DataT->AllData[XMLVAR_KNOB_OVHD_CABINPRESS_LDGELEV].Value) != pos) {
 		SetDataL(XMLVAR_KNOB_OVHD_CABINPRESS_LDGELEV, pos);
 	}
 }
 
 
 void CabinWork::PackFlow(DWORD mode) {
-	if ((DataT->AllData.A32NX_KNOB_OVHD_AIRCOND_PACKFLOW_Position) != mode) {
+	if ((DataT->AllData[A32NX_KNOB_OVHD_AIRCOND_PACKFLOW_Position].Value) != mode) {
 		SetDataL(A32NX_KNOB_OVHD_AIRCOND_PACKFLOW_Position, mode);
 	}
 }
 
 
 void CabinWork::EngFireTest(DWORD num) {
-	SetDataL(A32NX_FIRE_TEST_ENG1 + num - 1, 1);
-	while (!(DataT->AllData.A32NX_MASTER_WARNING));
-	Sleep(2000);
-	SetDataL(A32NX_FIRE_TEST_ENG1 + num - 1, 0);
-	while ((DataT->AllData.A32NX_MASTER_WARNING));
-	Sleep(1000);
+	switch (num) {
+	case 1: {
+		SetDataL(A32NX_FIRE_TEST_ENG1, 1);
+		while (!(DataT->AllData[A32NX_MASTER_WARNING].Value));
+		Sleep(2000);
+		SetDataL(A32NX_FIRE_TEST_ENG1, 0);
+		while ((DataT->AllData[A32NX_MASTER_WARNING].Value));
+		Sleep(1000);
+		break;
+	}
+	case 2: {
+		SetDataL(A32NX_FIRE_TEST_ENG2, 1);
+		while (!(DataT->AllData[A32NX_MASTER_WARNING].Value));
+		Sleep(2000);
+		SetDataL(A32NX_FIRE_TEST_ENG2, 0);
+		while ((DataT->AllData[A32NX_MASTER_WARNING].Value));
+		Sleep(1000);
+		break;
+	}
+	}
+	
 }
 
 
 void CabinWork::FlapRem(DWORD pos) {
-	if ((DataT->AllData.A32NX_TO_CONFIG_FLAPS) != pos) {
+	if ((DataT->AllData[A32NX_TO_CONFIG_FLAPS].Value) != pos) {
 		SetDataL(A32NX_TO_CONFIG_FLAPS, pos);
 	}
 }
@@ -970,7 +1008,7 @@ void CabinWork::FloodLightOver(double flood) {
 
 
 void CabinWork::BaroMode(DWORD mode) {
-	if ((DataT->AllData.XMLVAR_Baro1_Mode) != mode) {
+	if ((DataT->AllData[XMLVAR_Baro1_Mode].Value) != mode) {
 		SetDataL(XMLVAR_Baro1_Mode, mode);
 	}
 }
@@ -982,10 +1020,10 @@ void CabinWork::BarometricRef() {
 	double ambBaro = DataT->GData.SEA_LEVEL_PRESSURE;
 		double ppos = DataT->GData.KOHLSMAN_SETTING_HG;
 		while (((ppos + pog) < ambBaro) || ((ppos - pog) > ambBaro)) {
-			if ((DataT->AllData.XMLVAR_Baro1_Mode) != 1) {
+			if ((DataT->AllData[XMLVAR_Baro1_Mode].Value) != 1) {
 				SetDataL(XMLVAR_Baro1_Mode, 1);
 			}
-			if ((DataT->AllData.XMLVAR_Baro_Selector_HPA_1) != 0) {
+			if ((DataT->AllData[XMLVAR_Baro_Selector_HPA_1].Value) != 0) {
 				SetDataL(XMLVAR_Baro_Selector_HPA_1, 0);
 			}
 			if (ppos < ambBaro) {
@@ -1011,11 +1049,11 @@ void CabinWork::NDMode(DWORD num, DWORD mode) {
 	double var;
 	switch (num) {
 	case 1: {
-		var = DataT->AllData.A320_Neo_MFD_NAV_MODE_1;
+		var = DataT->AllData[A320_Neo_MFD_NAV_MODE_1].Value;
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.A320_Neo_MFD_NAV_MODE_2;
+		var = DataT->AllData[A320_Neo_MFD_NAV_MODE_2].Value;
 		break;
 	}
 	}
@@ -1029,11 +1067,11 @@ void CabinWork::NDRange(DWORD num, DWORD range) {
 	double var;
 	switch (num) {
 	case 1: {
-		var = DataT->AllData.A320_Neo_MFD_Range_1;
+		var = DataT->AllData[A320_Neo_MFD_Range_1].Value;
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.A320_Neo_MFD_Range_2;
+		var = DataT->AllData[A320_Neo_MFD_Range_2].Value;
 		break;
 	}
 	}
@@ -1047,11 +1085,11 @@ void CabinWork::ADFVOR1(DWORD num, DWORD mode) {
 	double var;
 	switch (num) {
 	case 1: {
-		var = DataT->AllData.XMLVAR_NAV_AID_SWITCH_L1_State;
+		var = DataT->AllData[XMLVAR_NAV_AID_SWITCH_L1_State].Value;
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.XMLVAR_NAV_AID_SWITCH_L1_State;
+		var = DataT->AllData[XMLVAR_NAV_AID_SWITCH_L1_State].Value;
 		break;
 	}
 	}
@@ -1065,11 +1103,11 @@ void CabinWork::ADFVOR2(DWORD num, DWORD mode) {
 	double var;
 	switch (num) {
 	case 1: {
-		var = DataT->AllData.XMLVAR_NAV_AID_SWITCH_L2_State;
+		var = DataT->AllData[XMLVAR_NAV_AID_SWITCH_L2_State].Value;
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.XMLVAR_NAV_AID_SWITCH_L2_State;
+		var = DataT->AllData[XMLVAR_NAV_AID_SWITCH_L2_State].Value;
 		break;
 	}
 	}
@@ -1090,7 +1128,7 @@ void CabinWork::SpeedMachMode(DWORD mode) {
 
 
 void CabinWork::HdgVsTrkFpa(DWORD mode) {
-	if ((DataT->AllData.A32NX_TRK_FPA_MODE_ACTIVE) != mode) {
+	if ((DataT->AllData[A32NX_TRK_FPA_MODE_ACTIVE].Value) != mode) {
 		SetDataL(A32NX_TRK_FPA_MODE_ACTIVE, mode);
 	}
 }
@@ -1143,21 +1181,21 @@ void CabinWork::SetAltitudeIncrement(DWORD alt) {
 	else {
 		alt = 1000;
 	}
-	if ((DataT->AllData.XMLVAR_Autopilot_Altitude_Increment) != alt) {
+	if ((DataT->AllData[XMLVAR_Autopilot_Altitude_Increment].Value) != alt) {
 		SetDataL(XMLVAR_Autopilot_Altitude_Increment, alt);
 	}
 }
 
 
 void CabinWork::AltInitial(DWORD alt) {
-	if ((DataT->AllData.AIRLINER_CRUISE_ALTITUDE) != alt) {
+	if ((DataT->AllData[AIRLINER_CRUISE_ALTITUDE].Value) != alt) {
 		SetDataL(AIRLINER_CRUISE_ALTITUDE, alt);
 	}
 }
 
 
 void CabinWork::CrewSupply(DWORD offon) {
-	if ((DataT->AllData.PUSH_OVHD_OXYGEN_CREW) != offon) {
+	if ((DataT->AllData[PUSH_OVHD_OXYGEN_CREW].Value) != offon) {
 		SetDataL(PUSH_OVHD_OXYGEN_CREW, offon);
 	}
 }
@@ -1171,21 +1209,21 @@ void CabinWork::ASandNS(DWORD onoff) {
 
 
 void CabinWork::WxrSys(DWORD mode) {
-	if ((DataT->AllData.XMLVAR_A320_WeatherRadar_Sys) != mode) {
+	if ((DataT->AllData[XMLVAR_A320_WeatherRadar_Sys].Value) != mode) {
 		SetDataL(XMLVAR_A320_WeatherRadar_Sys, mode);
 	}
 }
 
 
 void CabinWork::WxrWs(DWORD onoff) {
-	if ((DataT->AllData.A32NX_SWITCH_RADAR_PWS_Position) != onoff) {
+	if ((DataT->AllData[A32NX_SWITCH_RADAR_PWS_Position].Value) != onoff) {
 		SetDataL(A32NX_SWITCH_RADAR_PWS_Position, onoff);
 	}
 }
 
 
 void CabinWork::WxrMode(DWORD mode) {
-	if ((DataT->AllData.XMLVAR_A320_WEATHERRADAR_MODE) != mode) {
+	if ((DataT->AllData[XMLVAR_A320_WEATHERRADAR_MODE].Value) != mode) {
 		SetDataL(XMLVAR_A320_WeatherRadar_Mode, mode);
 	}
 }
@@ -1195,9 +1233,9 @@ void CabinWork::IrsAligned() {
 	ADIRS(0, 1);
 	ADIRS(1, 1);
 	ADIRS(2, 1);
-	while ((DataT->AllData.A32NX_ADIRS_ADIRU_1_STATE) != 2);
-	while ((DataT->AllData.A32NX_ADIRS_ADIRU_2_STATE) != 2);
-	while ((DataT->AllData.A32NX_ADIRS_ADIRU_3_STATE) != 2);
+	while ((DataT->AllData[A32NX_ADIRS_ADIRU_1_STATE].Value) != 2);
+	while ((DataT->AllData[A32NX_ADIRS_ADIRU_2_STATE].Value) != 2);
+	while ((DataT->AllData[A32NX_ADIRS_ADIRU_3_STATE].Value) != 2);
 }
 
 
@@ -1262,13 +1300,13 @@ void CabinWork::EngineIdleParameters(DWORD num) {
 	switch(num) {
 	case 1: {
 		while (DataT->GData.ENG_N1_RPM1 < 0.150); //0.195
-		while ((DataT->AllData.A32NX_ENGINE_STATE_1) != 1);
+		while ((DataT->AllData[A32NX_ENGINE_STATE_1].Value) != 1);
 		Sleep(15000);
 		break;
 	}
 	case 2: {
 		while (DataT->GData.ENG_N1_RPM2 < 0.150); //0.195
-		while ((DataT->AllData.A32NX_ENGINE_STATE_2) != 1);
+		while ((DataT->AllData[A32NX_ENGINE_STATE_2].Value) != 1);
 		Sleep(15000);
 		break;
 	}
@@ -1280,22 +1318,26 @@ void CabinWork::EngineAntiIce(DWORD num, DWORD onoff) {
 	double var;
 	switch (num) {
 	case 1: {
-		var = DataT->AllData.XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed;
+		var = DataT->AllData[XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed].Value;
+		if (var != onoff) {
+			SetDataL(XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed, onoff);
+		}
 		break;
 	}
 	case 2: {
-		var = DataT->AllData.XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed;
+		var = DataT->AllData[XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG2_Pressed].Value;
+		if (var != onoff) {
+			SetDataL(XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG2_Pressed, onoff);
+		}
 		break;
 	}
 	}
-	if (var != onoff) {
-		SetDataL(XMLVAR_Momentary_PUSH_OVHD_ANTIICE_ENG1_Pressed - 1 + num, onoff);
-	}
+	
 }
 
 
 void CabinWork::WingAntiIce(DWORD onoff) {
-	if ((DataT->AllData.XMLVAR_Momentary_PUSH_OVHD_ANTIICE_WING_Pressed) != onoff) {
+	if ((DataT->AllData[XMLVAR_Momentary_PUSH_OVHD_ANTIICE_WING_Pressed].Value) != onoff) {
 		SetDataL(XMLVAR_Momentary_PUSH_OVHD_ANTIICE_WING_Pressed, onoff);
 	}
 }
@@ -1394,7 +1436,7 @@ void CabinWork::StrobeLight(DWORD onoff) {
 
 
 void CabinWork::SetAutoBrakes(DWORD num) {
-	while ((DataT->AllData.A32NX_AUTOBRAKES_ARMED_MODE) != num) {
+	while ((DataT->AllData[A32NX_AUTOBRAKES_ARMED_MODE].Value) != num) {
 		SetDataL(A32NX_AUTOBRAKES_ARMED_MODE_SET, num);
 		//emit SendEvent(A32NX_AUTOBRAKES_ARMED_MODE_SET, num);
 		Sleep(600);
@@ -1403,15 +1445,15 @@ void CabinWork::SetAutoBrakes(DWORD num) {
 
 
 void CabinWork::HdgSel(double heading) {
-	while (round(DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED) != Utils::Constrain360(heading)) {
-		double prev = DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED;
-		if (round(Utils::Constrain180(DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED - Utils::Constrain360(heading))) < 0) {
+	while (round(DataT->AllData[A32NX_AUTOPILOT_HEADING_SELECTED].Value) != Utils::Constrain360(heading)) {
+		double prev = DataT->AllData[A32NX_AUTOPILOT_HEADING_SELECTED].Value;
+		if (round(Utils::Constrain180(DataT->AllData[A32NX_AUTOPILOT_HEADING_SELECTED].Value - Utils::Constrain360(heading))) < 0) {
 			SendEvent(A32NX_FCU_HDG_INC, 1);
 		}
 		else {
 			SendEvent(A32NX_FCU_HDG_DEC, 1);
 		}
-		while (DataT->AllData.A32NX_AUTOPILOT_HEADING_SELECTED == prev);
+		while (DataT->AllData[A32NX_AUTOPILOT_HEADING_SELECTED].Value == prev);
 	}
 }
 
@@ -1436,12 +1478,12 @@ void CabinWork::VSSel(double VS) {
 			VS = 4000;
 		}
 	}
-	while (DataT->AllData.A32NX_AUTOPILOT_VS_SELECTED != VS) {
-		if (DataT->AllData.A32NX_AUTOPILOT_VS_SELECTED < VS) {
-			SendEvent(A32NX_FCU_VS_SET, DataT->AllData.A32NX_AUTOPILOT_VS_SELECTED + 100);
+	while (DataT->AllData[A32NX_AUTOPILOT_VS_SELECTED].Value != VS) {
+		if (DataT->AllData[A32NX_AUTOPILOT_VS_SELECTED].Value < VS) {
+			SendEvent(A32NX_FCU_VS_SET, DataT->AllData[A32NX_AUTOPILOT_VS_SELECTED].Value + 100);
 		}
 		else {
-			SendEvent(A32NX_FCU_VS_SET, DataT->AllData.A32NX_AUTOPILOT_VS_SELECTED - 100);
+			SendEvent(A32NX_FCU_VS_SET, DataT->AllData[A32NX_AUTOPILOT_VS_SELECTED].Value - 100);
 		}
 		Sleep(60);
 	}
@@ -1450,7 +1492,7 @@ void CabinWork::VSSel(double VS) {
 
 
 void CabinWork::CabinReport() {
-	//if ((DataT->AllData.A32NX_CABIN_READY) != 1) {
+	//if ((DataT->AllData[A32NX_CABIN_READY].Value) != 1) {
 		SetDataL(PUSH_OVHD_CALLS_ALL, 1);
 		Sleep(1000);
 		SetDataL(PUSH_OVHD_CALLS_ALL, 0);
@@ -1460,7 +1502,7 @@ void CabinWork::CabinReport() {
 
 
 void CabinWork::TOConfig() {
-	if ((DataT->AllData.A32NX_FWC_TOCONFIG) != 1) {
+	if ((DataT->AllData[A32NX_FWC_TOCONFIG].Value) != 1) {
 		SetDataL(A32NX_BTN_TOCONFIG, 1);
 		Sleep(1000);
 		SetDataL(A32NX_BTN_TOCONFIG, 0);
@@ -1470,27 +1512,27 @@ void CabinWork::TOConfig() {
 
 
 void CabinWork::TcasMode(DWORD mode) {
-	//if ((DataT->AllData.A32NX_SWITCH_TCAS_Position) != mode) {
+	//if ((DataT->AllData[A32NX_SWITCH_TCAS_Position].Value) != mode) {
 		SetDataL(A32NX_SWITCH_TCAS_Position, mode);
 	//}
 }
 
 
 void CabinWork::TcasTraffic(DWORD mode) {
-	//if ((DataT->AllData.A32NX_SWITCH_TCAS_TRAFFIC_POSITION) != mode) {
+	//if ((DataT->AllData[A32NX_SWITCH_TCAS_TRAFFIC_POSITION].Value) != mode) {
 		SetDataL(A32NX_SWITCH_TCAS_Traffic_Position, mode);
 	//}
 }
 
 
 void CabinWork::AltRptg(DWORD onoff) {
-	//if ((DataT->AllData.A32NX_SWITCH_TCAS_TRAFFIC_POSITION) != mode) {
+	//if ((DataT->AllData[A32NX_SWITCH_TCAS_TRAFFIC_POSITION].Value) != mode) {
 	SetDataL(A32NX_SWITCH_ATC_ALT, onoff);
 	//}
 }
 
 void CabinWork::TransponderMode(DWORD mode) {
-	//if ((DataT->AllData.A32NX_SWITCH_TCAS_TRAFFIC_POSITION) != mode) {
+	//if ((DataT->AllData[A32NX_SWITCH_TCAS_TRAFFIC_POSITION].Value) != mode) {
 	SetDataL(A32NX_TRANSPONDER_MODE, mode);
 	//}
 }
@@ -1500,17 +1542,21 @@ void CabinWork::Pack(DWORD num, DWORD onoff) {
 	double var;
 	switch (num) {
 	case 0: {
-		var = DataT->AllData.A32NX_OVHD_COND_PACK_1_PB_IS_ON;
+		var = DataT->AllData[A32NX_OVHD_COND_PACK_1_PB_IS_ON].Value;
+		if (var != onoff) {
+			SetDataL(A32NX_OVHD_COND_PACK_1_PB_IS_ON, onoff);
+		}
 		break;
 	}
 	case 1: {
-		var = DataT->AllData.A32NX_OVHD_COND_PACK_2_PB_IS_ON;
+		var = DataT->AllData[A32NX_OVHD_COND_PACK_2_PB_IS_ON].Value;
+		if (var != onoff) {
+			SetDataL(A32NX_OVHD_COND_PACK_2_PB_IS_ON, onoff);
+		}
 		break;
 	}
 	}
-	if (var!= onoff) {
-		SetDataL(A32NX_OVHD_COND_PACK_1_PB_IS_ON - 1 + num, onoff);
-	}
+	
 }
 
 
@@ -1554,12 +1600,12 @@ void CabinWork::SetDataChange(DWORD var, DWORD sender) {
 void CabinWork::SetATHR(DWORD onoff)
 {
 	if (onoff) {
-		if (DataT->AllData.A32NX_AUTOTHRUST_MODE == 0) {
+		if (DataT->AllData[A32NX_AUTOTHRUST_MODE].Value == 0) {
 			SendEvent(A32NX_FCU_ATHR_PUSH, 1);
 		}
 	}
 	else {
-		if (DataT->AllData.A32NX_AUTOTHRUST_MODE > 0) {
+		if (DataT->AllData[A32NX_AUTOTHRUST_MODE].Value > 0) {
 			SendEvent(A32NX_FCU_ATHR_PUSH, 1);
 		}
 	}
@@ -1613,10 +1659,10 @@ void CabinWork::ReceiveCommand(DWORD command, double parameter1, double paramete
 		BaroM = parameter1;
 		break;
 	}
-	case SAVE_DATA: {
+	/*case SAVE_DATA: {
 		SetDataL(SAVE_VARS, 1);
 		break;
-	}
+	}*/
 	case PUSH_ALT: {
 		if (AltMode != 7) {
 			AltMode = 5;
@@ -1710,12 +1756,12 @@ void CabinWork::TimerProc() {
 			BarometricRef();
 		}
 		SpoilersSet(Spoilers);
-		if ((DataT == NULL) || (DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		if ((DataT == NULL) || (DataT->AllData[A32NX_AUTOPILOT_ACTIVE].Value)) {
 			if (AltTest > 0) {
 				AltSet(AltTest);
 			}
 		}
-		if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+		if ((DataT == NULL) || (!DataT->AllData[A32NX_AUTOPILOT_ACTIVE].Value)) {
 
 			if (HeadingMode == 1) {
 				SendEvent(A32NX_FCU_HDG_PUSH, 1);

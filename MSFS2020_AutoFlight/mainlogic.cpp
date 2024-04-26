@@ -384,9 +384,9 @@ void MainLogic::AddWayPoint(double lon, double lat, double altHi, QString pointT
 }
 
 void MainLogic::ChangeFlightPhaseReport() {
-	if (FlightPhase != data->AllData.A32NX_FMGC_FLIGHT_PHASE) {
+	if (FlightPhase != data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value) {
 		emit CabinReport();
-		FlightPhase = data->AllData.A32NX_FMGC_FLIGHT_PHASE;
+		FlightPhase = data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value;
 	}
 }
 
@@ -529,10 +529,10 @@ VOID MainLogic::TimerProc()
 					+ std::to_string(data->GData.PLANE_ALTITUDE) + ";"
 					+ std::to_string(data->GData.VERTICAL_SPEED) + ";"
 					+ std::to_string(data->GData.TOTAL_WEIGHT) + ";"
-					+ std::to_string(data->AllData.A32NX_SPEEDS_MANAGED_PFD) + ";"
+					+ std::to_string(data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) + ";"
 					+ std::to_string(data->GData.AIRSPEED_INDICATED) + ";"
-					+ std::to_string(data->AllData.XMLVAR_AirSpeedIsInMach) + ";"
-					+ std::to_string(data->AllData.A32NX_FMGC_FLIGHT_PHASE) + ";"
+					+ std::to_string(data->AllData[XMLVAR_AirSpeedIsInMach].Value) + ";"
+					+ std::to_string(data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value) + ";"
 					+ std::to_string(data->GData.TURB_ENG_N11) + ";"
 					+ std::to_string(ang) + ";"
 					+ "\n");
@@ -723,11 +723,11 @@ VOID MainLogic::TimerProc()
 					//TEST PUSHFORWARD IN UUEE FROM 59 TO 6L
 					for (int y = 0; y < RunwayWaysOrig->at(rrr).size(); y++) {
 						if (RunwayWaysOrig->at(rrr).at(y).Type != 11) {
-							if (RunwayWaysOrig->at(rrr).at(y).name == "A") {
+							if (RunwayWaysOrig->at(rrr).at(y).name == "D") {
 								break;
 							}
 							else {
-								RunwayWaysOrig->at(rrr).at(y).Type = 12;
+								//RunwayWaysOrig->at(rrr).at(y).Type = 12;
 							}
 						}
 					}
@@ -1133,12 +1133,12 @@ VOID MainLogic::TimerProc()
 	if (Mode == PREPARE) {
 		SendCommand(START_TIMER, 0, 0);
 		int rrrrr = sizeof(UINT64);
-		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
-		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
-		if (data->AllData.A32NX_INITFLIGHT_STATE >= 8) {
+		std::string LIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_1].Value });
+		std::string RIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_1].Value });
+		if (data->AllData[A32NX_INITFLIGHT_STATE].Value >= 8) {
 			Log("Start boarding");
 		}
-		if (data->AllData.A32NX_INITFLIGHT_STATE > 8) {
+		if (data->AllData[A32NX_INITFLIGHT_STATE].Value > 8) {
 			Log("Boarding completed");
 		}
 		Log("Prepare");
@@ -1189,8 +1189,8 @@ VOID MainLogic::TimerProc()
 		if (beforeStart == 2) {
 			Log("End before start");
 		}
-		while (data->AllData.FSDT_GSX_DEPARTURE_STATE < 0);
-		if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6 || data->AllData.FSDT_GSX_DEPARTURE_STATE == 1) {
+		while (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value < 0);
+		if (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 6 || data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 1 || data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 4) {
 			Log("mode: PUSHBACK, GSX Departure = 1");
 			CurrentLeg = Legs->at(CurrentWayIndex);
 			if (CurrentLeg.Type == TYPE_PATHS[11] || CurrentLeg.Type == TYPE_PATHS[12]) {
@@ -1214,11 +1214,11 @@ VOID MainLogic::TimerProc()
 					Log("Release parking brakes");
 					SetData(PUSHBACK_WAIT, 0);
 					Mode = PUSHBACK;
-					/*if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 5) {
+					/*if (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 5) {
 						SetDataL(FSDT_GSX_MENU_CHOICE, 1);
 						while (data->GData.GROUND_VELOCITY < 0.02) {
-							data->AllData.FSDT_GSX_MENU_CHOICE = 1;
-							while (data->AllData.FSDT_GSX_MENU_CHOICE != -2);
+							data->AllData[FSDT_GSX_MENU_CHOICE].Value = 1;
+							while (data->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
 							SendCommand(PARKBRAKE_SET, 0, 0);
 							Sleep(2000);
 						}
@@ -1277,8 +1277,8 @@ VOID MainLogic::TimerProc()
 				if (data->GData.GROUND_VELOCITY < 0.05) {
 					//SendCommand(PARKBRAKE_SET, 1, 0);
 				}
-				/*if ((data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) ||
-					data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
+				/*if ((data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 6) ||
+					data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 6) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					Mode = ENGINESTART;
 					Log("End pushback");
@@ -1312,7 +1312,7 @@ VOID MainLogic::TimerProc()
 				/*if (data->GData.GROUND_VELOCITY < 1.5) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 				}
-				if (data->AllData.FSDT_GSX_DEPARTURE_STATE == 6) {
+				if (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 6) {
 					SendCommand(PARKBRAKE_SET, 1, 0);
 					Mode = ENGINESTART;
 					Log("End pushback");
@@ -1349,7 +1349,7 @@ VOID MainLogic::TimerProc()
 				emit CLBeforeTaxi(FlightCruise, RunwayHeading, &beforeTaxi);
 			}
 		}
-		double V2 = data->AllData.AIRLINER_V2_SPEED;
+		double V2 = data->AllData[AIRLINER_V2_SPEED].Value;
 		
 		if ((beforeTaxi == 2)&&(V2 != 0)) {
 			Log("End before taxi");
@@ -1362,8 +1362,8 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	if ((Mode == TAXIOUT) || (Mode == TAXIIN)) {
-		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
-		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
+		std::string LIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_1].Value });
+		std::string RIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_1].Value });
 		double GAlt = data->GData.PLANE_ALT_ABOVE_GROUND - 9;
 		CurrentLeg = Legs->at(CurrentWayIndex);
 		CurrentLeg.Lat = data->GData.PLANE_LATITUDE;
@@ -1621,12 +1621,12 @@ VOID MainLogic::TimerProc()
 		}
 	}
 	if (Mode == TAKEOFF) {
-		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
-		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
+		std::string LIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_1].Value });
+		std::string RIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_1].Value });
 		//SendCommand(SET_THROTTLE, 4000, 0);
 		SendCommand(SET_ATHR, 1, 0);
-		double NPitch = (data->AllData.A32NX_FLIGHT_DIRECTOR_PITCH + data->GData.PLANE_PITCH_DEGREES);
-		double NBank = data->AllData.A32NX_FLIGHT_DIRECTOR_BANK;
+		double NPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
+		double NBank = data->AllData[A32NX_FLIGHT_DIRECTOR_BANK].Value;
 		//FlightDirectorPitch = -15;
 		double ISpeed = data->GData.AIRSPEED_INDICATED;
 		double SOG = data->GData.SIM_ON_GROUND;
@@ -1637,14 +1637,14 @@ VOID MainLogic::TimerProc()
 		double IAlt = data->GData.INDICATED_ALTITUDE;
 		double GAlt = data->GData.PLANE_ALT_ABOVE_GROUND - 9;
 
-		double V1 = (data->AllData.AIRLINER_V1_SPEED);
-		double VR = (data->AllData.AIRLINER_VR_SPEED);
-		double V2 = (data->AllData.AIRLINER_V2_SPEED);
-		double VF = (data->AllData.A32NX_SPEEDS_F);
-		double VS = (data->AllData.A32NX_SPEEDS_S);
-		double VGD = (data->AllData.A32NX_SPEEDS_GD);
+		double V1 = (data->AllData[AIRLINER_V1_SPEED].Value);
+		double VR = (data->AllData[AIRLINER_VR_SPEED].Value);
+		double V2 = (data->AllData[AIRLINER_V2_SPEED].Value);
+		double VF = (data->AllData[A32NX_SPEEDS_F].Value);
+		double VS = (data->AllData[A32NX_SPEEDS_S].Value);
+		double VGD = (data->AllData[A32NX_SPEEDS_GD].Value);
 
-		double RT = data->AllData.AIRLINER_THR_RED_ALT;
+		double RT = data->AllData[AIRLINER_THR_RED_ALT].Value;
 
 		
 
@@ -1717,16 +1717,16 @@ VOID MainLogic::TimerProc()
 				//Mode = CLIMB;
 			}
 			if (GAlt > 500) {
-				if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+				if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 					SendEvent(A32NX_FCU_AP_1_PUSH, 1);
 				}
 			}
 
 			if (TOGA) {
-				if (data->AllData.A32NX_AUTOTHRUST_MODE_MESSAGE) {
+				if (data->AllData[A32NX_AUTOTHRUST_MODE_MESSAGE].Value) {
 					SendCommand(SET_THROTTLE, 4000, 0);
 				}
-				if (data->AllData.A32NX_FMGC_FLIGHT_PHASE == 2) {
+				if (data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value == 2) {
 					
 					SendCommand(SET_THROTTLE, 4000, 0);
 					TOGA = false;
@@ -1787,8 +1787,8 @@ VOID MainLogic::TimerProc()
 	}
 	if ((Mode == CRUISE)||(Mode == DESCENT)) {
 		QJsonObject root = document.object();
-		double FlightDirectorPitch = (data->AllData.A32NX_FLIGHT_DIRECTOR_PITCH + data->GData.PLANE_PITCH_DEGREES);
-		double FlightDirectorBank = (data->AllData.A32NX_FLIGHT_DIRECTOR_BANK);
+		double FlightDirectorPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
+		double FlightDirectorBank = (data->AllData[A32NX_FLIGHT_DIRECTOR_BANK].Value);
 		double Pitch = data->GData.PLANE_PITCH_DEGREES;
 		double IAS = data->GData.AIRSPEED_INDICATED;
 		double GAS = data->GData.GROUND_VELOCITY;
@@ -1801,16 +1801,16 @@ VOID MainLogic::TimerProc()
 		double MagVar = data->GData.MAGVAR;
 		double GroundAltitude = data->GData.PLANE_ALT_ABOVE_GROUND - 9;
 		double TrueHeading = data->GData.PLANE_HEADING_DEGREES_TRUE;
-		double FSpeed = (data->AllData.A32NX_SPEEDS_F);
-		double SSpeed = (data->AllData.A32NX_SPEEDS_S);
-		double GDSpeed = (data->AllData.A32NX_SPEEDS_GD);
+		double FSpeed = (data->AllData[A32NX_SPEEDS_F].Value);
+		double SSpeed = (data->AllData[A32NX_SPEEDS_S].Value);
+		double GDSpeed = (data->AllData[A32NX_SPEEDS_GD].Value);
 		double Lat = data->GData.PLANE_LATITUDE;
 		double Lon = data->GData.PLANE_LONGITUDE;
-		double FlightPhase = data->AllData.A32NX_FMGC_FLIGHT_PHASE;
-		double TD = data->AllData.A32NX_PFD_MSG_TD_REACHED;
+		double FlightPhase = data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value;
+		double TD = data->AllData[A32NX_PFD_MSG_TD_REACHED].Value;
 		double VerticalSpeedForGlide;
-		std::string LIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_L_TO_WPT_IDENT_1 });
-		std::string RIdent = Utils::Unpack({ data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_0, data->AllData.A32NX_EFIS_R_TO_WPT_IDENT_1 });
+		std::string LIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_L_TO_WPT_IDENT_1].Value });
+		std::string RIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_1].Value });
 		ChangeFlightPhaseReport();
 
 		CurrentLeg = GetCurrentLeg();
@@ -1872,7 +1872,7 @@ VOID MainLogic::TimerProc()
 				}
 			}
 			if (GroundAltitude > 500) {
-				if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+				if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 					//SendEvent(A32NX_FCU_AP_1_PUSH, 0);
 				}
 			}
@@ -1926,7 +1926,7 @@ VOID MainLogic::TimerProc()
 				CurrentWayIndex = cI;
 				CurrentLeg = GetCurrentLeg();
 				AngleToDesc = GetDescentAngle();
-				if (data->AllData.A32NX_AUTOPILOT_1_ACTIVE) {
+				if (data->AllData[A32NX_AUTOPILOT_1_ACTIVE].Value) {
 					SendEvent(A32NX_FCU_AP_1_PUSH, 0);
 				}
 			}
@@ -1992,7 +1992,7 @@ VOID MainLogic::TimerProc()
 					
 
 					if ((IndicatedAltitude - 100) > FlightCruise) {
-						if ((IAS - 10) < data->AllData.A32NX_SPEEDS_MANAGED_PFD) {
+						if ((IAS - 10) < data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) {
 							if (((IndicatedAltitude - FlightCruise) < 1000) && (VerticalSpeedForGlide < -1000)) {
 								SendCommand(VS_SEL, int((FlightCruise - IndicatedAltitude) / 100) * 100, 20);
 							}
@@ -2017,12 +2017,12 @@ VOID MainLogic::TimerProc()
 						}
 						else {
 							if (IAS > 200) {
-								if (VerticalSpeedForGlide < -1500 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) {
-									if ((-1500 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) > -500) {
+								if (VerticalSpeedForGlide < -1500 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) {
+									if ((-1500 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) > -500) {
 										SendCommand(VS_SEL, -500, 20);
 									}
 									else {
-										SendCommand(VS_SEL, int((-1500 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) / 100) * 100, 20);
+										SendCommand(VS_SEL, int((-1500 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) / 100) * 100, 20);
 									}
 								}
 								else {
@@ -2030,12 +2030,12 @@ VOID MainLogic::TimerProc()
 								}
 							}
 							else {
-								if (VerticalSpeedForGlide < -1000 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) {
-									if ((-1000 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) > -500) {
+								if (VerticalSpeedForGlide < -1000 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) {
+									if ((-1000 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) > -500) {
 										SendCommand(VS_SEL, -500, 20);
 									}
 									else {
-										SendCommand(VS_SEL, int((-1000 + (IAS - data->AllData.A32NX_SPEEDS_MANAGED_PFD) * 50) / 100) * 100, 20);
+										SendCommand(VS_SEL, int((-1000 + (IAS - data->AllData[A32NX_SPEEDS_MANAGED_PFD].Value) * 50) / 100) * 100, 20);
 									}
 								}
 								else {
@@ -2077,7 +2077,8 @@ VOID MainLogic::TimerProc()
 					DWORD PIi = (PI >> 12) & 0xfff;
 					DWORD PIt = (PI >> 8) & 0xf;
 					DWORD PIn = PI & 0x1f;
-					ParkN = new std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn]);
+					DWORD PIs = (PI >> 24) & 0xff;
+					ParkN = new std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn] + ParkSuffix[PIs]);
 					Legs->resize(CurrentWayIndex + 1);
 					//CountWays = CurrentWayIndex + 1;
 					AddWayPoint(Lon, Lat, 0.0, "RUNWAY", "Go out", TrueHeading, 0, 0, 0,0.0);
@@ -2226,7 +2227,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	if ((CurrentLeg.Type == "HEADINGUNTILALT")) {
 		if ((data->GData.INDICATED_ALTITUDE > CurrentLeg.EAltitudeHi)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+				if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 					//SendCommand(PULL_SPD, 1, 0);
 					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
@@ -2243,7 +2244,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if (CurrentLeg.Type == "HEADINGUNTILFROMDIST") {
 		if (CurrentLeg.Distance > CurrentLeg.Dist) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+				if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 					//SendCommand(PULL_SPD, 1, 0);
 					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
@@ -2262,7 +2263,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		if (abs(abs(CurrentLeg.EndHeadingTrue) - abs(Legs->at(CurrentWayIndex).Dist)) < fl) {
 			if (abs(abs(CurrentLeg.EndHeadingTrue) - abs(Legs->at(CurrentWayIndex).Dist)) < 1.0) {
 				if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+					if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 						//SendCommand(PULL_SPD, 1, 0);
 						//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 					}
@@ -2278,7 +2279,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 			}
 			if ((CurrentLeg.Distance < REangle)) {
 				if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-					if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+					if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 						//SendCommand(PULL_SPD, 1, 0);
 						//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 					}
@@ -2295,7 +2296,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 		}
 		else {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+				if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 					//SendCommand(PULL_SPD, 1, 0);
 					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
@@ -2314,7 +2315,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if ((CurrentLeg.Type == "FIX") || (CurrentLeg.Type == "TURNLEFTDIRECTFIX") || (CurrentLeg.Type == "TURNRIGHTDIRECTFIX")) {
 		if ((CurrentLeg.Distance < REangle)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+				if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 					//SendCommand(PULL_SPD, 1, 0);
 					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
@@ -2331,7 +2332,7 @@ double MainLogic::CalcToNewWay(bool changeWay) {
 	else if (changeWay) {
 		if ((EangleRel > 60) || (EangleRel < -60) || (CurrentLeg.Distance < REangle)) {
 			if (Legs->at(CurrentWayIndex + 1).IndSpeed > 0) {
-				if ((data->AllData.A32NX_FMGC_FLIGHT_PHASE < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
+				if ((data->AllData[A32NX_FMGC_FLIGHT_PHASE].Value < 5) && (data->GData.AIRSPEED_INDICATED > 1)) { //TO DO
 					//SendCommand(PULL_SPD, 1, 0);
 					//SendCommand(SPD_SEL, Legs->at(CurrentWayIndex + 1).IndSpeed, 0);
 				}
@@ -2706,6 +2707,8 @@ void MainLogic::StartStopSim() {
 
 // Main connect method
 
+
+
 void MainLogic::Connect() {
 	Quit = FALSE;
 	
@@ -2718,11 +2721,34 @@ void MainLogic::Connect() {
 		emit ButtonModify(ui->ConnectButton, "Try connected...", "background: lightblue; color: darkblue; border: 1px solid darkblue");
 		if (SUCCEEDED(SimConnect_Open(&HSimConnect, "MSFS 2020 AutoFlight", NULL, 0, 0, 0))) {
 			
+			WasmInitClientData = {
+				"MobiFlight",
+				SIMCONNECT_CLIENT_ID::MOBIFLIGHT_LVARS,
+				SIMCONNECT_CLIENT_ID::MOBIFLIGHT_CMD,
+				SIMCONNECT_CLIENT_ID::MOBIFLIGHT_RESPONSE,
+				SIMCONNECT_CLIENT_ID::MOBIFLIGHT_STRINGVAR,
+				SIMCONNECT_DEFINE_ID::INIT_CLIENT,
+				0
+			};
+			WasmRuntimeClientData =
+			{
+				"MSFS_AutoFlight",
+				SIMCONNECT_CLIENT_ID::RUNTIME_LVARS,
+				SIMCONNECT_CLIENT_ID::RUNTIME_CMD,
+				SIMCONNECT_CLIENT_ID::RUNTIME_RESPONSE,
+				SIMCONNECT_CLIENT_ID::RUNTIME_STRINGVAR,
+				SIMCONNECT_DEFINE_ID::RUNTIME_CLIENT,
+				0
+			};
+
+			HRESULT hr = S_OK;
 			
 			emit SendLog("Connected to Simulator");
 			emit ButtonModify(ui->ConnectButton, "Disconnect", "background: lightgreen; color: darkgreen; border: 1px solid darkgreen");
+;
+			
 
-			SUCC(SimConnect_MapClientDataNameToID(HSimConnect, A32NX_LOCAL_DATA_NAME, A32NX_LOCAL_DATA_ID));
+			/*SUCC(SimConnect_MapClientDataNameToID(HSimConnect, A32NX_LOCAL_DATA_NAME, A32NX_LOCAL_DATA_ID));
 			SUCC(SimConnect_AddToClientDataDefinition(HSimConnect, A32NX_LOCAL_DATA_DEFINITION, 0, sizeof(ExportData)));
 			SUCC(SimConnect_RequestClientData(HSimConnect, A32NX_LOCAL_DATA_ID, REQ_LOCAL_DATA, A32NX_LOCAL_DATA_DEFINITION,
 						SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0));
@@ -2739,8 +2765,8 @@ void MainLogic::Connect() {
 //				SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0));
 
 
-			SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_TEXT));
-			SUCC(SimConnect_RequestSystemState(HSimConnect, REQ_AIR_PATH, "AircraftLoaded"));
+			SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_TEXT));*/
+			/*SUCC(SimConnect_RequestSystemState(HSimConnect, REQ_AIR_PATH, "AircraftLoaded"));
 			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_SIM_START, "SimStart"));
 
 			hr = (SimConnect_MapClientEventToSimEvent(HSimConnect, EXTERNAL_SYSTEM_SET, "EXTERNAL_SYSTEM_SET"));
@@ -2772,17 +2798,18 @@ void MainLogic::Connect() {
 			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EXTERNAL_SYSTEM_TOGGLE);
 			hr = SimConnect_SetNotificationGroupPriority(HSimConnect, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST);
 
-			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz"));
-			SUCC(SimConnect_AddToDataDefinition(HSimConnect, DEF_AIRCRAFT_USER, "Title", NULL, SIMCONNECT_DATATYPE_STRING256));
+			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz"));*/
+			SUCC(SimConnect_AddToDataDefinition(HSimConnect, SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, "Title", NULL, SIMCONNECT_DATATYPE_STRING256));
+			SUCC(SimConnect_RequestDataOnSimObject(HSimConnect, (SIMCONNECT_DATA_REQUEST_ID)SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_SECOND, SIMCONNECT_DATA_REQUEST_FLAG_CHANGED, 0, 0, 0));
 			//SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, A32NX_APU_FLAP_OPEN_PERCENTAGE, "Autoflight.A32NX_APU_FLAP_OPEN_PERCENTAGE"));
 
-
+			Log("SimConnect (MSFS2020) instantiated");
 			
 
 
 
 
-			data = new SimData(HSimConnect);
+			data = new SimData(HSimConnect, WasmInitClientData, WasmRuntimeClientData);
 			
 			planesWork->DataT = data;
 
@@ -2801,14 +2828,14 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(this, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, const char*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(GetDataStringSignal(DWORD, DWORD, std::string*)), data, SLOT(GetDataString(DWORD, DWORD, std::string*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(SetDataSignal(DWORD, DWORD, double*, const char*)), data, SLOT(SetData(DWORD, DWORD, double*, const char*))));
-			ConnectConnectors->push_back(connect(this, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, const char*))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL2(DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(this, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, const char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, const char*))));
 			ConnectConnectors->push_back(connect(this, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
 
 			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(GetDataSignal(DWORD, DWORD, double*, const char*)), data, SLOT(GetData(DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, const char*))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetDataSignal(DWORD, DWORD, double*, const char*)), data, SLOT(SetData(DWORD, DWORD, double*, const char*))));
-			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, const char*))));
+			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL2(DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, const char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, const char*, const char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, const char*, const char*))));
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
@@ -2817,7 +2844,7 @@ void MainLogic::Connect() {
 			//ConnectConnectors->push_back(connect(planesWork, SIGNAL(GetDataSignal(DWORD, DWORD, double*, const char*)), data, SLOT(GetData(DWORD, DWORD, double*, const char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(GetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(GetDataL(DWORD, DWORD, double*, const char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetDataSignal(DWORD, DWORD, double*, const char*)), data, SLOT(SetData(DWORD, DWORD, double*, const char*))));
-			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL(DWORD, DWORD, double*, const char*))));
+			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetDataSignalL(DWORD, DWORD, double*, const char*)), data, SLOT(SetDataL2(DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetGetDataSignal(DWORD, DWORD, DWORD, double*, const char*)), data, SLOT(SetGetData(DWORD, DWORD, DWORD, double*, const char*))));
 			//ConnectConnectors->push_back(connect(planesWork, SIGNAL(SetSetDataSignal(DWORD, DWORD, double*, DWORD, double*, const char*, const char*)), data, SLOT(SetSetData(DWORD, DWORD, double*, DWORD, double*, const char*, const char*))));
 			ConnectConnectors->push_back(connect(planesWork, SIGNAL(SendEventSignal(DWORD, DWORD, long)), data, SLOT(SendEvent(DWORD, DWORD, long))));
@@ -2873,7 +2900,7 @@ void MainLogic::Connect() {
 			Mode = START;
 			//data->Timer->start(60);
 			//emit SendLog("Start timer");
-			SendEvent(SAVE_VARS, 1);
+			//SendEvent(SAVE_VARS, 1);
 		}
 		else {
 			emit SendLog("Not Connected");
@@ -3611,10 +3638,10 @@ double MainLogic::RudWithHead(double Heading) {
 			rudPID = 0;
 		}
 		else if (data->GData.GROUND_VELOCITY < 5) {
-			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / (data->GData.GROUND_VELOCITY / 4), data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+			rudPID = PID(dt, HeadingRel, data->AllData[AI_RUDDER_P].Value / (data->GData.GROUND_VELOCITY / 4), data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value; //0.1,0.001,0.05,1.0,1.0
 		}
 		else {
-			rudPID = PID(dt, HeadingRel, data->AllData.AI_RUDDER_P / 1.5, data->AllData.AI_RUDDER_I, data->AllData.AI_RUDDER_D, data->AllData.AI_RUDDER_IB, data->AllData.AI_RUDDER_ID, &prevErr, &integral) * data->AllData.AI_RUDDER_K; //0.1,0.001,0.05,1.0,1.0
+			rudPID = PID(dt, HeadingRel, data->AllData[AI_RUDDER_P].Value / 1.5, data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value; //0.1,0.001,0.05,1.0,1.0
 		}
 	}
 	if (data->GData.GROUND_VELOCITY > 5) {
@@ -3691,7 +3718,7 @@ double MainLogic::LimitVal(double val, double min, double max = 8518) {
 }
 
 void MainLogic::ManPitchWithFD(double RequiredPitch) {
-	//if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+	//if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 		//static double StickYPos = data->GData.YOKE_Y_POSITION;
 
 	static double prevErr = 0;
@@ -3711,7 +3738,7 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 		Coefficient = 70;
 	} 
 	
-	static double StickYPos = data->AllData.A32NX_SIDESTICK_POSITION_Y * 16383;
+	static double StickYPos = data->AllData[A32NX_SIDESTICK_POSITION_Y].Value * 16383;
 	static int countFails = 5;
 	if (countFails >= 0) { //5
 		countFails = 0;
@@ -3751,12 +3778,12 @@ void MainLogic::ManPitchWithFD(double RequiredPitch) {
 
 		//Test PID
 		//NewStickYPos = PID(dt, PitchRelative, 1000.0, 0.1, 5.0, 100, 100.0, &prevErr, &integral); //0.1,0.001,0.05,1.0,1.0
-		NewStickYPos = PID(dt, PitchRelative, data->AllData.AI_PITCH_P, data->AllData.AI_PITCH_I, data->AllData.AI_PITCH_D, data->AllData.AI_PITCH_IB, data->AllData.AI_PITCH_ID, &prevErr, &integral) * data->AllData.AI_PITCH_K; //0.1,0.001,0.05,1.0,1.0
+		NewStickYPos = PID(dt, PitchRelative, data->AllData[AI_PITCH_P].Value, data->AllData[AI_PITCH_I].Value, data->AllData[AI_PITCH_D].Value, data->AllData[AI_PITCH_IB].Value, data->AllData[AI_PITCH_ID].Value, &prevErr, &integral) * data->AllData[AI_PITCH_K].Value; //0.1,0.001,0.05,1.0,1.0
 		//////////
 
 		NewStickYPos = LimitVal(NewStickYPos, 16383);
 
-		if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+		if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 			SendCommand(SET_ELEVATOR, NewStickYPos, 0);
 		}
 		else {
@@ -3788,7 +3815,7 @@ void MainLogic::ManBankWithFD(double NNBank) {
 		else if (NBank < -30) {
 			NBank = -30;
 		}
-		static double NewBank = data->AllData.A32NX_SIDESTICK_POSITION_X * 16383;
+		static double NewBank = data->AllData[A32NX_SIDESTICK_POSITION_X].Value * 16383;
 		static int countFails = 0;
 		//SendText("ailer: " + QString::number(data->GData.YOKE_X_POSITION, 'f', 3) + "\n" + "NewBank: " + QString::number(NewBank, 'f', 3) + "\n", false);
 		if (countFails >= 5) {
@@ -3838,7 +3865,7 @@ void MainLogic::ManBankWithFD(double NNBank) {
 				ailer = -16383 / 4.16666666666666667;
 			}
 			double intpParameter = ailer / 16383;// / 0.40000001;
-			if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+			if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 				SendCommand(SET_AILERON, intpParameter * 16383, 0);
 			}
 			else {
@@ -3917,7 +3944,7 @@ double MainLogic::AltBankWithPos(double TargetValue) {
 	}
 	double intpParameter = -ailer / 16383.0;
 	//SimConnect_SetDataOnSimObject(hSimConnect, DEF_AILERON, 0, 0, 0, sizeof(intpParameter), &intpParameter);
-	if (!data->AllData.A32NX_AUTOPILOT_ACTIVE) {
+	if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 		SendCommand(SET_AILERON, -intpParameter * 16383, 0);
 	}
 	else {

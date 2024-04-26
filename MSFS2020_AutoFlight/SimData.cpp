@@ -1,28 +1,34 @@
 #include "SimData.h"
+#include <regex>
 
-//#include "main.cpp"
+#include "WasmModuleClient.cpp"
 
 void SimData::TimerProc() {
 	
 	
-	if (RegVarsGet->size() > 0) {
+	//if (RegVarsGet->size() > 0) {
 		GetAllData();
 		//SUCC(SimConnect_RequestDataOnSimObject(HSimConnect, 15, 15, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE));
-	}
+	//}
 	
 	//SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
 }
 
 HRESULT SimData::GetAllData() {
 	Context c = { this, SIMDATA_ID };
-	HRESULT result = SimConnect_RequestDataOnSimObject(HSimConnect, REQ_DATA, DEF_DATA, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
-	result = SimConnect_RequestClientData(HSimConnect, A32NX_ALLDATA_ID, REQ_ALL_DATA, A32NX_ALLDATA_DEFINITION,
+	HRESULT result;
+	
+	result = SimConnect_RequestDataOnSimObject(HSimConnect, REQ_DATA, DEF_DATA, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
+	/*result = SimConnect_RequestClientData(HSimConnect, A32NX_ALLDATA_ID, REQ_ALL_DATA, A32NX_ALLDATA_DEFINITION,
 		SIMCONNECT_CLIENT_DATA_PERIOD_ONCE, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0);
+	result = SimConnect_RequestClientData(HSimConnect, clientData.AREA_RESPONSE_ID, (SIMCONNECT_DATA_REQUEST_ID)clientData.DATA_DEFINITION_ID, clientData.DATA_DEFINITION_ID,
+		SIMCONNECT_CLIENT_DATA_PERIOD_ONCE, SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT, 0, 0, 0);*/
 	DWORD cbData;
 	SIMCONNECT_RECV* pData;
 	while (SUCCEEDED(SimConnect_GetNextDispatch(HSimConnect, &pData, &cbData))) {
 		FDispatchProc(pData, cbData, (void*)(&c));
 	}
+	//RefreshLVarsList();
 	return result;
 }
 
@@ -31,10 +37,101 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 	if (lContext->data->AirportData != NULL) {
 		lContext->data->AirportData->DispatchProc(pData, cbData, lContext);
 	}
+	
 	switch (pData->dwID) {
 	case SIMCONNECT_RECV_ID_CLIENT_DATA: { // Receive and process the NGX data block 
 		SIMCONNECT_RECV_CLIENT_DATA* pObjData = (SIMCONNECT_RECV_CLIENT_DATA*)pData;
-		switch (pObjData->dwRequestID) {
+		if (pObjData->dwRequestID == (uint)lContext->data->clientData.DATA_DEFINITION_ID)
+		{
+			//char* simData = ((char*)&pObjData->dwData);
+			char* simData;
+			DWORD size_title;
+			SimConnect_RetrieveString(pObjData, pObjData->dwSize, &pObjData->dwData, &simData, &size_title);
+			//*SimVarsGet[RegVarsGet->at(i)] = *((double*)&pObjData->dwData + i);
+			std::string str = simData;
+			if (str == "MF.Pong")
+			{
+				if (!lContext->data->_wasmConnected)
+				{
+					// Next add runtime client                    
+					WasmModuleClient::AddAdditionalClient(lContext->data->HSimConnect, lContext->data->runtimeData.NAME.c_str(), lContext->data->clientData);
+				}
+			}
+			// Runtime client was added		
+			else if (str.rfind(lContext->data->runtimeData.NAME))
+			{
+				SimData::InitializeClientDataAreas(lContext->data->HSimConnect, lContext->data->runtimeData);
+				lContext->data->_wasmConnected = true;
+				lContext->data->RegisterLVars();
+			}
+		}
+		// Runtime Client Callback
+		else if (pObjData->dwRequestID == (uint)lContext->data->runtimeData.DATA_DEFINITION_ID)
+		{
+			char* simData;
+			DWORD size_title;
+			SimConnect_RetrieveString(pObjData, pObjData->dwSize, &pObjData->dwData, &simData, &size_title);
+			std::string str = simData;
+			
+			if (str.find("MF.SimVars.Set.") != std::string::npos) {
+				std::string prefix = "MF.SimVars.Set.";
+				std::string varID = str.substr(prefix.length()+1);
+				lContext->data->ExportData.version = std::stoi(varID) - 21000;
+			}
+			if (str == "MF.LVars.List.Start")
+			{
+				lContext->data->ResponseStatus = "LVars.List.Receiving";
+				lContext->data->dLVars.clear();
+			}
+			else if (str == "MF.LVars.List.End")
+			{
+				lContext->data->ResponseStatus = "LVars.List.Completed";
+			}
+			else if (lContext->data->ResponseStatus == "LVars.List.Receiving")
+			{
+				lContext->data->dLVars.push_back(simData);
+			}
+
+#if DEBUG
+			// this only for debug compilation
+			// it slows down the client immensly.
+			Log.Instance.log($"Received {simData.Data}.", LogSeverity.Debug);
+#endif
+
+			}
+		// SimVar value callback
+		else if (pObjData->dwRequestID > MOBIFLIGHT_STRINGVAR_ID_OFFSET) // -> is string SimVar
+		{
+			char* simData;
+			DWORD size_title;
+			SimConnect_RetrieveString(pObjData, pObjData->dwSize, &pObjData->dwData, &simData, &size_title);
+			std::string str = simData;
+
+			int simVarIndex = (int)(pObjData->dwRequestID - MOBIFLIGHT_STRINGVAR_ID_OFFSET - 1);
+
+			if (lContext->data->StringSimVars.size() <= simVarIndex || simVarIndex < 0) return;
+			lContext->data->StringSimVars[simVarIndex].Data = str;
+		}
+		else // -> Must be float SimVar
+		{
+
+			float simData = *(float*)&pObjData->dwData;
+			DWORD size_title = sizeof(float);
+			size_title = sizeof(double);
+
+			//INT64 ptrAllData = (INT64)(&lContext->data->AllData);
+
+			int simVarIndex = (int)(pObjData->dwRequestID) - SIMVAR_DATA_DEFINITION_OFFSET;
+
+			if (lContext->data->SimVars.size() <= simVarIndex || simVarIndex < 0) return;
+			//double* var = (double*)(ptrAllData + (sizeof(double) * simVarIndex));
+			lContext->data->SimVars[simVarIndex].Data = simData;
+			//lContext->data->SendLog("Var " + QString(lContext->data->SimVars[simVarIndex].Name.c_str()) + " is change from " + QString::number(*var) + " to " + QString::number(simData));
+			lContext->data->AllData[simVarIndex].Value = simData;
+			//*var = simData;
+
+		}
+		/*switch (pObjData->dwRequestID) {
 		case REQ_CONTROL: {
 			A32NX_Control* pS = (A32NX_Control*)&pObjData->dwData;
 			lContext->data->Control = *pS;
@@ -57,7 +154,7 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 			//AddText("NON Data request and not control request");
 			break;
 		}
-		}
+		}*/
 		break;
 	}
 	case SIMCONNECT_RECV_ID_SIMOBJECT_DATA: {
@@ -157,6 +254,13 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 				size = size + std::strlen((char*)&pObjData->dwData + size);
 			}
 			lContext->data->set60 = true;
+			break;
+		}
+		case SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME: {
+			char* title;
+			DWORD size_title;
+			SimConnect_RetrieveString(pObjData, pObjData->dwSize, &pObjData->dwData, &title, &size_title);
+			//char* title = ((char*)&pObjData->dwData);
 			break;
 		}
 								
@@ -318,16 +422,208 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 		lContext->data->Quit = 1;
 		break;
 	}
+	case SIMCONNECT_RECV_ID_OPEN: {
+		lContext->data->SendLog("OPEN\n");
+		// register Events TO DO
+			/*foreach(string GroupKey in Events.Keys) {
+				foreach(Tuple<string, uint> eventItem in Events[GroupKey])
+				{
+					var prefix = "";
+					if (GroupKey != STANDARD_EVENT_GROUP) prefix = "MobiFlight.";
+					(sender).MapClientEventToSimEvent((MOBIFLIGHT_EVENTS)eventItem.Item2, prefix + eventItem.Item1);
+				}
+			}*/
+			// register receive data events
+			//SimConnect_OnRecvClientData += SimConnectCache_OnRecvClientData;
+
+			// initialize init client
+		SimData::InitializeClientDataAreas(lContext->data->HSimConnect, lContext->data->clientData);
+
+
+		WasmModuleClient::Ping(lContext->data->HSimConnect, lContext->data->clientData);
+		break;
+	}
 	case SIMCONNECT_RECV_ID_EXCEPTION: {
 		SIMCONNECT_RECV_EXCEPTION* exc = (SIMCONNECT_RECV_EXCEPTION*)pData;
 		switch (exc->dwException) {
-			/*case SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_GET_OBSERVATION: {
-				Metar = "ERROR METAR";
-				metar = std::string(Metar);
+			case SIMCONNECT_EXCEPTION_NONE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("NONE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
 				break;
-			}*/
+			}
+			case SIMCONNECT_EXCEPTION_ERROR: {
+				lContext->data->SendLog("EXCEPTION=" + QString("ERROR") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_SIZE_MISMATCH: {
+				lContext->data->SendLog("EXCEPTION=" + QString("SIZE MISMATCH") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_UNRECOGNIZED_ID: {
+				lContext->data->SendLog("EXCEPTION=" + QString("UNRECOGNIZED ID") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_UNOPENED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("UNOPENED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_VERSION_MISMATCH: {
+				lContext->data->SendLog("EXCEPTION=" + QString("VERSION MISMATCH") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_TOO_MANY_GROUPS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("TOO MANY GROUPS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_NAME_UNRECOGNIZED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("NAME UNRECOGNIZED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_TOO_MANY_EVENT_NAMES: {
+				lContext->data->SendLog("EXCEPTION=" + QString("TOO MANY EVENT NAMES") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_EVENT_ID_DUPLICATE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("EVENT ID DUPLICATE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_TOO_MANY_MAPS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("TOO MANY MAPS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_TOO_MANY_OBJECTS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("TOO MANY OBJECTS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_TOO_MANY_REQUESTS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("TOO MANY REQUESTS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_WEATHER_INVALID_PORT: {
+				lContext->data->SendLog("EXCEPTION=" + QString("WEATHER INVALID PORT") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_WEATHER_INVALID_METAR: {
+				lContext->data->SendLog("EXCEPTION=" + QString("WEATHER INVALID METAR") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_GET_OBSERVATION: {
+				lContext->data->SendLog("EXCEPTION=" + QString("WEATHER UNABLE TO GET OBSERVATION") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_CREATE_STATION: {
+				lContext->data->SendLog("EXCEPTION=" + QString("WEATHER UNABLE TO CREATE STATION") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_WEATHER_UNABLE_TO_REMOVE_STATION: {
+				lContext->data->SendLog("EXCEPTION=" + QString("WEATHER UNABLE TO REMOVE STATION") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_INVALID_DATA_TYPE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("INVALID DATA TYPE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_INVALID_DATA_SIZE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("INVALID DATA SIZE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_DATA_ERROR: {
+				lContext->data->SendLog("EXCEPTION=" + QString("DATA ERROR") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_INVALID_ARRAY: {
+				lContext->data->SendLog("EXCEPTION=" + QString("INVALID ARRAY") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_CREATE_OBJECT_FAILED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("CREATE OBJECT FAILED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_LOAD_FLIGHTPLAN_FAILED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("(<L:OAD FLIGHTPLAN FAILED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OPERATION_INVALID_FOR_OBJECT_TYPE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OPERATION INVALID FOR OBJECT TYPE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_ILLEGAL_OPERATION: {
+				lContext->data->SendLog("EXCEPTION=" + QString("ILLEGAL OPERATION") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_ALREADY_SUBSCRIBED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("ALREADY SUBSCRIBED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_INVALID_ENUM: {
+				lContext->data->SendLog("EXCEPTION=" + QString("INVALID ENUM") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_DEFINITION_ERROR: {
+				lContext->data->SendLog("EXCEPTION=" + QString("DEFINITION ERROR") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_DUPLICATE_ID: {
+				lContext->data->SendLog("EXCEPTION=" + QString("DUPLICATE ID") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_DATUM_ID: {
+				lContext->data->SendLog("EXCEPTION=" + QString("DATUM ID") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OUT_OF_BOUNDS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OUT OF BOUNDS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_ALREADY_CREATED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("ALREADY CREATED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OBJECT_OUTSIDE_REALITY_BUBBLE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OBJECT OUTSIDE REALITY BUBBLE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OBJECT_CONTAINER: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OBJECT CONTAINER") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OBJECT_AI: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OBJECT AI") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OBJECT_ATC: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OBJECT ATC") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_OBJECT_SCHEDULE: {
+				lContext->data->SendLog("EXCEPTION=" + QString("OBJECT SCHEDULE") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_JETWAY_DATA: {
+				lContext->data->SendLog("EXCEPTION=" + QString("JETWAY DATA") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_ACTION_NOT_FOUND: {
+				lContext->data->SendLog("EXCEPTION=" + QString("ACTION NOT FOUND") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_NOT_AN_ACTION: {
+				lContext->data->SendLog("EXCEPTION=" + QString("NOT AN ACTION") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_INCORRECT_ACTION_PARAMS: {
+				lContext->data->SendLog("EXCEPTION=" + QString("INCORRECT ACTION PARAMS") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_GET_INPUT_EVENT_FAILED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("GET INPUT EVENT FAILED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
+			case SIMCONNECT_EXCEPTION_SET_INPUT_EVENT_FAILED: {
+				lContext->data->SendLog("EXCEPTION=" + QString("SET INPUT EVENT FAILED") + "  SendID = " + QString::number(exc->dwSendID) + "  uOffset = " + QString::number(exc->dwIndex) + "  cbData = " + QString::number(cbData));
+				break;
+			}
 		default: {
-			//lContext->data->SendLog("***** EXCEPTION=" + QString::number(exc->dwException) + "  SendID=" + QString::number(exc->dwSendID) + "  uOffset=" + QString::number(exc->dwIndex) + "  cbData=" + QString::number(cbData));
+			lContext->data->SendLog("***** EXCEPTION=" + QString::number(exc->dwException) + "  SendID=" + QString::number(exc->dwSendID) + "  uOffset=" + QString::number(exc->dwIndex) + "  cbData=" + QString::number(cbData));
 			break;
 		}
 					 break;
@@ -339,6 +635,47 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 		break;
 	}
 	}
+}
+
+void SimData::RefreshLVarsList()
+{
+	if (HSimConnect == NULL) return;
+	WasmModuleClient::GetLVarList(HSimConnect, runtimeData);
+}
+
+void SimData::InitializeClientDataAreas(HANDLE HSimConnect, WasmModuleClientData clientData)
+{
+	// register Client Data (for SimVars)
+	SimConnect_MapClientDataNameToID(HSimConnect, (clientData.NAME + ".LVars").c_str(), clientData.AREA_SIMVAR_ID);
+	SimConnect_CreateClientData(HSimConnect, clientData.AREA_SIMVAR_ID, 4096, SIMCONNECT_CREATE_CLIENT_DATA_FLAG_DEFAULT);
+
+	// register Client Data (for WASM Module Commands)
+	SimConnect_MapClientDataNameToID(HSimConnect, (clientData.NAME + ".Command").c_str(), clientData.AREA_COMMAND_ID);
+	SimConnect_CreateClientData(HSimConnect, clientData.AREA_COMMAND_ID, MOBIFLIGHT_MESSAGE_SIZE, SIMCONNECT_CREATE_CLIENT_DATA_FLAG_DEFAULT);
+
+	// register Client Data (for WASM Module Responses)
+	SimConnect_MapClientDataNameToID(HSimConnect, (clientData.NAME + ".Response").c_str(), clientData.AREA_RESPONSE_ID);
+	SimConnect_CreateClientData(HSimConnect, clientData.AREA_RESPONSE_ID, MOBIFLIGHT_MESSAGE_SIZE, SIMCONNECT_CREATE_CLIENT_DATA_FLAG_DEFAULT);
+
+	// register Client Data (for String-SimVars)
+	SimConnect_MapClientDataNameToID(HSimConnect, (clientData.NAME + ".StringVars").c_str(), clientData.AREA_STRINGSIMVAR_ID);
+	SimConnect_CreateClientData(HSimConnect, clientData.AREA_STRINGSIMVAR_ID, MOBIFLIGHT_STRINGVAR_DATAAREA_SIZE, SIMCONNECT_CREATE_CLIENT_DATA_FLAG_DEFAULT);
+
+	SimConnect_AddToClientDataDefinition(HSimConnect, clientData.DATA_DEFINITION_ID,
+		clientData.RESPONSE_OFFSET, MOBIFLIGHT_MESSAGE_SIZE);
+
+	//SimConnect_RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, ResponseString>(clientData.DATA_DEFINITION_ID);
+	SimConnect_RequestClientData(
+		HSimConnect,
+		clientData.AREA_RESPONSE_ID,
+		(SIMCONNECT_DATA_REQUEST_ID)clientData.DATA_DEFINITION_ID,
+		clientData.DATA_DEFINITION_ID,
+		SIMCONNECT_CLIENT_DATA_PERIOD_ONCE,
+		SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT,
+		0,
+		0,
+		0
+	);
 }
 
 int SimData::AddData(HANDLE hSimConnect, DWORD simData, const char* unitName = "") {
@@ -357,7 +694,9 @@ int SimData::AddData(HANDLE hSimConnect, DWORD simData, const char* unitName = "
 	return 0;
 }
 
-SimData::SimData(HANDLE hSimConnect) {
+SimData::SimData(HANDLE hSimConnect, WasmModuleClientData clientData, WasmModuleClientData runtimeData) {
+	this->clientData = clientData;
+	this->runtimeData = runtimeData;
 	HSimConnect = hSimConnect;
 	//DataT = this;
   RegVarsGet = new std::vector<DWORD>();
@@ -366,7 +705,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	RegVarsSetGet = new std::vector<DWORD>();
 	Timer = new QTimer(this);
 	AirportData = NULL;
-	AllData.version = 0;
+	//AllData.version = 0;
 	GData.version = 0;
 	VerAll = 0;
 	Version = 0;
@@ -378,7 +717,7 @@ SimData::SimData(HANDLE hSimConnect) {
 	Quit = false;
 	RegEvent = std::vector<bool>(1700, false);
 
-
+	WasmModuleClient::SetConfig(HSimConnect, "MAX_VARS_PER_FRAME", "5", clientData);
 
 
 
@@ -484,10 +823,36 @@ SimData::SimData(HANDLE hSimConnect) {
 	AddData(HSimConnect, YOKE_Y_POSITION);
 	AddData(HSimConnect, PUSHBACK_STATE);
 	AddData(HSimConnect, PUSHBACK_ATTACHED);
+
+	
+
+
+
 	
 
 	connect(Timer, SIGNAL(timeout()), this, SLOT(TimerProc()));
-	Timer->start(60);
+	Timer->start(120);
+}
+
+void SimData::AddLocalData(std::string LVarName, int priority) {
+	std::string StringValue = "";
+	double DoubleValue = 0.0;
+	std::string LVarFullName = "(L:" + LVarName + ")";
+	if (GetSimVar(LVarFullName, &StringValue, &DoubleValue, priority) == FSUIPCOffsetType::Float) {
+		SendLog(QString(LVarFullName.c_str()) + " = " + QString::number(DoubleValue));
+	}
+	else {
+		SendLog(QString(LVarFullName.c_str()) + " = " + QString(StringValue.c_str()));
+	}
+}
+
+void SimData::RegisterLVars() {
+	WasmModuleClient::SendWasmCmd(HSimConnect, "MF.SimVars.Clear", runtimeData);
+	for (int i = 0; i < AllData.size(); i++) {
+		AddLocalData(AllData[i].Name, AllData[i].Priority);
+	}
+	double val = 2.0;
+	//SetDataL2(SIMDATA_ID, XMLVAR_SWITCH_OVHD_INTLT_SEATBELT_Position, &val);
 }
 
 SimData::~SimData() {
@@ -647,6 +1012,177 @@ void SimData::GetDataString(DWORD sender, DWORD var, std::string* val)
 	set53 = false;
 }*/
 
+FSUIPCOffsetType SimData::RegisterSimVar(std::string SimVarName)
+{
+	// Matches presets like "(A:TITLE,String)" in different variations. These will most likely be of type String an will therefore be treated as String.
+	std::regex r("\\(.*A.*:.*,.*String.*\\)");
+	
+	//Match stringPreset = Regex.Match(SimVarName, "\\(.*A.*:.*,.*String.*\\)", RegexOptions.IgnoreCase);
+	FSUIPCOffsetType simVarType = std::regex_match(SimVarName, r) ? FSUIPCOffsetType::String : FSUIPCOffsetType::Float;
+
+	if (simVarType == FSUIPCOffsetType::Float)
+	{
+		// Register SimVar as float
+		SimVar newSimVar = SimVar{(UINT)(SimVars.size() + SIMVAR_DATA_DEFINITION_OFFSET), SimVarName, 0.0};
+		SimVars.push_back(newSimVar);
+		if (MaxClientDataDefinition < (SimVars.size() + SIMVAR_DATA_DEFINITION_OFFSET - 1 + StringSimVars.size()))
+		{
+			// Register SimVar as float
+			SimConnect_AddToClientDataDefinition(
+				HSimConnect,
+				(SIMCONNECT_CLIENT_DATA_DEFINITION_ID)newSimVar.ID,
+				(uint)((newSimVar.ID - SIMVAR_DATA_DEFINITION_OFFSET) * sizeof(float)),
+				sizeof(float),
+				0,
+				0);
+
+			//m_oSimConnect ? .RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, ClientDataValue>((SIMCONNECT_DEFINE_ID)newSimVar.ID);
+
+			SimConnect_RequestClientData(
+				HSimConnect,
+				runtimeData.AREA_SIMVAR_ID,
+				(SIMCONNECT_DATA_REQUEST_ID)newSimVar.ID,
+				(SIMCONNECT_CLIENT_DATA_DEFINITION_ID)newSimVar.ID,
+				SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET,
+				SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_CHANGED,
+				0,
+				0,
+				0
+			);
+
+			MaxClientDataDefinition = (uint)(SimVars.size() + SIMVAR_DATA_DEFINITION_OFFSET - 1 + StringSimVars.size());
+		}
+	}
+	else
+	{
+		// Register SimVar as string (different ID-offset, size and a separate data-area)
+		StringSimVar newStringSimVar = StringSimVar{(uint)StringSimVars.size() + 1 + MOBIFLIGHT_STRINGVAR_ID_OFFSET, SimVarName, ""};
+		StringSimVars.push_back(newStringSimVar);
+		if (MaxClientDataDefinition < (SimVars.size() + SIMVAR_DATA_DEFINITION_OFFSET - 1 + StringSimVars.size()))
+		{
+			SimConnect_AddToClientDataDefinition(
+				HSimConnect,
+				(SIMCONNECT_CLIENT_DATA_DEFINITION_ID)(newStringSimVar.ID),
+				(uint)((StringSimVars.size() - 1) * MOBIFLIGHT_STRINGVAR_SIZE),
+				MOBIFLIGHT_STRINGVAR_SIZE,
+				0,
+				0);
+
+			//m_oSimConnect ? .RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, ClientDataStringValue>((SIMCONNECT_DEFINE_ID)newStringSimVar.ID);
+
+			SimConnect_RequestClientData(
+				HSimConnect,
+				runtimeData.AREA_STRINGSIMVAR_ID,
+				(SIMCONNECT_DATA_REQUEST_ID)(newStringSimVar.ID),
+				(SIMCONNECT_CLIENT_DATA_DEFINITION_ID)(newStringSimVar.ID),
+				SIMCONNECT_CLIENT_DATA_PERIOD_ON_SET,
+				SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_CHANGED,
+				0,
+				0,
+				0
+			);
+
+			MaxClientDataDefinition = (uint)(SimVars.size() + SIMVAR_DATA_DEFINITION_OFFSET - 1 + StringSimVars.size());
+		}
+	}
+
+	return simVarType;
+}
+
+FSUIPCOffsetType SimData::GetSimVar(std::string simVarName, std::string* stringVal, double* floatVal, int priority)
+{
+	FSUIPCOffsetType simVarType = FSUIPCOffsetType::Float;
+	bool isFloat = false;
+	bool isString = false;
+
+	*stringVal = "0";
+	*floatVal = 0.0F;
+
+	//if (!IsConnected())
+	//	return simVarType;
+
+	if (simVarName == "")
+		return simVarType;
+
+	std::vector<SimVar>::iterator var = std::find_if(SimVars.begin(), SimVars.end(), [&](SimVar& sv) { return sv.Name == simVarName; });
+		//isFloat = true; //TO DO
+	//isFloat = std::find_if(SimVars.begin(), SimVars.end(), [&simVarName](SimVar& sv) { return sv.Name == simVarName; });
+	if (!isFloat)
+	{
+		std::vector<StringSimVar>::iterator var = std::find_if(StringSimVars.begin(), StringSimVars.end(), [&](StringSimVar& ssv) { return ssv.Name == simVarName; });
+		//isString = true; //TO DO
+
+		if (!isString)
+		{
+			simVarType = RegisterSimVar(simVarName);
+			if (simVarType == FSUIPCOffsetType::String)
+			{
+				WasmModuleClient::AddStringSimVar(HSimConnect, simVarName.c_str(), runtimeData);
+			}
+			else
+			{
+				WasmModuleClient::AddSimVar(HSimConnect, simVarName.c_str(), runtimeData, priority);
+			}
+		}
+		else
+		{
+			simVarType = FSUIPCOffsetType::String;
+		}
+	}
+
+	if (simVarType == FSUIPCOffsetType::Float)
+	{
+		std::vector<SimVar>::iterator var = std::find_if(SimVars.begin(), SimVars.end(), [&](SimVar& sv) { return sv.Name == simVarName; });
+		*floatVal = var->Data;
+		//*floatVal = SimVars.Find(lvar => lvar.Name == simVarName).Data;
+	}
+	else
+	{
+		std::vector<StringSimVar>::iterator var = std::find_if(StringSimVars.begin(), StringSimVars.end(), [&](StringSimVar& ssv) { return ssv.Name == simVarName; });
+		*stringVal = var->Data;
+		//*stringVal = StringSimVars.Find(lvar = > lvar.Name == simVarName).Data;
+		*stringVal = (*stringVal) == "" ? "0" : *stringVal;
+	}
+
+	return simVarType;
+}
+
+void SimData::SetDataL2(DWORD sender, DWORD var, double* val, const char* unit)
+{
+	setlocale(LC_ALL, "");
+	//RegisterEvent((CLIENTEVENTS)var);	
+	std::string SimVarCode = "(>" + AllData[var].Name + ")";
+	std::string strVal = std::to_string(*val);
+	std::size_t pos = strVal.find(",");
+	if (pos != std::string::npos) {
+		strVal.replace(pos, 1, ".");
+	}
+	std::string ExecuteCode = "(" + strVal + " " + SimVarCode + ")";
+	WasmModuleClient::SetSimVar(HSimConnect, ExecuteCode.c_str(), runtimeData);
+	Context c = { this, 53 };
+	while ((ExportData.version != var)) {
+		SimConnect_RequestClientData(
+			HSimConnect,
+			runtimeData.AREA_RESPONSE_ID,
+			(SIMCONNECT_DATA_REQUEST_ID)runtimeData.DATA_DEFINITION_ID,
+			runtimeData.DATA_DEFINITION_ID,
+			SIMCONNECT_CLIENT_DATA_PERIOD_ONCE,
+			SIMCONNECT_CLIENT_DATA_REQUEST_FLAG_DEFAULT,
+			0,
+			0,
+			0
+		);
+		SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
+		Sleep(1);
+		if (ExportData.version == -2) {
+			SendLog(QString("Fail set var ") + QString(AllData[var].Name.c_str()));
+			break;
+		}
+	};
+	ExportData.version = -1;
+	emit SetDataChange(var, sender);
+	set54 = false;
+}
 
 
 void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
@@ -665,11 +1201,12 @@ void SimData::SetDataL(DWORD sender, DWORD var, double* val, const char* unit)
 			SendEvent(sender, var, Version);
 			f = 100000;
 		}*/
+
 		SUCC(SimConnect_CallDispatch(HSimConnect, FDispatchProc, (void*)(&c)));
 		Sleep(1);
 	};
 	//ExportData.version = false;
-	Version++;
+	Version = ExportData.version;
 	Control.version = Version;
 	Control.id = ExportData.id;
 	Control.Parameter = *val;

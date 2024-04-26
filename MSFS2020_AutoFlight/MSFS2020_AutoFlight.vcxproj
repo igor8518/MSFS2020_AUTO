@@ -46,6 +46,8 @@
     <LibraryPath>..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;X:\Qt\5.15.2\msvc2019_64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <IncludePath>..\AirportData\Extern;C:\MSFS SDK\SimConnect SDK\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;X:\Qt\5.15.2\msvc2019_64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
@@ -60,8 +62,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <ForcedIncludeFiles>stdafx.h;%(ForsedIncludedFiles) </ForcedIncludeFiles>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>SimConnect.lib;AirportData.lib;Qt5PrintSupport.lib;Qt5Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>5.15.2_msvc2019_64</QtInstall>
@@ -71,9 +76,12 @@
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
-    <QtInstall>msvc2017_64</QtInstall>
-    <QtModules>core;gui;widgets;opengl</QtModules>
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
+    <QtModules>core;opengl;gui;widgets;openglextensions</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
+  </PropertyGroup>
+  <PropertyGroup Label="QtDeploy" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
     <Import Project="$(QtMsBuild)\qt.props" />
@@ -135,6 +143,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WasmModuleClient.cpp" />
     <ClCompile Include="WriteStream.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
@@ -157,6 +166,7 @@
     <QtMoc Include="airportview.h" />
     <ClInclude Include="globaldata.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="WasmModuleClient.h" />
     <ClInclude Include="WriteStream.h" />
     <QtMoc Include="SimData.h" />
     <QtMoc Include="ExQThread.h" />

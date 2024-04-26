@@ -18,7 +18,7 @@ void PlanesWork::TimerProc() {
 	if (DataT->GData.INDICATED_ALTITUDE < 3000) {
 		ThrottleSet(0, 10);
 	}
-	if ((DataT == NULL) || (!DataT->AllData.A32NX_AUTOPILOT_ACTIVE)) {
+	if ((DataT == NULL) || (!DataT->AllData[A32NX_AUTOPILOT_ACTIVE].Value)) {
 		AileronSet(0, 10);
 		ElevatorSet(0, 10);
 		RudderSet(0, 10);
@@ -352,12 +352,12 @@ void PlanesWork::setThrust(FLOAT thrust) {
 void PlanesWork::GSpeedSet(double pos, double Tr) {
 	if (TTAS >= SET_GSPEED) {
 		double speed = 0;
-		if (DataT->GData.ATC_CLEARED_TAXI == 1 || DataT->GData.ATC_CLEARED_TAKEOF == 1 || DataT->GData.ATC_CLEARED_LANDING == 1) {
+		//if (DataT->GData.ATC_CLEARED_TAXI != 2 || DataT->GData.ATC_CLEARED_TAKEOF == 1 || DataT->GData.ATC_CLEARED_LANDING == 1) {
 			speed = _GSpeed;
-		}
-		else {
-			speed = -5;
-		}
+		//}
+		//else {
+		//	speed = -5;
+		//}
 		double brakes;
 		double N1L = DataT->GData.TURB_ENG_N11;
 		double GS = DataT->GData.GROUND_VELOCITY;

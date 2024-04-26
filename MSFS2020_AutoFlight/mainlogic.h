@@ -10,6 +10,7 @@
 #include "CabinWork.h"
 #include "PlanesWork.h"
 #include "Utils.h"
+#include "WasmModuleClient.h"
 
 class QTableViewModel : public QAbstractListModel {
 public:
@@ -66,6 +67,8 @@ public:
   std::string ParkName[38] = { "NONE", "PARKING", "N_PARKING", "NE_PARKING", "E_PARKING", "SE_PARKING", "S_PARKING", "SW_PARKING", "W_PARKING", "NW_PARKING", "GATE", "DOCK",
     "GATE_A", "GATE_B", "GATE_C", "GATE_D", "GATE_E", "GATE_F", "GATE_G", "GATE_H", "GATE_I", "GATE_J", "GATE_K", "GATE_L", "GATE_M", "GATE_N", "GATE_O", "GATE_P", "GATE_Q", "GATE_R", "GATE_S", "GATE_T",
     "GATE_U", "GATE_V", "GATE_W", "GATE_X", "GATE_Y", "GATE_Z" };
+  std::string ParkSuffix[27] = { "", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K",
+    "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
   double minDCommon = 10000;
   std::vector<sWayPoint>* Legs = NULL;
   //std::vector<sWayPoint>* QLegs = NULL;
@@ -283,5 +286,8 @@ private:
   "GSWAY",
   "GATE",
   };
+
+  WasmModuleClientData WasmInitClientData;
+  WasmModuleClientData WasmRuntimeClientData;
 };
 

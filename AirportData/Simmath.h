@@ -578,6 +578,7 @@ namespace PMDG_TEST
 		static std::vector<TPath> solveGate(std::vector<TaxiwayPoints>* tpoints, std::vector<TaxiwayPaths>* tpaths, std::vector<TaxiwayNames>* tNames, std::vector<TaxiwayParks>* tParks, WORD start, WORD end, double heading) {
 			std::string ds[] = { "", "L", "R", "C", "W", "A", "B" };
 			double INF = 100000000.0;
+			double headingPark = (tParks->at(end).Heading);
 			std::vector<TPath> rPath;
 			long v = start;
 			long t = end + tpoints->size() - tParks->size();
@@ -591,108 +592,120 @@ namespace PMDG_TEST
 			a[v] = heading;
 			DSHEH* dsheh = new DSHEH();
 			int x;
-			for (int i = 0; i<m; ++i) {
+			for (int i = 0; i < m; ++i) {
 				bool any = false;
 				x = -1;
-        for (int j = 0; j < m; ++j) {
-          if ((d[tpaths->at(j).IndexStartPoint] < INF) && (((tpaths->at(j).Type & 0xf) == 1) || ((tpaths->at(j).Type & 0xf) == 2) || ((tpaths->at(j).Type & 0xf) == 3) || ((tpaths->at(j).Type & 0xf) == 4) || ((tpaths->at(j).Type & 0xf) == 14))) {
-            dsheh->Slla.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexStartPoint).Lat);
-            dsheh->Slla.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexStartPoint).Lon);
-            //dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lat);
-            //dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lon);
+				for (int j = 0; j < m; ++j) {
+					if ((d[tpaths->at(j).IndexStartPoint] < INF) && (((tpaths->at(j).Type & 0xf) == 1) || ((tpaths->at(j).Type & 0xf) == 2) || ((tpaths->at(j).Type & 0xf) == 3) || ((tpaths->at(j).Type & 0xf) == 4) || ((tpaths->at(j).Type & 0xf) == 14))) {
+						dsheh->Slla.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexStartPoint).Lat);
+						dsheh->Slla.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexStartPoint).Lon);
+						//dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lat);
+						//dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).IndexEndPoint & 0xfff).Lon);
 						dsheh->Ella.Latitude = DecodeLat(tpoints->at(tpaths->at(j).End).Lat);
 						dsheh->Ella.Longitude = DecodeLon(tpoints->at(tpaths->at(j).End).Lon);
-            if (tpaths->at(j).IndexStartPoint == 22) {
-              std::cout << 1;
-            }
-            DOrtoKM(dsheh);
-            if ((tpaths->at(j).Type & 0xf) == 2) {
-              dsheh->D = dsheh->D * 1000000;
-            }
-            if ((tpaths->at(j).Type & 0xf) == 3) {
-              dsheh->D = dsheh->D * 100000;
-            }
-            if (d[tpaths->at(j).IndexStartPoint] < 0) {
-              dsheh->D = int(INF / 10) - dsheh->D;
-            }
-            double ra;
-            int CountRa = 1;
-            ra = dsheh->EH - a[tpaths->at(j).IndexStartPoint];
-            if (ra > 180) {
-              ra = ra - 360;
-            }
-            else if (ra < -180) {
-              ra = ra + 360;
-            }
-            ra = abs(ra);
-            double DComm = 0.050;
-            DWORD lastPoint = tpaths->at(j).IndexStartPoint;
-            for (int cur = tpaths->at(j).IndexStartPoint; cur != -1; cur = p[cur]) {
-              PMDG_TEST::SIMMATH::DSHEH de;
-              de.Slla.Latitude = DecodeLat(tpoints->at(lastPoint).Lat);
-              de.Slla.Longitude = DecodeLon(tpoints->at(lastPoint).Lon);
-              de.Ella.Latitude = DecodeLat(tpoints->at(cur).Lat);
-              de.Ella.Longitude = DecodeLon(tpoints->at(cur).Lon);
-              DOrtoKM(&de);
-              DComm = DComm - de.D;
-              if (DComm > 0.0) {
-                if (de.D != 0.0) {
-                  double ra2 = a[lastPoint] - a[cur];
-                  if (ra2 > 180) {
-                    ra2 = ra2 - 360;
-                  }
-                  else if (ra2 < -180) {
-                    ra2 = ra2 + 360;
-                  }
-                  CountRa = CountRa + 1;
-                  ra = ra + abs(ra2);
-                }
-                lastPoint = cur;
-              }
-              else {
-                break;
-              }
-            }
-            ra = ra / CountRa;
-            double RRA;
-            RRA = abs(pow(abs(ra), 5)) / 100000.0;
-            //if (d[tpaths->at(j).IndexEndPoint & 0xfff] > (d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA)) {
-              //d[tpaths->at(j).IndexEndPoint & 0xfff] = max(-INF, d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA);
-              //a[tpaths->at(j).IndexEndPoint & 0xfff] = dsheh->EH;
-              //p[tpaths->at(j).IndexEndPoint & 0xfff] = tpaths->at(j).IndexStartPoint;
-              //x = tpaths->at(j).IndexEndPoint & 0xfff;
-							if (d[tpaths->at(j).End] > (d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA)) {
-								d[tpaths->at(j).End] = max(-INF, d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA);
-								a[tpaths->at(j).End] = dsheh->EH;
-								p[tpaths->at(j).End] = tpaths->at(j).IndexStartPoint;
-								x = tpaths->at(j).End;
-              if ((tpaths->at(j).Type & 0xf) == 2) {
-                std::string R1 = "";
-                if ((tpaths->at(j).TaxiNameIndex) < 10) {
-                  R1 = "0" + std::to_string(tpaths->at(j).TaxiNameIndex) + ds[tpaths->at(j).IndexEndPoint >> 12];
-                }
-                else {
-                  R1 = std::to_string(tpaths->at(j).TaxiNameIndex) + ds[tpaths->at(j).IndexEndPoint >> 12];
-                }
-                //names[tpaths->at(j).IndexEndPoint & 0xfff] = R1;
+						if (tpaths->at(j).IndexStartPoint == 22) {
+							std::cout << 1;
+						}
+						DOrtoKM(dsheh);
+						if ((tpaths->at(j).Type & 0xf) == 2) {
+							dsheh->D = dsheh->D * 1000000;
+						}
+						if ((tpaths->at(j).Type & 0xf) == 3) {
+							dsheh->D = dsheh->D * 100000;
+						}
+						if (d[tpaths->at(j).IndexStartPoint] < 0) {
+							dsheh->D = int(INF / 10) - dsheh->D;
+						}
+						double ra;
+						int CountRa = 1;
+						ra = dsheh->EH - a[tpaths->at(j).IndexStartPoint];
+						if (ra > 180) {
+							ra = ra - 360;
+						}
+						else if (ra < -180) {
+							ra = ra + 360;
+						}
+						ra = abs(ra);
+						double DComm = 0.050;
+						DWORD lastPoint = tpaths->at(j).IndexStartPoint;
+						for (int cur = tpaths->at(j).IndexStartPoint; cur != -1; cur = p[cur]) {
+							PMDG_TEST::SIMMATH::DSHEH de;
+							de.Slla.Latitude = DecodeLat(tpoints->at(lastPoint).Lat);
+							de.Slla.Longitude = DecodeLon(tpoints->at(lastPoint).Lon);
+							de.Ella.Latitude = DecodeLat(tpoints->at(cur).Lat);
+							de.Ella.Longitude = DecodeLon(tpoints->at(cur).Lon);
+							DOrtoKM(&de);
+							DComm = DComm - de.D;
+							if (DComm > 0.0) {
+								if (de.D != 0.0) {
+									double ra2 = a[lastPoint] - a[cur];
+									if (ra2 > 180) {
+										ra2 = ra2 - 360;
+									}
+									else if (ra2 < -180) {
+										ra2 = ra2 + 360;
+									}
+									CountRa = CountRa + 1;
+									ra = ra + abs(ra2);
+								}
+								lastPoint = cur;
+							}
+							else {
+								break;
+							}
+						}
+						ra = ra / CountRa;
+						double RRA;
+						RRA = abs(pow(abs(ra), 5)) / 100000.0;
+						//if (d[tpaths->at(j).IndexEndPoint & 0xfff] > (d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA)) {
+						  //d[tpaths->at(j).IndexEndPoint & 0xfff] = max(-INF, d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA);
+						  //a[tpaths->at(j).IndexEndPoint & 0xfff] = dsheh->EH;
+						  //p[tpaths->at(j).IndexEndPoint & 0xfff] = tpaths->at(j).IndexStartPoint;
+						  //x = tpaths->at(j).IndexEndPoint & 0xfff;
+						double MP = 1;
+						if (tpaths->at(j).End == t) {
+							MP = (headingPark - dsheh->EH);
+							if (MP > 180) {
+								MP = MP - 360;
+							}
+							else if (MP < -180) {
+								MP = MP + 360;
+							}
+							MP = (abs(MP) + 1) * 100000;
+						}
+						if (d[tpaths->at(j).End] > (d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA + MP)) {
+							
+							d[tpaths->at(j).End] = max(-INF, d[tpaths->at(j).IndexStartPoint] + dsheh->D + RRA + MP);
+							a[tpaths->at(j).End] = dsheh->EH;
+							p[tpaths->at(j).End] = tpaths->at(j).IndexStartPoint;
+							x = tpaths->at(j).End;
+							if ((tpaths->at(j).Type & 0xf) == 2) {
+								std::string R1 = "";
+								if ((tpaths->at(j).TaxiNameIndex) < 10) {
+									R1 = "0" + std::to_string(tpaths->at(j).TaxiNameIndex) + ds[tpaths->at(j).IndexEndPoint >> 12];
+								}
+								else {
+									R1 = std::to_string(tpaths->at(j).TaxiNameIndex) + ds[tpaths->at(j).IndexEndPoint >> 12];
+								}
+								//names[tpaths->at(j).IndexEndPoint & 0xfff] = R1;
 								names[tpaths->at(j).End] = R1;
-              }
-              else {
-                //names[tpaths->at(j).IndexEndPoint & 0xfff] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
+							}
+							else {
+								//names[tpaths->at(j).IndexEndPoint & 0xfff] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
 								names[tpaths->at(j).End] = tNames->at(tpaths->at(j).TaxiNameIndex).TaxiName;
-              }
-              any = true;
-            }
-          }
-        }
+							}
+							any = true;
+						}
+					}
+				}
 				if (!any)  break;
 			}
 			delete dsheh;
 			dsheh = NULL;
 			int z = 0;
-      if (x == -1) {
-        std::cout << "No negative cycle from " << v;
-      }
+			if (x == -1) {
+				std::cout << "No negative cycle from " << v;
+			}
 			else {
 				int y = x;
 				for (int i = 0; i < n; ++i) {
@@ -711,7 +724,7 @@ namespace PMDG_TEST
 				}
 				reverse(path.begin(), path.end());
 				std::cout << "Negative cycle: ";
-				for (size_t i = 0; i<path.size(); ++i)
+				for (size_t i = 0; i < path.size(); ++i)
 					std::cout << path[i] << ' ';
 			}
 			if (d[t] >= INF) {
@@ -720,9 +733,9 @@ namespace PMDG_TEST
 			else {
 				std::cout << std::endl << v << "->" << t << "=" << d[t];
 			}
-      if (d[t] == INF) {
-        std::cout << std::endl << "No path from " << v << " to " << t << ".";
-      }
+			if (d[t] == INF) {
+				std::cout << std::endl << "No path from " << v << " to " << t << ".";
+			}
 			else {
 				std::vector<int> path;
 				for (int cur = t; cur != -1; cur = p[cur]) {

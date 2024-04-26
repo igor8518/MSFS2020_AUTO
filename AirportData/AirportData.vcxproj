@@ -84,9 +84,9 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\GAMES\LM\SDK\5.1.12.26829\inc\SimConnect;C:\Users\igor8\source\repos\PMDG_AUTO\PMDG_TEST;C:\Users\igor8\source\repos\PMDG_AUTO\AirportData;C:\Users\igor8\source\repos\PMDG_AUTO\AirportData\Extern;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\GAMES\LM\SDK\5.1.12.26829\lib\SimConnect;$(LibraryPath)</LibraryPath>
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>.\sidstar;.\json;.\spirit-boost-1.71.0\include\boost;C:\MSFS SDK\SimConnect SDK\include;.\Extern;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\MSFS SDK\SimConnect SDK\lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -140,7 +140,8 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;AIRPORTDATA_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -150,9 +151,11 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>
+      </GenerateDebugInformation>
       <AdditionalOptions>SimConnect.lib %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>AirportData.def</ModuleDefinitionFile>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
