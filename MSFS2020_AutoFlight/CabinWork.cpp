@@ -25,6 +25,7 @@ void CabinWork::CLPreliminaryCocpitPrep(int* Status)
 {
 	if (*Status != 2) {
 		*Status = 1;
+		//SetDataL(FSDT_GSX_SET_REMOTECONTROL, 1);
 		ParkBrake = 1;
 		ParkingBrakeSet(ParkBrake);
 		CabinLight(3);
@@ -100,7 +101,9 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		//SendEvent(KEY_REQUEST_CATERING, 0);
 		GSXServicesRequest(REQUEST_CATERING_SERVICE);
 		SetDataL(FSDT_GSX_FUEL_COUNTER_MAX, 99999.0);
+		SetServiceEnabled(CATERING, true);
 		while (DataT->AllData[FSDT_GSX_CATERING_STATE].Value != 6);
+		SetServiceEnabled(CATERING, false);
 		Sleep(3000);
 		//SendEvent(KEY_REQUEST_FUEL, 0);
 		while ((DataT->AllData[FSDT_GSX_SIMBRIEF_SUCCESS].Value != 0) && 
@@ -113,9 +116,13 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		SeatBeltSign(0);
 		
 		GSXServicesRequest(REQUEST_REFUELING);
+		SendLog("Waiting while fuelhouse connected");
 		while (DataT->AllData[FSDT_GSX_FUELHOSE_CONNECTED].Value != 1);
 		SetDataL(A32NX_INITFLIGHT_STATE, 1);
-		while (DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 1);
+		SetServiceEnabled(REFUELING, true);
+		SendLog("Waiting while refueling completed");
+		while (DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 1 && DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 6);
+		SetServiceEnabled(REFUELING, false);
 
 		Sleep(3000);
 		SetCabinLight(100);
@@ -223,9 +230,16 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		//FMGSAirfieldData
 		IrsAligned();
 		while (DataT->AllData[A32NX_INITFLIGHT_STATE].Value != 20);
+		SetServiceEnabled(BOARDING, true);
+		SetServiceEnabled(REFUELING, true);
+		SetServiceEnabled(CATERING, true);
 		while (DataT->AllData[FSDT_GSX_BOARDING_STATE].Value != 6 ||
-			DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 3 ||
+			(DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 1 &&
+			DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 6) ||
 			DataT->AllData[FSDT_GSX_CATERING_STATE].Value != 6);
+		SetServiceEnabled(BOARDING, false);
+		SetServiceEnabled(REFUELING, false);
+		SetServiceEnabled(CATERING, false);
 		//SendEvent(KEY_TOGGLE_JETWAY, 0);
 		//Sleep(30000);
 		//FMGSAtcClereance
@@ -269,11 +283,12 @@ void CabinWork::CLBeforeStart(int* Status) {
 	//ParkingBrakeAccuPress
 	ParkBrake = 1;
 	//PushBack
-	GSXServicesRequest(REQUEST_DEPARTING);
+	//GSXServicesRequest(REQUEST_DEPARTING);
 	Sleep(3000);
-	SetDataL(FSDT_GSX_MENU_CHOICE, 0);
-	DataT->AllData[FSDT_GSX_MENU_CHOICE].Value = 0;
-	while (DataT->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
+	//SetDataL(FSDT_GSX_SET_REMOTECONTROL, 0);
+	//SetDataL(FSDT_GSX_MENU_CHOICE, 0);
+	//DataT->AllData[FSDT_GSX_MENU_CHOICE].Value = 0;
+	//while (DataT->AllData[FSDT_GSX_MENU_CHOICE].Value != -2);
 	*Status = 2;
 }
 
@@ -646,14 +661,14 @@ void CabinWork::APUOff() {
 
 void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
-	if (num < 11) {
+	//if (num < 11) {
 		switch (num) {
-		case 9: {
+		/*case 9: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH9 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
 			}
 			break;
-		}
+		}*/
 		case 2: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH2 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
@@ -666,12 +681,12 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 			}
 			break;
 		}
-		case 10: {
+		/*case 10: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH10 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
 			}
 			break;
-		}
+		}*/
 		case 5: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH5 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
@@ -686,7 +701,7 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 		}
 		}
 		
-	}
+	//}
 }
 
 

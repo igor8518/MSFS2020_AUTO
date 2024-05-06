@@ -28,6 +28,12 @@ HRESULT SimData::GetAllData() {
 	while (SUCCEEDED(SimConnect_GetNextDispatch(HSimConnect, &pData, &cbData))) {
 		FDispatchProc(pData, cbData, (void*)(&c));
 	}
+	SetServiceStates(DEBOARDING, AllData[FSDT_GSX_DEBOARDING_STATE].Value);
+	SetServiceStates(CATERING, AllData[FSDT_GSX_CATERING_STATE].Value);
+	SetServiceStates(REFUELING, AllData[FSDT_GSX_REFUELING_STATE].Value);
+	SetServiceStates(BOARDING, AllData[FSDT_GSX_BOARDING_STATE].Value);
+	SetServiceStates(DEPARTURE, AllData[FSDT_GSX_DEPARTURE_STATE].Value);
+	SetServiceStates(DEICING, AllData[FSDT_GSX_DEICING_STATE].Value);
 	//RefreshLVarsList();
 	return result;
 }
@@ -128,6 +134,33 @@ void CALLBACK SimData::FDispatchProc(SIMCONNECT_RECV* pData, DWORD cbData, void*
 			lContext->data->SimVars[simVarIndex].Data = simData;
 			//lContext->data->SendLog("Var " + QString(lContext->data->SimVars[simVarIndex].Name.c_str()) + " is change from " + QString::number(*var) + " to " + QString::number(simData));
 			lContext->data->AllData[simVarIndex].Value = simData;
+			switch (simVarIndex) {
+			case FSDT_GSX_DEBOARDING_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[0].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			case FSDT_GSX_CATERING_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[1].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			case FSDT_GSX_REFUELING_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[2].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			case FSDT_GSX_BOARDING_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[3].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			case FSDT_GSX_DEPARTURE_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[4].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			case FSDT_GSX_DEICING_STATE: {
+				lContext->data->SendLog("Service " + QString(lContext->data->GSXServicesName[5].c_str()) + " " + QString(lContext->data->GSXServiceStatesName[(int)simData].c_str()));
+				break;
+			}
+			}
+
 			//*var = simData;
 
 		}
@@ -781,10 +814,10 @@ SimData::SimData(HANDLE hSimConnect, WasmModuleClientData clientData, WasmModule
 	AddData(HSimConnect, CIRCUIT_SWITCH_ON80);
 	AddData(HSimConnect, EXTERNAL_POWER_AVAILABLE1);
 	AddData(HSimConnect, EXTERNAL_POWER_ON1);
-	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH9);
+	//AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
-	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH10);
+	//AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH5);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH6);
 	AddData(HSimConnect, LIGHT_POTENTIOMETER7);

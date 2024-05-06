@@ -161,6 +161,63 @@ void MSFS2020_AutoFlight::PlotCircle(double dist, double alt, double common) {
 	}
 }
 
+void MSFS2020_AutoFlight::SetServiceStates(DWORD service, DWORD state) {
+	switch (service) {
+	case DEBOARDING: {
+		ui->deboardingState->setValue(state);
+		break;
+	}
+	case CATERING: {
+		ui->cateringState->setValue(state);
+		break;
+	}
+	case REFUELING: {
+		ui->refuelingState->setValue(state);
+		break;
+	}
+	case BOARDING: {
+		ui->boardingSate->setValue(state);
+		break;
+	}
+	case DEPARTURE: {
+		ui->departureState->setValue(state);
+		break;
+	}
+	case DEICING: {
+		ui->deicingState->setValue(state);
+		break;
+	}
+	}
+}
+void MSFS2020_AutoFlight::SetServiceEnabled(DWORD service, bool enabled) {
+	switch (service) {
+	case DEBOARDING: {
+		ui->deboardingState->setEnabled(enabled);
+		break;
+	}
+	case CATERING: {
+		ui->cateringState->setEnabled(enabled);
+		break;
+	}
+	case REFUELING: {
+		ui->refuelingState->setEnabled(enabled);
+		break;
+	}
+	case BOARDING: {
+		ui->boardingSate->setEnabled(enabled);
+		break;
+	}
+	case DEPARTURE: {
+		ui->departureState->setEnabled(enabled);
+		break;
+	}
+	case DEICING: {
+		ui->deicingState->setEnabled(enabled);
+		break;
+	}
+	}
+}
+
 void MSFS2020_AutoFlight::PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex) {
 	double CommonDistance = 0;
 	for (int i = startIndex; i <= endIndex; i++) {

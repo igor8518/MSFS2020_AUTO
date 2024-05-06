@@ -23,388 +23,419 @@
    <string notr="true">fusion</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="ConnectButton">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>851</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Connect</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_2">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>440</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Quit</string>
-    </property>
-   </widget>
-   <widget class="QListWidget" name="listWidget">
-    <property name="geometry">
-     <rect>
-      <x>870</x>
-      <y>10</y>
-      <width>441</width>
-      <height>421</height>
-     </rect>
-    </property>
-    <property name="mouseTracking">
-     <bool>false</bool>
-    </property>
-    <property name="autoScroll">
-     <bool>true</bool>
-    </property>
-    <property name="alternatingRowColors">
-     <bool>true</bool>
-    </property>
-    <property name="selectionBehavior">
-     <enum>QAbstractItemView::SelectRows</enum>
-    </property>
-    <property name="horizontalScrollMode">
-     <enum>QAbstractItemView::ScrollPerPixel</enum>
-    </property>
-    <property name="uniformItemSizes">
-     <bool>true</bool>
-    </property>
-    <property name="currentRow">
-     <number>-1</number>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>440</y>
-      <width>1161</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="textFormat">
-     <enum>Qt::PlainText</enum>
-    </property>
-   </widget>
-   <widget class="QCustomPlot" name="Graph" native="true">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>461</width>
-      <height>101</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QSlider" name="vs1">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>470</x>
-      <y>80</y>
-      <width>31</width>
-      <height>91</height>
-     </rect>
-    </property>
-    <property name="minimum">
-     <number>-16383</number>
-    </property>
-    <property name="maximum">
-     <number>16383</number>
-    </property>
-    <property name="singleStep">
-     <number>10</number>
-    </property>
-    <property name="pageStep">
-     <number>100</number>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-    <property name="tickPosition">
-     <enum>QSlider::TicksBothSides</enum>
-    </property>
-    <property name="tickInterval">
-     <number>1</number>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="cb1">
-    <property name="geometry">
-     <rect>
-      <x>470</x>
-      <y>60</y>
-      <width>121</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="cb2">
-    <property name="geometry">
-     <rect>
-      <x>600</x>
-      <y>60</y>
-      <width>111</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="cb3">
-    <property name="geometry">
-     <rect>
-      <x>720</x>
-      <y>60</y>
-      <width>121</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="cc1">
-    <property name="geometry">
-     <rect>
-      <x>590</x>
-      <y>80</y>
-      <width>70</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Control</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="sb1P">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>80</y>
-      <width>61</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>6</number>
-    </property>
-    <property name="minimum">
-     <double>-32768.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>99000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="sb1I">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>110</y>
-      <width>61</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>6</number>
-    </property>
-    <property name="minimum">
-     <double>-32768.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>99000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="sb1D">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>140</y>
-      <width>61</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>6</number>
-    </property>
-    <property name="minimum">
-     <double>-32768.000000000000000</double>
-    </property>
-    <property name="maximum">
-     <double>99000.000000000000000</double>
-    </property>
-    <property name="singleStep">
-     <double>0.010000000000000</double>
-    </property>
-   </widget>
-   <widget class="QCustomPlot" name="Graph2" native="true">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>500</y>
-      <width>1301</width>
-      <height>311</height>
-     </rect>
-    </property>
-    <property name="title" stdset="0">
-     <string>GroupBox</string>
-    </property>
-   </widget>
-   <widget class="QTableView" name="tableView">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>170</y>
-      <width>851</width>
-      <height>261</height>
-     </rect>
-    </property>
-    <property name="dragDropOverwriteMode">
-     <bool>false</bool>
-    </property>
-    <property name="selectionMode">
-     <enum>QAbstractItemView::SingleSelection</enum>
-    </property>
-    <property name="selectionBehavior">
-     <enum>QAbstractItemView::SelectRows</enum>
-    </property>
-    <property name="gridStyle">
-     <enum>Qt::DotLine</enum>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="Alt">
-    <property name="geometry">
-     <rect>
-      <x>730</x>
-      <y>110</y>
-      <width>91</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>0</number>
-    </property>
-    <property name="maximum">
-     <double>40000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="dist">
-    <property name="geometry">
-     <rect>
-      <x>730</x>
-      <y>90</y>
-      <width>91</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="decimals">
-     <number>0</number>
-    </property>
-    <property name="maximum">
-     <double>6500.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="delta">
-    <property name="geometry">
-     <rect>
-      <x>640</x>
-      <y>130</y>
-      <width>47</width>
-      <height>13</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="startButton">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>851</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start sim</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="PMDGButton">
-    <property name="geometry">
-     <rect>
-      <x>730</x>
-      <y>140</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Send PMDG</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="switchID">
-    <property name="geometry">
-     <rect>
-      <x>650</x>
-      <y>140</y>
-      <width>71</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="minimum">
-     <number>100</number>
-    </property>
-    <property name="maximum">
-     <number>1000000</number>
-    </property>
-    <property name="singleStep">
-     <number>100</number>
-    </property>
-    <property name="value">
-     <number>101</number>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="BOpenAirport">
-    <property name="geometry">
-     <rect>
-      <x>1030</x>
-      <y>440</y>
-      <width>151</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Open airport</string>
-    </property>
-   </widget>
+   <layout class="QVBoxLayout" name="verticalLayout_7" stretch="2,0,0,1">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="5,3">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,1,5">
+        <item>
+         <widget class="QPushButton" name="ConnectButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Connect</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="startButton">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Start sim</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="50,0">
+          <item>
+           <widget class="QCustomPlot" name="Graph" native="true"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QComboBox" name="cb1"/>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cb2"/>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cb3"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QSlider" name="vs1">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>-16383</number>
+                </property>
+                <property name="maximum">
+                 <number>16383</number>
+                </property>
+                <property name="singleStep">
+                 <number>10</number>
+                </property>
+                <property name="pageStep">
+                 <number>100</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="tickPosition">
+                 <enum>QSlider::TicksBothSides</enum>
+                </property>
+                <property name="tickInterval">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                 <widget class="QDoubleSpinBox" name="sb1P">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>6</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-32768.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>99000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="sb1I">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>6</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-32768.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>99000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="sb1D">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>6</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-32768.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>99000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QCheckBox" name="cc1">
+                  <property name="text">
+                   <string>Control</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="delta">
+                  <property name="text">
+                   <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="switchID">
+                  <property name="minimum">
+                   <number>100</number>
+                  </property>
+                  <property name="maximum">
+                   <number>1000000</number>
+                  </property>
+                  <property name="singleStep">
+                   <number>100</number>
+                  </property>
+                  <property name="value">
+                   <number>101</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_3">
+                <item>
+                 <widget class="QDoubleSpinBox" name="dist">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>6500.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="Alt">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>40000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="PMDGButton">
+                  <property name="text">
+                   <string>Send PMDG</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTableView" name="tableView">
+          <property name="dragDropOverwriteMode">
+           <bool>false</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <property name="gridStyle">
+           <enum>Qt::DotLine</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QListWidget" name="listWidget">
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoScroll">
+         <bool>true</bool>
+        </property>
+        <property name="alternatingRowColors">
+         <bool>true</bool>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="horizontalScrollMode">
+         <enum>QAbstractItemView::ScrollPerPixel</enum>
+        </property>
+        <property name="uniformItemSizes">
+         <bool>true</bool>
+        </property>
+        <property name="currentRow">
+         <number>-1</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="10,0">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::PlainText</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="BOpenAirport">
+            <property name="text">
+             <string>Open airport</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="text">
+             <string>Quit</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>DEBOARDING: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="deboardingState">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>CATERING: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="cateringState">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>REFUELING: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="refuelingState">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>BOARDING: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="boardingSate">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>DEPARTURE:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="departureState">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>DEICING:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="deicingState">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QCustomPlot" name="Graph2" native="true">
+      <property name="title" stdset="0">
+       <string>GroupBox</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -412,7 +443,7 @@
      <x>0</x>
      <y>0</y>
      <width>1327</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>

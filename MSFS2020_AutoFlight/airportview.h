@@ -14,6 +14,10 @@ class AirportView : public QDialog, public Ui::AirportViewClass
 public:
 	AirportView(MainLogic* mainlogic, QWidget* parent = Q_NULLPTR);
 	~AirportView();
+
+	void Update();
+
+	void FillPointLists(IAirport* airport);
 	
 	QPainter* painter;
 	MainLogic* mainlogic;
@@ -22,8 +26,8 @@ public:
 protected:
 	
 
-private slots:
-	void update();
+public slots:
+	//void update();
 	void ChangeToDeparture();
 	void ChangeToDestination();
 	void Close();

@@ -128,6 +128,7 @@ signals:
   void SendEventSignal(DWORD sender, DWORD EventID, long dwData);
   void SendEventSignal2(DWORD sender, DWORD EventID, long dwData, DWORD var, double val, const char* unit = "");
   void SendCommand(DWORD command, double parameter1, double parameter2);
+  void SetServiceEnabled(DWORD service, bool enabled);
 
 public slots:
   void TimerProc();

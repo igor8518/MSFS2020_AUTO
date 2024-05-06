@@ -1,5 +1,5 @@
 #pragma once
-#include "AirportData.h"
+//#include "AirportData.h"
 #include <SimConnect.h>
 #include <vector>
 #define _CRT_SECURE_NO_WARNINGS 1
@@ -9,7 +9,10 @@
 #endif
 
 
+
 #pragma pack(push, 1)
+
+
 
 class DATA_RUNWAY {
 public:
@@ -478,32 +481,33 @@ public:
 	std::vector<DATA_RUNWAY>*		POneWayRunways		= 0;
 	std::vector<POINTS_RUNWAY>*		PPointsRunway		= 0;
 	AddAirportInfo*					PAddAirportInformation = 0;
+	virtual std::string GetParkName(TaxiwayParks* park) = 0;
+
 	
 };
 
 class IAirportData
 {
 	public: 
-		virtual UINT											FillDB()																																		= 0;
-		virtual int												GetProgress()																																= 0;
-		virtual void											Release()																																		= 0;
-		virtual AirportList								GetNearAirport(double Lat, double Lon, int index = -1)											= 0;
-		virtual AirportList							  GetAirportByIcao(std::string icao)																					= 0;
-		virtual std::vector<RunwayPaths>*	GetRunways()																																= 0;
-		virtual std::vector<int>*					GetRunwayStart(double lat, double lon, double direction)										= 0;
-		virtual std::vector<TPath>				GetPath(DWORD start, DWORD heading, double direction)												= 0;
-		virtual std::vector<TPath>				GetPath1(DWORD start, DWORD heading, int end)																= 0;
-		virtual DATA_RUNWAY								GetStartCoord(int index)																										= 0;
-		virtual DWORD											GetNearTaxiwayPoint(double Lat, double Lon)																	= 0;
-		virtual DWORD											GetNearTaxiwayPath(double Lat, double Lon, double heading)									= 0;
-		virtual std::vector<TPath>				GetPathGate(DWORD path, DWORD heading, double radius, TaxiwayParks * park)	= 0;
-		virtual void											SetHSim(HANDLE hSim)																												= 0;
-		virtual void											DispatchProc(SIMCONNECT_RECV * pData, DWORD cbData, void * pContext)				= 0;
-		virtual IAirport *								GetAirport()																																= 0;
-		std::vector<double>*							d																																						= 0;
+		virtual UINT									FillDB()																		= 0;
+		virtual int										GetProgress()																	= 0;
+		virtual void									Release()																		= 0;
+		virtual AirportList								GetNearAirport(double Lat, double Lon, int index = -1)							= 0;
+		virtual AirportList								GetAirportByIcao(std::string icao)												= 0;
+		virtual std::vector<RunwayPaths>*				GetRunways()																	= 0;
+		virtual std::vector<int>*						GetRunwayStart(double lat, double lon, double direction)						= 0;
+		virtual std::vector<TPath>						GetPath(DWORD start, DWORD heading, double direction)							= 0;
+		virtual std::vector<TPath>						GetPath1(DWORD start, DWORD heading, int end)									= 0;
+		virtual DATA_RUNWAY								GetStartCoord(int index)														= 0;
+		virtual DWORD									GetNearTaxiwayPoint(double Lat, double Lon)										= 0;
+		virtual DWORD									GetNearTaxiwayPath(double Lat, double Lon, double heading)						= 0;
+		virtual std::vector<TPath>						GetPathGate(DWORD path, DWORD heading, double radius, TaxiwayParks * park)		= 0;
+		virtual void									SetHSim(HANDLE hSim)															= 0;
+		virtual void									DispatchProc(SIMCONNECT_RECV * pData, DWORD cbData, void * pContext)			= 0;
+		virtual IAirport *								GetAirport()																	= 0;
+		std::vector<double>*							d																				= 0;
 		std::vector<TPath>*								ReturnPath;
-		std::string											RootSim;
-		
+		std::string										RootSim;	
 	};
 
 

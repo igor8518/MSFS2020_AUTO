@@ -32,6 +32,25 @@ public:
 	 std::vector<SimVar> SimVars;
 	 bool NewGSXQuestion = false;
 	 std::string ResponseStatus = "NEW";
+	 std::vector<std::string> GSXServicesName = {
+		 "DEBOARDING",
+		 "CATERING",
+		 "REFUELING",
+		 "BOARDING",
+		 "DEPARTURE",
+		 "DEICING",
+	 };
+
+	 std::vector<std::string> GSXServiceStatesName = {
+		 "",
+		 "CAN BE CALLED",
+		 "IS NOT AVAILABLE",
+		 "HAS BEEN BYPASSED",
+		 "HAS BEEN REQUESTED",
+		 "IS BEING PERFORMED",
+		 "HAS BEEN COMPLETED",
+	 };
+
 	 uint MaxClientDataDefinition = 0;
 	 std::vector<sVar> AllData = {
 		{"A320_Neo_MFD_NAV_MODE_1",								1, 	 999.99999999},
@@ -41,6 +60,7 @@ public:
 		{"A32NX_ADIRS_ADIRU_1_STATE",							1, 	 999.99999999},
 		{"A32NX_ADIRS_ADIRU_2_STATE",							1, 	 999.99999999},
 		{"A32NX_ADIRS_ADIRU_3_STATE",							1, 	 999.99999999},
+		{"A32NX_APPROACH_STATE",								1, 	 999.99999999},
 		{"A32NX_APU_FLAP_OPEN_PERCENTAGE",						1, 	 999.99999999},
 		{"A32NX_AUTOBRAKES_ARMED_MODE",							1, 	 999.99999999},
 		{"A32NX_AUTOBRAKES_ARMED_MODE_SET",						1, 	 999.99999999},
@@ -125,6 +145,8 @@ public:
 		{"FSDT_GSX_BOARDING_STATE",								1, 	 999.99999999},
 		{"FSDT_GSX_CATERING_STATE",								1, 	 999.99999999},
 		{"FSDT_GSX_COUATL_STARTED",								1, 	 999.99999999},
+		{"FSDT_GSX_DEBOARDING_STATE",							1, 	 999.99999999},
+		{"FSDT_GSX_DEICING_STATE",								1, 	 999.99999999},
 		{"FSDT_GSX_DEPARTURE_STATE",							1, 	 999.99999999},
 		{"FSDT_GSX_FUELHOSE_CONNECTED",							1, 	 999.99999999},
 		{"FSDT_GSX_FUEL_COUNTER_MAX",							1, 	 999.99999999},
@@ -132,6 +154,7 @@ public:
 		{"FSDT_GSX_MENU_OPEN",									1, 	 999.99999999},
 		{"FSDT_GSX_REFUELING_STATE",							1, 	 999.99999999},
 		{"FSDT_GSX_SIMBRIEF_SUCCESS",							1, 	 999.99999999},
+		{"FSDT_GSX_SET_REMOTECONTROL",							1,	 999.99999999},
 		{"LANDING_2_RETRACTED",									1, 	 999.99999999},
 		{"LANDING_3_RETRACTED",									1, 	 999.99999999},
 		{"LIGHTING_LANDING_2",									1, 	 999.99999999},
@@ -6747,6 +6770,8 @@ signals:
 	void GetDataChange(DWORD var, DWORD sender); //Direct
 	void SetGetDataChange(DWORD var1, DWORD var2, DWORD sender); //Direct
 	void SetSetDataChange(DWORD var1, DWORD var2, DWORD sender); //Direct
+	void SetServiceStates(DWORD service, DWORD state);
+	void SetServiceEnabled(DWORD service, bool enabled);
 
 public slots:
 	void TimerProc();

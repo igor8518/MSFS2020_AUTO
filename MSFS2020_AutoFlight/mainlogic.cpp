@@ -69,6 +69,7 @@ Ui::MSFS2020_AutoFlightClass* MainLogic::GetUi()
 }
 
 MainLogic::MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainObject, QObject* parent) : QObject(parent) {
+	this->mainObject = mainObject;
 	this->planesWork = planesWork;
 	qRegisterMetaType<DWORD>("DWORD");
 	this->ui = mainObject->GetUi();
@@ -92,6 +93,8 @@ MainLogic::MainLogic(PlanesWork* planesWork, MSFS2020_AutoFlight* mainObject, QO
 	ObjectConnectors->push_back(connect(this, SIGNAL(PlotCircle(double, double, double)), mainObject, SLOT(PlotCircle(double, double, double)), Qt::QueuedConnection));
 	ObjectConnectors->push_back(connect(this, SIGNAL(SelectRow(int)), mainObject, SLOT(SelectRow(int)), Qt::QueuedConnection));
 	//ObjectConnectors->push_back(connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(on_ChangeRow(QItemSelection, QItemSelection))));
+
+	
 	
 	ModelTable = new QTableViewModel();
 	ui->tableView->setModel(ModelTable);
@@ -1113,7 +1116,9 @@ VOID MainLogic::TimerProc()
 			//Mode = TAKEOFF;
 			//Mode = CRUISE;
 			//SendCommand(HDG_SEL, 180, 0);
-			//Mode = ENGINESTART;
+			if (debug) {
+				Mode = TAXIOUT;
+			}
 			CurrentLeg = Legs->at(CurrentWayIndex);
 			CurrentLeg.Lat = data->GData.PLANE_LATITUDE;
 			CurrentLeg.Lon = data->GData.PLANE_LONGITUDE;
@@ -1189,7 +1194,7 @@ VOID MainLogic::TimerProc()
 		if (beforeStart == 2) {
 			Log("End before start");
 		}
-		while (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value < 0);
+		while (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value >= 6);
 		if (data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 6 || data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 1 || data->AllData[FSDT_GSX_DEPARTURE_STATE].Value == 4) {
 			Log("mode: PUSHBACK, GSX Departure = 1");
 			CurrentLeg = Legs->at(CurrentWayIndex);
@@ -1356,6 +1361,7 @@ VOID MainLogic::TimerProc()
 			SendCommand(SET_GSPEED, -1, 0);
 			Sleep(5000);
 			Mode = TAXIOUT;
+			TaxiOutIndex = CurrentWayIndex;
 			Log("Taxiout");
 			Taxiway = CurrentWayIndex;
 			SendCommand(PARKBRAKE_SET, 0, 0);
@@ -1411,6 +1417,7 @@ VOID MainLogic::TimerProc()
 			DCommon = DCommon + AddRadius;
 		}
 		if (Mode == TAXIOUT) {
+			SendCommand(FLAPS_SET, 2, 0);
 			double RWDist = Utils::RunwayDictCalc(&RunWaysPathsOrig, &CurrentLeg);
 			if (RWDist < 0.1) {
 				SendCommand(LIGHTSTROBE_SET, 1, 0);
@@ -1448,6 +1455,13 @@ VOID MainLogic::TimerProc()
 		
 		if (minDCommon > CurrentLeg.Distance) {
 				minDCommon = CurrentLeg.Distance;
+		}
+		if (debug) {
+			if (((CurrentWayIndex + 3) >= Legs->size())) {
+				SendText("RESET", true);
+				CurrentWayIndex = TaxiOutIndex;
+				Mode = TAXIOUT;
+			}
 		}
 		if (((CurrentWayIndex + 1) >= Legs->size()) && (DCommon < 0.003) && ((minDCommon + 0.001) < DCommon)) {
 			SendCommand(SET_GSPEED, -5, 0);
@@ -1689,6 +1703,16 @@ VOID MainLogic::TimerProc()
 			SendCommand(SET_RUDDER, 0, 0);
 		}
 		//ManPitchWithFD(FlightDirectorPitch);
+		if (debug) {
+			if (ISpeed >= V1) {
+				int cI = CurrentWayIndex + 1;
+				while ((Legs->at(cI).Type != "RUNWAY") && (cI < (Legs->size() - 1))) {
+					cI++;
+				}
+				CurrentWayIndex = cI;
+				Mode = DESCENT;
+			}
+		}
 		if (ISpeed > VR) {
 			
 				if (SOG == 1) {
@@ -2067,25 +2091,27 @@ VOID MainLogic::TimerProc()
 					SendCommand(SPOILER_SET, 0, 0);
 					//SendCommand(LIGHTSTROBE_SET, 0, 0);
 					//SendCommand(FLAPS_SET, 0, 0);
-
-					AirportList ApList = AirportData->GetAirportByIcao(root["destination"].toObject()["icao_code"].toString().toStdString());
-					DWORD indexPath = AirportData->GetNearTaxiwayPath(Lat, Lon, TrueHeading);
-					TaxiwayParks* Park = new TaxiwayParks();
-					std::vector<TPath> Path = AirportData->GetPathGate(indexPath, TrueHeading, 15.0, Park);
-					DWORD PI = Park->TaxiParkInfo;
-					AddRadius = (Park->Radius - 13) / 1000;
-					DWORD PIi = (PI >> 12) & 0xfff;
-					DWORD PIt = (PI >> 8) & 0xf;
-					DWORD PIn = PI & 0x1f;
-					DWORD PIs = (PI >> 24) & 0xff;
-					ParkN = new std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn] + ParkSuffix[PIs]);
-					Legs->resize(CurrentWayIndex + 1);
-					//CountWays = CurrentWayIndex + 1;
-					AddWayPoint(Lon, Lat, 0.0, "RUNWAY", "Go out", TrueHeading, 0, 0, 0,0.0);
-					for (int i = 0; i < Path.size() - 1; i++) {
-						AddWayPoint(Path.at(i).Lon, Path.at(i).Lat, 0.0, TYPE_PATHS[Path[i].Type], QString(Path.at(i).name.c_str()), 0, 0, 0, 0,0.0);
-					}
-					AddWayPoint(Path.at(Path.size() - 1).Lon, Path.at(Path.size() - 1).Lat, 0, "GATE", QString(Path.at(Path.size() - 1).name.c_str()),0, 0, 0, 0,0.0);
+					//if (!TaxiInPathSet) {
+						AirportList ApList = AirportData->GetAirportByIcao(root["destination"].toObject()["icao_code"].toString().toStdString());
+						DWORD indexPath = AirportData->GetNearTaxiwayPath(Lat, Lon, TrueHeading);
+						TaxiwayParks* Park = new TaxiwayParks();
+						std::vector<TPath> Path = AirportData->GetPathGate(indexPath, TrueHeading, 15.0, Park);
+						//GetParkName
+						DWORD PI = Park->TaxiParkInfo;
+						AddRadius = (Park->Radius - 13) / 1000;
+						DWORD PIi = (PI >> 12) & 0xfff;
+						DWORD PIt = (PI >> 8) & 0xf;
+						DWORD PIn = PI & 0x1f;
+						DWORD PIs = (PI >> 24) & 0xff;
+						ParkN = new std::string(ParkType[PIt] + " " + std::to_string(PIi) + " " + ParkName[PIn] + ParkSuffix[PIs]);
+						Legs->resize(CurrentWayIndex + 1);
+						//CountWays = CurrentWayIndex + 1;
+						AddWayPoint(Lon, Lat, 0.0, "RUNWAY", "Go out", TrueHeading, 0, 0, 0, 0.0);
+						for (int i = 0; i < Path.size() - 1; i++) {
+							AddWayPoint(Path.at(i).Lon, Path.at(i).Lat, 0.0, TYPE_PATHS[Path[i].Type], QString(Path.at(i).name.c_str()), 0, 0, 0, 0, 0.0);
+						}
+						AddWayPoint(Path.at(Path.size() - 1).Lon, Path.at(Path.size() - 1).Lat, 0, "GATE", QString(Path.at(Path.size() - 1).name.c_str()), 0, 0, 0, 0, 0.0);
+					//}
 					CurrentWayIndex = CurrentWayIndex + 2;
 					if (Flight) {
 						delete Flight;
@@ -2690,8 +2716,12 @@ void MainLogic::SendDataPMDG(DWORD val) {
 
 void MainLogic::StartStopSim() {
 	if (Mode == PREPREPARE) {
-		cabinWork->Work = true;
+		cabinWork->Work = true;	
 		Mode = PREPARE;
+	}
+	if (Mode == TAXIOUT) {
+		cabinWork->Work = true;
+		SendCommand(START_TIMER, 0, 0);
 	}
 	if (MainTimer->isActive()) {
 		MainTimer->stop();
@@ -2767,7 +2797,7 @@ void MainLogic::Connect() {
 
 			SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, EVENT_TEXT));*/
 			/*SUCC(SimConnect_RequestSystemState(HSimConnect, REQ_AIR_PATH, "AircraftLoaded"));
-			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_SIM_START, "SimStart"));
+			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_SIM_START, "SimStart"));*/
 
 			hr = (SimConnect_MapClientEventToSimEvent(HSimConnect, EXTERNAL_SYSTEM_SET, "EXTERNAL_SYSTEM_SET"));
 			hr = (SimConnect_MapClientEventToSimEvent(HSimConnect, EXTERNAL_SYSTEM_TOGGLE, "EXTERNAL_SYSTEM_TOGGLE"));
@@ -2798,7 +2828,7 @@ void MainLogic::Connect() {
 			hr = SimConnect_AddClientEventToNotificationGroup(HSimConnect, 0, EXTERNAL_SYSTEM_TOGGLE);
 			hr = SimConnect_SetNotificationGroupPriority(HSimConnect, 0, SIMCONNECT_GROUP_PRIORITY_HIGHEST);
 
-			hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz"));*/
+			/*hr = (SimConnect_SubscribeToSystemEvent(HSimConnect, EVENT_6HZ, "6Hz")); */
 			SUCC(SimConnect_AddToDataDefinition(HSimConnect, SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, "Title", NULL, SIMCONNECT_DATATYPE_STRING256));
 			SUCC(SimConnect_RequestDataOnSimObject(HSimConnect, (SIMCONNECT_DATA_REQUEST_ID)SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, SIMCONNECT_DEFINE_ID::AIRCRAFT_NAME, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_SECOND, SIMCONNECT_DATA_REQUEST_FLAG_CHANGED, 0, 0, 0));
 			//SUCC(SimConnect_MapClientEventToSimEvent(HSimConnect, A32NX_APU_FLAP_OPEN_PERCENTAGE, "Autoflight.A32NX_APU_FLAP_OPEN_PERCENTAGE"));
@@ -2865,7 +2895,10 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(data, SIGNAL(SetGetDataChange(DWORD, DWORD, DWORD)), planesWork, SLOT(SetGetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
 			ConnectConnectors->push_back(connect(data, SIGNAL(SetSetDataChange(DWORD, DWORD, DWORD)), planesWork, SLOT(SetSetDataChange(DWORD, DWORD, DWORD)), Qt::DirectConnection));
 
-
+			ConnectConnectors->push_back(connect(data, SIGNAL(SetServiceStates(DWORD, DWORD)), mainObject, SLOT(SetServiceStates(DWORD, DWORD))));
+			ConnectConnectors->push_back(connect(this, SIGNAL(SetServiceEnabled(DWORD, bool)), mainObject, SLOT(SetServiceEnabled(DWORD, bool))));
+			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SetServiceEnabled(DWORD, bool)), mainObject, SLOT(SetServiceEnabled(DWORD, bool))));
+			ConnectConnectors->push_back(connect(data, SIGNAL(SetServiceEnabled(DWORD, bool)), mainObject, SLOT(SetServiceEnabled(DWORD, bool))));
 			
 
 			ConnectConnectors->push_back(connect(cabinWork, SIGNAL(SendText(QString, bool)), utils, SLOT(SetText(QString, bool))));
@@ -2894,6 +2927,8 @@ void MainLogic::Connect() {
 			ConnectConnectors->push_back(connect(this, SIGNAL(CLParking(int*)), cabinWork, SLOT(CLParking(int*))));
 
 			ConnectConnectors->push_back(connect(this, SIGNAL(CabinReport()), cabinWork, SLOT(CabinReport())));
+
+			
 			
 			Quit = FALSE;
 			Connected = TRUE;			
@@ -3521,18 +3556,18 @@ double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 	double a = Utils::GetFixDA(sin(EangleRel * M_PI / 180) * CurrentLeg.Distance, EangleRel);
 	double HeadingRel;
 	if ((data->GData.SIM_ON_GROUND== 1)) {
-		EangleRel = a * 500; //500
+		EangleRel = a * 2000; //500
 		if (data->GData.GROUND_VELOCITY < 10) {
-			EangleRel = a * 2000; //2000
+			EangleRel = a * 4000; //2000
 		}
 		if (data->GData.GROUND_VELOCITY < 7) {
-			EangleRel = a * 3000; //6000
+			EangleRel = a * 6000; //6000
 		}
 		if (data->GData.GROUND_VELOCITY < 5) {
-			EangleRel = a * 3000; //20000
+			EangleRel = a * 8000; //20000
 		}
 		if (data->GData.GROUND_VELOCITY < 2) {
-			EangleRel = a * 6000;
+			EangleRel = a * 10000;
 		}
 		
 		
@@ -3641,13 +3676,13 @@ double MainLogic::RudWithHead(double Heading) {
 			rudPID = PID(dt, HeadingRel, data->AllData[AI_RUDDER_P].Value / (data->GData.GROUND_VELOCITY / 4), data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value; //0.1,0.001,0.05,1.0,1.0
 		}
 		else {
-			rudPID = PID(dt, HeadingRel, data->AllData[AI_RUDDER_P].Value / 1.5, data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value; //0.1,0.001,0.05,1.0,1.0
+			rudPID = PID(dt, HeadingRel, data->AllData[AI_RUDDER_P].Value / 1.0, data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value; //0.1,0.001,0.05,1.0,1.0
 		}
 	}
 	if (data->GData.GROUND_VELOCITY > 5) {
 
 		if (data->GData.AIRSPEED_INDICATED > 60) {
-			rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2)); //50
+			rud = rud - (50 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2)); //50
 			//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral) * 16383;
 			//intParameter = -Utils::Constrain(rud, -3000, 3000);
 			intParameter = -Utils::Constrain(rud, -16383, 16383);
@@ -3673,7 +3708,8 @@ double MainLogic::RudWithHead(double Heading) {
 		intParameter = -Utils::Constrain(rud, -16383, 16383);
 	}
 	if (Mode == TAKEOFF || Mode == LANDING) {
-		intParameter = -Utils::Constrain(rud, -16383, 16383);
+		intParameter = -Utils::Constrain(rudPID, -16383, 16383);
+		//intParameter = -Utils::Constrain(rud, -16383, 16383);
 	}
 	else {
 		//rudPID = 0;

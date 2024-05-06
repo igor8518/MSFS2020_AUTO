@@ -38,6 +38,7 @@ class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    bool debug = false;
     bool pushbackMode = false;
     bool prevPushbackMode = false;
     bool firstLand = false;
@@ -57,6 +58,8 @@ public:
   DWORD Mode = 0;
   bool InTimer = false;
   DWORD CurrentWayIndex = 0;
+  DWORD TaxiOutIndex = 0;
+  bool TaxiInPathSet = false;
   DWORD FlightPhase;
   bool STAR = false;
   BOOL Quit = FALSE;
@@ -101,7 +104,7 @@ signals:
   void CLParking(int* Status);
   void CabinReport();
   void ReplotGraphs();
-  
+  void SetServiceEnabled(DWORD service, bool enabled);
 
   void RegisterVar(DWORD DefaultParameter, const char* unit = "");
   void GetDataSignal(DWORD sender, DWORD var, double* val, const char* unit = "");
@@ -195,6 +198,7 @@ private:
   double MaximumAltitude;
   CabinWork* cabinWork;
   PlanesWork* planesWork = NULL;
+  MSFS2020_AutoFlight* mainObject = NULL;
   ExQThread* TUtils;
   ExQThread* TData;
   ExQThread* TCabinWork;

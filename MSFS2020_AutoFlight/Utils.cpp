@@ -248,6 +248,50 @@ double Utils::DecodeLon(DWORD lon) {
 	return lon * (360.0 / (3 * 0x10000000)) - 180.0;
 }
 
+std::string Utils::DecodeICAO(DWORD CodedICAO)
+{
+	if (CodedICAO)
+	{
+		CodedICAO = CodedICAO >> 5;
+	}
+	std::string ICAO;
+	char oneCodedChar;
+	char CodedChars[10] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0' , '\0' , '\0' , '\0' };
+	int i = 0;
+	while (CodedICAO > 37)
+	{
+		oneCodedChar = CodedICAO % 38;
+		CodedChars[i] = oneCodedChar;
+		i++;
+		CodedICAO = (CodedICAO - oneCodedChar) / 38;
+		if (CodedICAO < 38)
+		{
+			oneCodedChar = (char)CodedICAO;
+			CodedChars[i] = oneCodedChar;
+		}
+	}
+
+	// The first coded char in the list is the last one computed in the while loop 
+
+	for (int j = i; j >= 0; j--)
+	{
+		if (CodedChars[j] == 0)
+		{
+			return ICAO;
+		}
+		else if (CodedChars[j] > 1 && CodedChars[j] < 12)
+		{
+			// digit 0-9
+			ICAO = ICAO + char('0' + (CodedChars[j] - 2));
+		}
+		else
+		{
+			// letter
+			ICAO = ICAO + char('A' + (CodedChars[j] - 12));
+		}
+	}
+	return ICAO;
+}
 
 
 

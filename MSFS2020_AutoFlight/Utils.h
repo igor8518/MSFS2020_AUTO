@@ -33,6 +33,7 @@ public slots:
   static double RunwayDictCalc(std::vector<sWayPoint>* runwayPaths, sWayPoint* CurrentLeg);
   static double DecodeLat(DWORD lat);
   static double DecodeLon(DWORD lon);
+  static std::string DecodeICAO(DWORD CodedICAO);
   //static double CalcToNewWay(bool changeWay, std::vector<sWayPoint>* wayPoints, sWayPoint* currentPos, int currentWay);
   //void DrawAirport(IAirportData* PAirportData, double Lat, double Lon, double Hed);
 private:

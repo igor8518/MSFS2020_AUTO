@@ -43,4 +43,7 @@ class Airport : public IAirport {
 		HRESULT							GetSids(ReadStreamText * SIDSTARFile);
 		
 		
+
+		std::string GetParkName(TaxiwayParks* park);
+
 };

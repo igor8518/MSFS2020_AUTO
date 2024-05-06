@@ -28,6 +28,8 @@ private slots:
   
   void realtimeDataSlot();
   void PlotCircle(double dist, double alt, double common);
+  void SetServiceStates(DWORD service, DWORD state);
+  void SetServiceEnabled(DWORD service, bool enabled);
   void PlotConstraints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex, int currentIndex);
   void PlotPoints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex);
   void PlotRealPath(double flyPoint, double planeAlt, double commonDistance);

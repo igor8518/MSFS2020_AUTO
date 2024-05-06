@@ -404,7 +404,8 @@ void PlanesWork::GSpeedSet(double pos, double Tr) {
 		if (_GSpeed <= 0) {
 			_Trust = 0;
 		}
-		setThrust(thrust);
+		//setThrust(thrust);
+		setThrust(0);
 		thrustSet = TRUE;
 		startTime = clock();
 		startSpeed = GS;
