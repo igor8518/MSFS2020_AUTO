@@ -25,12 +25,14 @@ int main(int argc, char *argv[])
 
     MSFS2020_AutoFlight* w = new MSFS2020_AutoFlight(planesWork);
     MainLogic* m = new MainLogic(planesWork, w);
+    planesWork->mainlogic = m;
     w->mainlogic = m;
     w->maimThread = new ExQThread("mainThread", m->utils);
     m->moveToThread(w->maimThread);
     w->maimThread->start();
 
     QObject::connect(w, SIGNAL(Connect()), m, SLOT(Connect()));
+    QObject::connect(w, SIGNAL(send_alternateChange(bool)), m, SLOT(SetAlternate(bool)));
     QObject::connect(w, SIGNAL(PMDGSend(DWORD)), m, SLOT(SendDataPMDG(DWORD)));
     QObject::connect(w, SIGNAL(StartSend()), m, SLOT(StartStopSim()));
     w->setWindowTitle("MSFS 2020 AutoFlight");

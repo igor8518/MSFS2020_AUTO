@@ -59,7 +59,8 @@ std::string Utils::Unpack(std::vector<double> values) {
 		BYTE char1 = i % 8;
 		UINT64 fst = values[word];
 		DWORD a1 = char1 * 6;
-		UINT64 a2 = 1 << a1;
+		//UINT64 a2 = 1 << a1;
+		UINT64 a2 = pow(2, a1);
 		UINT64 a3 = floor(fst / a2);
 		BYTE a4 = a3 & 0x3f;
 		BYTE code = UINT64(floor(double(values[word]) / double((pow(2,(char1 * 6)))))) & 0x3f;

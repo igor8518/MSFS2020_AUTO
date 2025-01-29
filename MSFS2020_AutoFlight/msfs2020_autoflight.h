@@ -34,7 +34,7 @@ private slots:
   void PlotPoints(std::vector<sWayPoint>* Legs, int startIndex, int endIndex);
   void PlotRealPath(double flyPoint, double planeAlt, double commonDistance);
   void SelectRow(int Row);
-  void on_ChangeRow(QItemSelection Row, QItemSelection prev);
+  void on_ChangeRow(int Row, int prev);
   void on_sb1P(double val);
   void on_sb1I(double val);
   void on_sb1D(double val);
@@ -43,11 +43,13 @@ private slots:
   void on_cb2curr(QString text);
   void on_cb3curr(QString text);
   void on_vs1(int pos);
+  void on_alternateChange(bool check);
 signals:
   void Connect();
   void ChangeCurrentLegIndex(int currentLegIndex);
   void PMDGSend(DWORD val);
   void StartSend();
+  void send_alternateChange(bool check);
 private:
   QObject* planesWork;
   QCPItemEllipse* pos;

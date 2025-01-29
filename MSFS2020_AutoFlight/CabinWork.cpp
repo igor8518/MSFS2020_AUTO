@@ -235,7 +235,7 @@ void CabinWork::CLCocpitPreparation(int* Status)
 		SetServiceEnabled(CATERING, true);
 		while (DataT->AllData[FSDT_GSX_BOARDING_STATE].Value != 6 ||
 			(DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 1 &&
-			DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 6) ||
+				DataT->AllData[FSDT_GSX_REFUELING_STATE].Value != 6) ||
 			DataT->AllData[FSDT_GSX_CATERING_STATE].Value != 6);
 		SetServiceEnabled(BOARDING, false);
 		SetServiceEnabled(REFUELING, false);
@@ -508,7 +508,7 @@ void CabinWork::CLParking(int* Status) {
 		WindowsAndDoors(5, 1);
 		WindowsAndDoors(2, 1);
 		Sleep(2000);
-		SendEvent(KEY_TOGGLE_JETWAY, 1);
+		//SendEvent(KEY_TOGGLE_JETWAY, 1);
 		*Status = 2;
 	}
 }
@@ -663,12 +663,17 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 	DWORD var;
 	//if (num < 11) {
 		switch (num) {
-		/*case 9: {
-			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH9 != onoff) {
-				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+		case 9: {
+			if (DataT->GData.FUELSYSTEM_VALVE_SWITCH9 != onoff) {
+				if (onoff) {
+					emit SendEvent(KEY_FUELSYSTEM_VALVE_OPEN, num);
+				}
+				else {
+					emit SendEvent(KEY_FUELSYSTEM_VALVE_CLOSE, num);
+				}
 			}
 			break;
-		}*/
+		}
 		case 2: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH2 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
@@ -681,12 +686,17 @@ void CabinWork::FuelPump(DWORD num, DWORD onoff) {
 			}
 			break;
 		}
-		/*case 10: {
-			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH10 != onoff) {
-				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
+		case 10: {
+			if (DataT->GData.FUELSYSTEM_VALVE_SWITCH10 != onoff) {
+				if (onoff) {
+					emit SendEvent(KEY_FUELSYSTEM_VALVE_OPEN, num);
+				}
+				else {
+					emit SendEvent(KEY_FUELSYSTEM_VALVE_CLOSE, num);
+				}
 			}
 			break;
-		}*/
+		}
 		case 5: {
 			if (DataT->GData.FUELSYSTEM_PUMP_SWITCH5 != onoff) {
 				emit SendEvent(KEY_FUELSYSTEM_PUMP_TOGGLE, num);
@@ -1185,6 +1195,9 @@ void CabinWork::AltSet(DWORD alt) {
 				Sleep(100);
 			}
 		}
+	}
+	else {
+		Alt = -1;
 	}
 }
 
@@ -1793,11 +1806,11 @@ void CabinWork::TimerProc() {
 			}
 			else if (Alt >= 100) {
 				AltSet(Alt);
-				Alt = -1;
+				//Alt = -1;
 			}
 			else {
 				AltSet(100);
-				Alt = -1;
+				//Alt = -1;
 			}
 			if (SpeedMode == 1) {
 				SendEvent(A32NX_FCU_SPD_PUSH, 1);

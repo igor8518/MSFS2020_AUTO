@@ -27,7 +27,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="5,3">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,1,5">
+       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,1,0">
         <item>
          <widget class="QPushButton" name="ConnectButton">
           <property name="enabled">
@@ -172,6 +172,13 @@
                  <widget class="QLabel" name="delta">
                   <property name="text">
                    <string>0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="alternateBox">
+                  <property name="text">
+                   <string>Alternate</string>
                   </property>
                  </widget>
                 </item>
@@ -477,8 +484,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1286</x>
-     <y>473</y>
+     <x>1314</x>
+     <y>527</y>
     </hint>
     <hint type="destinationlabel">
      <x>144</x>
@@ -509,8 +516,8 @@
    <slot>on_cc1(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>590</x>
-     <y>129</y>
+     <x>729</x>
+     <y>154</y>
     </hint>
     <hint type="destinationlabel">
      <x>630</x>
@@ -525,8 +532,8 @@
    <slot>on_vs1(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>500</x>
-     <y>193</y>
+     <x>543</x>
+     <y>227</y>
     </hint>
     <hint type="destinationlabel">
      <x>656</x>
@@ -589,8 +596,8 @@
    <slot>on_sb1P(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>570</x>
-     <y>134</y>
+     <x>651</x>
+     <y>160</y>
     </hint>
     <hint type="destinationlabel">
      <x>557</x>
@@ -605,8 +612,8 @@
    <slot>on_sb1I(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>570</x>
-     <y>164</y>
+     <x>651</x>
+     <y>191</y>
     </hint>
     <hint type="destinationlabel">
      <x>554</x>
@@ -621,8 +628,8 @@
    <slot>on_sb1D(double)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>570</x>
-     <y>194</y>
+     <x>651</x>
+     <y>222</y>
     </hint>
     <hint type="destinationlabel">
      <x>583</x>
@@ -637,8 +644,8 @@
    <slot>on_startButton()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>435</x>
-     <y>74</y>
+     <x>446</x>
+     <y>95</y>
     </hint>
     <hint type="destinationlabel">
      <x>668</x>
@@ -653,8 +660,8 @@
    <slot>on_PMDGButton()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>767</x>
-     <y>184</y>
+     <x>817</x>
+     <y>221</y>
     </hint>
     <hint type="destinationlabel">
      <x>668</x>
@@ -669,8 +676,24 @@
    <slot>on_OpenAirport()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1105</x>
-     <y>484</y>
+     <x>1228</x>
+     <y>527</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>663</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>alternateBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MSFS2020_AutoFlightClass</receiver>
+   <slot>on_ButtonConnect()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>694</x>
+     <y>189</y>
     </hint>
     <hint type="destinationlabel">
      <x>663</x>

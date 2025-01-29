@@ -38,6 +38,8 @@ class MainLogic : public QObject {
   Q_OBJECT;
   
 public:
+    double NPitch = 0;
+    bool Alternate = false;
     bool debug = false;
     bool pushbackMode = false;
     bool prevPushbackMode = false;
@@ -137,7 +139,7 @@ private slots:
   double GetAngleFront(double frontOut, bool nose);
 
   double PID(double dt, double err, double kp, double ki, double kd, double bi, double bd, double* prevErr, double* integral);
-
+  void SetAlternate(bool alternate);
   void ManPitchWithFD(double NPitch);
   void ManBankWithFD(double NNBank);
   double BankWithHead(double Heading);

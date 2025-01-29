@@ -713,6 +713,7 @@ VOID MainLogic::TimerProc()
 				}
 				if (countWays > 0) {
 					std::string RWFromSB = root["origin"].toObject()["plan_rwy"].toString().toStdString();
+					//RWFromSB = "03";
 					for (int RC = 0; RC < RunwayWaysOrig->size(); RC++) {
 						if (RunwayWaysOrig->at(RC).at(RunwayWaysOrig->at(RC).size() - 1).name == RWFromSB) {
 							rrr = RC;
@@ -1069,7 +1070,7 @@ VOID MainLogic::TimerProc()
 				Legs->at(STARPoint).Name = QString((OrigStars->at(Star).STAR + " -> " + OrigStars->at(Star).APPROACH).c_str());
 			}
 			else {
-				SIMCONNECT_DATA_LATLONALT latlon = Utils::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, 18.0);
+				SIMCONNECT_DATA_LATLONALT latlon = Utils::GetDALatLon(runway.sLatitude, runway.sLongitude, runway.eHeading, -20.0);
 				AddWayPoint(latlon.Longitude, latlon.Latitude, runway.alt + 2000.0, "FIX", "GlideAngle 18.0 " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt + 2000.0);
 				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt + 2000.0, "WAYPOINT", "FINAL " + QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt + 2000.0);
 				AddWayPoint(runway.sLongitude, runway.sLatitude, runway.alt, "GSWAY", QString(runway.Name.c_str()), 0, FIXALT, 0.0, 0, runway.alt);
@@ -1377,6 +1378,7 @@ VOID MainLogic::TimerProc()
 		Utils::DOrtoKM(&CurrentLeg);
 		double AngleFront = GetAngleFront(0.04, false);
 		double NoseFront = GetAngleFront(0.01, false);
+		double heading = data->GData.PLANE_HEADING_DEGREES_TRUE;
 		double HeadingRel = ManHeadWithWay(&Legs->at(CurrentWayIndex));
 		//double HeadingRel = RudWithHead(data->GData.PLANE_HEADING_DEGREES_TRUE + NoseFront);
 		double DCommon = Utils::DToType(CurrentWayIndex, Legs, "RUNWAY", &CurrentLeg, Utils::Constrain180(CurrentLeg.EndHeadingTrue-data->GData.PLANE_HEADING_DEGREES_TRUE));
@@ -1410,7 +1412,7 @@ VOID MainLogic::TimerProc()
 		if ((CurrentWayIndex + 1) >= Legs->size()) {
 			DToHed = 0.001;
 		}
-		double EangleRel = Utils::Constrain180(CurrentLeg.HeadingTrue - Legs->at(CurrentWayIndex).EndHeadingTrue);
+		double EangleRel = Utils::Constrain180(CurrentLeg.EndHeadingTrue - Legs->at(CurrentWayIndex).EndHeadingTrue);
 
 		double a = Utils::GetFixDA(sin(EangleRel * M_PI / 180) * CurrentLeg.Distance, EangleRel);
 		if (Mode == TAXIIN) {
@@ -1502,7 +1504,7 @@ VOID MainLogic::TimerProc()
 			}
 		}
 		else {
-			if ((abs(HeadingRel) < 2.0) && (abs(a) < 0.002) && (CurrentLeg.Distance > 0.200)) {
+			if ((abs(Utils::Constrain180(CurrentLeg.HeadingTrue - heading)) < 0.5) && (abs(a) < 0.002) && (CurrentLeg.Distance > 0.200)) {
 				if (((CurrentWayIndex + 1) != Legs->size()) && ((Legs->at(CurrentWayIndex).Type == "RUNWAY"))) {
 					speed = -1;
 					SendCommand(LIGHTLANDING_SET, 1, 0);
@@ -1510,15 +1512,17 @@ VOID MainLogic::TimerProc()
 					if (data->GData.GROUND_VELOCITY < 1) {
 
 						SendCommand(SET_TRUST, 40, 0);
-						while ((data->GData.ENG_N1_RPM1 < 0.4) && (data->GData.ENG_N1_RPM2 < 0.4));
+						//while ((data->GData.ENG_N1_RPM1 < 0.4) && (data->GData.ENG_N1_RPM2 < 0.4));					
+						//CurrentWayIndex = Taxiway;
+
+					}
+					if ((data->GData.ENG_N1_RPM1 > 0.4) && (data->GData.ENG_N1_RPM2 > 0.4)) {
 						//speed = 180;
+						SendCommand(SET_TRUST, 41, 0);
 						Flight = new WriteStream(AirportData->RootSim + "\\Flight.csv");
 						lastlon = CurrentLeg.Lon;
 						lastlat = CurrentLeg.Lat;
 						Mode = TAKEOFF;
-						
-						//CurrentWayIndex = Taxiway;
-
 					}
 				}
 				else {
@@ -1639,7 +1643,7 @@ VOID MainLogic::TimerProc()
 		std::string RIdent = Utils::Unpack({ data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_0].Value, data->AllData[A32NX_EFIS_R_TO_WPT_IDENT_1].Value });
 		//SendCommand(SET_THROTTLE, 4000, 0);
 		SendCommand(SET_ATHR, 1, 0);
-		double NPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
+		NPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
 		double NBank = data->AllData[A32NX_FLIGHT_DIRECTOR_BANK].Value;
 		//FlightDirectorPitch = -15;
 		double ISpeed = data->GData.AIRSPEED_INDICATED;
@@ -1716,18 +1720,21 @@ VOID MainLogic::TimerProc()
 		if (ISpeed > VR) {
 			
 				if (SOG == 1) {
-					ManPitchWithFD(-15);
+					NPitch = -15;
+					ManPitchWithFD(NPitch);
 				}
 				if (data->GData.AUTOPILOT_FLIGHT_DIRECTOR_ACTIVE1) {
 					if ((GAlt < 500) && (SOG == 0)) {
 						ManPitchWithFD(NPitch);
 					}
 					else {
-						ManPitchWithFD(-15);
+						NPitch = -15;
+						ManPitchWithFD(NPitch);
 					}
 				}
 				else if (SOG == 0) {
-					ManPitchWithFD(-10);
+					NPitch = -10;
+					ManPitchWithFD(NPitch);
 				}
 			if ((VSpeed > 1000) && (SOG == FALSE) && (GAlt > 100)) {
 				double intpParameter = 0.0;
@@ -1809,9 +1816,9 @@ VOID MainLogic::TimerProc()
 			}
 		}
 	}
-	if ((Mode == CRUISE)||(Mode == DESCENT)) {
+	if ((Mode == CRUISE)||(Mode == DESCENT)||(Mode == LANDING)) {
 		QJsonObject root = document.object();
-		double FlightDirectorPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
+		NPitch = (data->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + data->GData.PLANE_PITCH_DEGREES);
 		double FlightDirectorBank = (data->AllData[A32NX_FLIGHT_DIRECTOR_BANK].Value);
 		double Pitch = data->GData.PLANE_PITCH_DEGREES;
 		double IAS = data->GData.AIRSPEED_INDICATED;
@@ -2077,6 +2084,7 @@ VOID MainLogic::TimerProc()
 		else {
 			if (landing == 0) {
 				emit CLLanding(&landing);
+				Mode == LANDING;
 			}
 			//LANDING
 			SendCommand(AUTOBRAKES_SET, 1, 0);
@@ -2174,28 +2182,31 @@ VOID MainLogic::TimerProc()
 				Pitch50 = Pitch;
 			}
 			if (GroundAltitude > 100) {
-				ManPitchWithFD(FlightDirectorPitch);
+				ManPitchWithFD(NPitch);
 			}
 			else if (GroundAltitude > 30) {
 				if ((DTForLanding % 10) == 0) {
-					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(NPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
 				}
 				//ManPitchWithFD(Pitch50);
-				ManPitchWithFD(-2.5);
+				NPitch = -2.5;
+				ManPitchWithFD(NPitch);
 			}
 			else if (GroundAltitude > 20) {
 				if ((DTForLanding % 10) == 0) {
-					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(NPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
 				}
 				//ManPitchWithFD(Pitch50);
-				ManPitchWithFD(-3.0);
+				NPitch = -3.0;
+				ManPitchWithFD(NPitch);
 			}
 			else {
 				//ManPitchWithFD(Pitch50 - 2.0);
 				if ((DTForLanding % 10) == 0) {
-					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(FlightDirectorPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
+					emit SendLog("Alt: " + QString::number(GroundAltitude) + "; FDP: " + QString::number(NPitch) + "; Pitch: " + QString::number(Pitch) + ";VS: " + QString::number(VerticalSpeed));
 				}
-				ManPitchWithFD(-4.0);
+				NPitch = -4.0;
+				ManPitchWithFD(NPitch);
 			}
 			
 			
@@ -2213,7 +2224,8 @@ VOID MainLogic::TimerProc()
 				SendCommand(SET_AILERON, 0, 0);
 			}
 			else {
-				ManPitchWithFD(0);
+				NPitch = 0.0;
+				ManPitchWithFD(NPitch);
 			}
 			
 			//AltPitchWithPos(0);
@@ -3555,7 +3567,7 @@ double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 	double EangleRel = Utils::Constrain180(CurrentLeg.EndHeadingTrue - EndHead);
 	double a = Utils::GetFixDA(sin(EangleRel * M_PI / 180) * CurrentLeg.Distance, EangleRel);
 	double HeadingRel;
-	if ((data->GData.SIM_ON_GROUND== 1)) {
+	if ((data->GData.SIM_ON_GROUND== 1) || data->GData.PLANE_ALT_ABOVE_GROUND < 3000.0) {
 		EangleRel = a * 2000; //500
 		if (data->GData.GROUND_VELOCITY < 10) {
 			EangleRel = a * 4000; //2000
@@ -3578,6 +3590,9 @@ double MainLogic::ManHeadWithWay(sWayPoint* Way) {
 		HeadingRel = RudWithHead(EangleRel);
 	}
 	else {
+		SendCommand(SET_RUDDER, 0, 0);
+	}
+	if (data->GData.SIM_ON_GROUND == 0) {
 		if ((CurrentLeg.Type == TYPE_PATHS[GSWAY]) || (CurrentLeg.Type == TYPE_PATHS[RUNWAY])) {
 			EangleRel = a * 500 / CurrentLeg.Distance;
 		}
@@ -3648,7 +3663,7 @@ double MainLogic::PID(double dt, double err, double kp, double ki, double kd, do
 double MainLogic::RudWithHead(double Heading) {
 	double VelV = data->GData.ROTATION_VELOCITY_BODY_Y;
 	VelV = VelV / 1;
-	
+
 	static double sHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
 	double eHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
 	double HeadingRel = Utils::Constrain180(Heading - data->GData.PLANE_HEADING_DEGREES_TRUE);
@@ -3664,12 +3679,15 @@ double MainLogic::RudWithHead(double Heading) {
 	double rud = data->GData.RUDDER_PEDAL_POSITION * 16383;
 	double rudPID = 0;
 	int intParameter;
-	if (!data->GData.SIM_ON_GROUND) {
+	if (data->GData.PLANE_ALT_ABOVE_GROUND > 20.0) {
 		integral = 0;
 		//rudPID = 0;
+		prevErr = 0;
+		sHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
+		rudPID = PID(dt, 0.0, data->AllData[AI_RUDDER_P].Value / (data->GData.GROUND_VELOCITY / 4), data->AllData[AI_RUDDER_I].Value, data->AllData[AI_RUDDER_D].Value, data->AllData[AI_RUDDER_IB].Value, data->AllData[AI_RUDDER_ID].Value, &prevErr, &integral) * data->AllData[AI_RUDDER_K].Value;
 	}
 	else {
-		if (data->GData.GROUND_VELOCITY < 0.5) {
+		if (data->GData.GROUND_VELOCITY < 1) {
 			rudPID = 0;
 		}
 		else if (data->GData.GROUND_VELOCITY < 5) {
@@ -3693,12 +3711,15 @@ double MainLogic::RudWithHead(double Heading) {
 				//rud = computePID(dt, HeadingRel, 0.15, 0.001, 0.001, 1.0, 1.0, &prevErr, &integral) * 16383;
 				//intParameter = -Utils::Constrain(rud, -13100, 13100);
 				intParameter = -Utils::Constrain(rud, -16383, 16383);
-			} 
+			}
 			else {
 				rud = rud - (100 * (VelV - parameter) * (data->GData.GROUND_VELOCITY / 2));
 				//rud = computePID(dt, HeadingRel, 0.0, 0.0, 0.1, 1.0, 1.0, &prevErr, &integral) * 16383;
 				//intParameter = -Utils::Constrain(rud, -15290, 15290);
 				intParameter = -Utils::Constrain(rud, -16383, 16383);
+			}
+			if (data->GData.GROUND_VELOCITY < 1.0) {
+				intParameter = 0;
 			}
 		}
 	}
@@ -3710,6 +3731,9 @@ double MainLogic::RudWithHead(double Heading) {
 	if (Mode == TAKEOFF || Mode == LANDING) {
 		intParameter = -Utils::Constrain(rudPID, -16383, 16383);
 		//intParameter = -Utils::Constrain(rud, -16383, 16383);
+	}
+	else if (Mode == CRUISE) {
+		intParameter = -Utils::Constrain(rudPID, -4096, 4096);
 	}
 	else {
 		//rudPID = 0;
@@ -3723,6 +3747,7 @@ double MainLogic::RudWithHead(double Heading) {
 		//SendEvent(KEY_TUG_HEADING, (0xFFFFFFFF / 360) * Heading);
 		SetDataL(A32NX_PUSHBACK_HDG_FACTOR, double(-intParameter / 16383.0));
 	}
+
 	SendCommand(SET_RUDDER, intParameter, 0);
 
 	sHed = data->GData.PLANE_HEADING_DEGREES_TRUE;
@@ -3753,93 +3778,101 @@ double MainLogic::LimitVal(double val, double min, double max = 8518) {
 	return val;
 }
 
+void MainLogic::SetAlternate(bool alternate) {
+	Alternate = alternate;
+}
+
 void MainLogic::ManPitchWithFD(double RequiredPitch) {
 	//if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
 		//static double StickYPos = data->GData.YOKE_Y_POSITION;
-
-	static double prevErr = 0;
-	static double integral = 0;
-
-	double Coefficient = 15;
-	if (Mode == TAKEOFF) {
-		Coefficient = 70;
-	}
-	if (Mode == CRUISE) {
-		Coefficient = 30;
-	}
-	if (landing != 0) {
-		Coefficient = 50;
-	}
-	if ((Mode == DESCENT) && ((data->GData.PLANE_ALT_ABOVE_GROUND - 9) < 100) && (data->GData.SIM_ON_GROUND == 0)) {
-		Coefficient = 70;
-	} 
-	
-	static double StickYPos = data->AllData[A32NX_SIDESTICK_POSITION_Y].Value * 16383;
-	static int countFails = 5;
-	if (countFails >= 0) { //5
-		countFails = 0;
-		SetDataPitch = true;
-	}
-
-	/*if (round(StickYPos * 1000000) == round(StickYPos * 1000000)) {
-		SetDataPitch = true;
-	}*/
-	if (SetDataPitch) {
-		static clock_t sTime = 0; //Start time
-		clock_t cTime = clock(); //Current time
-		static double LastPitch = 0;
-		static double LastRequiredPich = 0;
-		double CurrentPitch = data->GData.PLANE_PITCH_DEGREES;
-		//double RequiredPitch_L = RequiredPitch;
-		double DeltaTime = cTime - sTime; //Delta time from last iterration
-		
-		//ui->delta->setText(QString::number(DeltaTime, 'f', 3));
-		//Safe NaN
-		if (DeltaTime == 0) {
-			DeltaTime = 0.000001;
-		}
-		double dt = DeltaTime;
-		double PichVelocity = CalcVelocity(LastPitch, CurrentPitch, DeltaTime);
-		double RequiredPitchVelocity = CalcVelocity(LastRequiredPich, RequiredPitch, DeltaTime);
-
-		double PitchRelative = RequiredPitch - CurrentPitch; //Relative pitch
-
-		PitchRelative = Utils::Constrain180(PitchRelative);
-
-		double NeededChangeStickYPos = ((PitchRelative / 10 + RequiredPitchVelocity - PichVelocity) * 500);
-
-		NeededChangeStickYPos = LimitVal(NeededChangeStickYPos, Coefficient);
-
-		double NewStickYPos = StickYPos + NeededChangeStickYPos;
-
-		//Test PID
-		//NewStickYPos = PID(dt, PitchRelative, 1000.0, 0.1, 5.0, 100, 100.0, &prevErr, &integral); //0.1,0.001,0.05,1.0,1.0
-		NewStickYPos = PID(dt, PitchRelative, data->AllData[AI_PITCH_P].Value, data->AllData[AI_PITCH_I].Value, data->AllData[AI_PITCH_D].Value, data->AllData[AI_PITCH_IB].Value, data->AllData[AI_PITCH_ID].Value, &prevErr, &integral) * data->AllData[AI_PITCH_K].Value; //0.1,0.001,0.05,1.0,1.0
-		//////////
-
-		NewStickYPos = LimitVal(NewStickYPos, 16383);
-
-		if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
-			SendCommand(SET_ELEVATOR, NewStickYPos, 0);
-		}
-		else {
-			SendCommand(SET_ELEVATOR, 0, 0);
-			StickYPos = 0;
-			NewStickYPos = 0;
-		}
-		sTime = clock();
-		StickYPos = NewStickYPos;
-		LastPitch = CurrentPitch;
-		LastRequiredPich = RequiredPitch;
-		SetDataPitch = true;
+	if (Alternate) {
+		AltPitchWithPos(RequiredPitch);
 	}
 	else {
-		countFails++;
+		static double prevErr = 0;
+		static double integral = 0;
+
+		double Coefficient = 15;
+		if (Mode == TAKEOFF) {
+			Coefficient = 70;
+		}
+		if (Mode == CRUISE) {
+			Coefficient = 30;
+		}
+		if (landing != 0) {
+			Coefficient = 50;
+		}
+		if ((Mode == DESCENT || Mode == LANDING) && ((data->GData.PLANE_ALT_ABOVE_GROUND - 9) < 100) && (data->GData.SIM_ON_GROUND == 0)) {
+			Coefficient = 70;
+		}
+
+		static double StickYPos = data->AllData[A32NX_SIDESTICK_POSITION_Y].Value * 16383;
+		static int countFails = 5;
+		if (countFails >= 0) { //5
+			countFails = 0;
+			SetDataPitch = true;
+		}
+
+		/*if (round(StickYPos * 1000000) == round(StickYPos * 1000000)) {
+			SetDataPitch = true;
+		}*/
+		if (SetDataPitch) {
+			static clock_t sTime = 0; //Start time
+			clock_t cTime = clock(); //Current time
+			static double LastPitch = 0;
+			static double LastRequiredPich = 0;
+			double CurrentPitch = data->GData.PLANE_PITCH_DEGREES;
+			//double RequiredPitch_L = RequiredPitch;
+			double DeltaTime = cTime - sTime; //Delta time from last iterration
+
+			//ui->delta->setText(QString::number(DeltaTime, 'f', 3));
+			//Safe NaN
+			if (DeltaTime == 0) {
+				DeltaTime = 0.000001;
+			}
+			double dt = DeltaTime;
+			double PichVelocity = CalcVelocity(LastPitch, CurrentPitch, DeltaTime);
+			double RequiredPitchVelocity = CalcVelocity(LastRequiredPich, RequiredPitch, DeltaTime);
+
+			double PitchRelative = RequiredPitch - CurrentPitch; //Relative pitch
+
+			PitchRelative = Utils::Constrain180(PitchRelative);
+
+			double NeededChangeStickYPos = ((PitchRelative / 10 + RequiredPitchVelocity - PichVelocity) * 500);
+
+			NeededChangeStickYPos = LimitVal(NeededChangeStickYPos, Coefficient);
+
+			double NewStickYPos = StickYPos + NeededChangeStickYPos;
+
+			//Test PID
+			//NewStickYPos = PID(dt, PitchRelative, 1000.0, 0.1, 5.0, 100, 100.0, &prevErr, &integral); //0.1,0.001,0.05,1.0,1.0
+			NewStickYPos = PID(dt, PitchRelative, data->AllData[AI_PITCH_P].Value, data->AllData[AI_PITCH_I].Value, data->AllData[AI_PITCH_D].Value, data->AllData[AI_PITCH_IB].Value, data->AllData[AI_PITCH_ID].Value, &prevErr, &integral) * data->AllData[AI_PITCH_K].Value; //0.1,0.001,0.05,1.0,1.0
+			//////////
+
+			NewStickYPos = LimitVal(NewStickYPos, 16383);
+
+			if (!data->AllData[A32NX_AUTOPILOT_ACTIVE].Value) {
+				SendCommand(SET_ELEVATOR, NewStickYPos, 0);
+			}
+			else {
+				SendCommand(SET_ELEVATOR, 0, 0);
+				StickYPos = 0;
+				NewStickYPos = 0;
+			}
+			sTime = clock();
+			StickYPos = NewStickYPos;
+			LastPitch = CurrentPitch;
+			LastRequiredPich = RequiredPitch;
+			SetDataPitch = true;
+		}
+		else {
+			countFails++;
+		}
+		//}
+		//else {
+		//	SendCommand(SET_ELEVATOR, 0, 0);
+		//}
 	}
-	//}
-	//else {
-	//	SendCommand(SET_ELEVATOR, 0, 0);
-	//}
 }
 
 void MainLogic::ManBankWithFD(double NNBank) {

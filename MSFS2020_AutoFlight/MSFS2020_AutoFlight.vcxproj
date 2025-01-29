@@ -43,7 +43,7 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <IncludePath>..\AirportData\Extern;C:\MSFS SDK\SimConnect SDK\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;X:\Qt\5.15.2\msvc2019_64\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\x64\Debug;C:\MSFS SDK\SimConnect SDK\lib;E:\Qt\5.15.2\msvc2019_64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <IncludePath>..\AirportData\Extern;C:\MSFS SDK\SimConnect SDK\include;$(IncludePath)</IncludePath>
@@ -74,6 +74,7 @@
     <QtBuildConfig>debug</QtBuildConfig>
     <QtQMLDebugEnable>true</QtQMLDebugEnable>
     <QtDeploy>true</QtDeploy>
+    <QtPlugin>true</QtPlugin>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>5.15.2_msvc2019_64</QtInstall>

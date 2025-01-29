@@ -3,6 +3,7 @@
 
 #include "SimData.h"
 #include "SimData.h"
+class MainLogic;
 class PlanesWork : public QObject {
   Q_OBJECT
 
@@ -10,6 +11,23 @@ class PlanesWork : public QObject {
     Q_PROPERTY(double InThrottle READ inThrottle WRITE setInThrottle)
     Q_PROPERTY(double minInThrottle READ minInThrottle)
     Q_PROPERTY(double maxInThrottle READ maxInThrottle)
+
+    Q_PROPERTY(bool sourceNPitch READ sourceNPitch WRITE setSourceNPitch)
+    Q_PROPERTY(double NPitch READ NPitch WRITE setNPitch)
+    Q_PROPERTY(double minNPitch READ minNPitch)
+    Q_PROPERTY(double maxNPitch READ maxNPitch)
+
+    Q_PROPERTY(double Pitch READ Pitch)
+    Q_PROPERTY(double minDPitch READ minDPitch)
+    Q_PROPERTY(double maxDPitch READ maxDPitch)
+
+    Q_PROPERTY(double DPitch READ DPitch)
+    Q_PROPERTY(double minDPitch READ minDPitch)
+    Q_PROPERTY(double maxDPitch READ maxDPitch)
+
+    Q_PROPERTY(double VS READ VS)
+    Q_PROPERTY(double minPitch READ minPitch)
+    Q_PROPERTY(double maxPitch READ maxPitch)
 
     Q_PROPERTY(bool sourceInAileron READ sourceAileron WRITE setSourceAileron)
     Q_PROPERTY(double InAileron READ inAileron WRITE setInAileron)
@@ -64,6 +82,10 @@ class PlanesWork : public QObject {
     Q_PROPERTY(double IInThrottleOutThrottle READ IInThrottleOutThrottle WRITE setIInThrottleOutThrottle)
     Q_PROPERTY(double DInThrottleOutThrottle READ DInThrottleOutThrottle WRITE setDInThrottleOutThrottle)
 
+    Q_PROPERTY(double PNPitchPitch READ PNPitchPitch WRITE setPNPitchPitch)
+    Q_PROPERTY(double INPitchPitch READ INPitchPitch WRITE setINPitchPitch)
+    Q_PROPERTY(double DNPitchPitch READ DNPitchPitch WRITE setDNPitchPitch)
+
     Q_PROPERTY(double PInAileronOutAileron READ PInAileronOutAileron WRITE setPInAileronOutAileron)
     Q_PROPERTY(double IInAileronOutAileron READ IInAileronOutAileron WRITE setIInAileronOutAileron)
     Q_PROPERTY(double DInAileronOutAileron READ DInAileronOutAileron WRITE setDInAileronOutAileron)
@@ -96,9 +118,18 @@ public:
   SimData* DataT;
   QTimer* Timer;
   PlanesWork(HANDLE hSimConnect);
+  MainLogic* mainlogic = NULL;
   double inThrottle() { return _inThrottle; };
   double minInThrottle() { return -3277; };
   double maxInThrottle() { return 16383; };
+
+  double NPitch() { return _NPitch * 1000.0; };
+  double minNPitch() { return -15; };
+  double maxNPitch() { return 15; };
+
+  double Pitch() { return _Pitch * 1000.0; };
+  double minPitch() { return -15; };
+  double maxPitch() { return 15; };
 
   double inAileron() { return _inAileron; };
   double minInAileron() { return -16383; };
@@ -128,7 +159,6 @@ public:
   double minGSpeed() { return 0; };
   double maxGSpeed() { return 30 / 35 * 16383; };
 
-
   double outThrottle() { return _outThrottle; };
   double minOutThrottle() { return -3277; };
   double maxOutThrottle() { return 16383; };
@@ -144,6 +174,14 @@ public:
   double outRudder() { return _outRudder; };
   double minOutRudder() { return -16383; };
   double maxOutRudder() { return 16383; };
+
+  double DPitch() { return _DPitch * 1000.0; };
+  double minDPitch() { return -15; };
+  double maxDPitch() { return 15; };
+
+  double VS() { return _VS * 8.0; };
+  double minVS() { return -2000; };
+  double maxVS() { return 2000; };
 
   void setInThrottle(double inThrottle) { _inThrottle = inThrottle; TTAS = 0; };
   bool sourceThrottle() { return _sourceThrottle; };
@@ -172,6 +210,10 @@ public:
   void setGSpeed(double GSpeed) { _GSpeed = GSpeed / 16383 * 35; TTAS = 3; };
   bool sourceGSpeed() { return _sourceGSpeed; };
   void setSourceGSpeed(bool sourceGSpeed) { _sourceGSpeed = sourceGSpeed; };
+
+  void setNPitch(double NPitch) { _NPitch = NPitch / 1000.0; };
+  bool sourceNPitch() { return _sourceNPitch; };
+  void setSourceNPitch(bool sourceNPitch) { _sourceNPitch = sourceNPitch; };
 
   void setPInThrottleOutThrottle(double PInThrottleOutThrottle) { _PInThrottleOutThrottle = PInThrottleOutThrottle; };
   double PInThrottleOutThrottle() { return _PInThrottleOutThrottle; };
@@ -222,6 +264,13 @@ public:
   void setDGSpeedAccseleration(double DGSpeedAccseleration) { _DGSpeedAccseleration = DGSpeedAccseleration; };
   double DGSpeedAccseleration() { return _DGSpeedAccseleration; };
 
+  void setPNPitchPitch(double PNPitchPitch) { _PNPitchPitch = PNPitchPitch; };
+  double PNPitchPitch() { return _PNPitchPitch; };
+  void setINPitchPitch(double INPitchPitch) { _INPitchPitch = INPitchPitch; };
+  double INPitchPitch() { return _INPitchPitch; };
+  void setDNPitchPitch(double DNPitchPitch) { _DNPitchPitch = DNPitchPitch; };
+  double DNPitchPitch() { return _DNPitchPitch; };
+
   void setPGSpeedTrust(double PGSpeedTrust) { _PGSpeedTrust = PGSpeedTrust; };
   double PGSpeedTrust() { return _PGSpeedTrust; };
   void setIGSpeedTrust(double IGSpeedTrust) { _IGSpeedTrust = IGSpeedTrust; };
@@ -244,7 +293,12 @@ private:
   double _Trust = 0;
   double _CurrTrust = 0;
   bool _sourceGSpeed = true;
+  bool _sourceNPitch = true;
   double _GSpeed = 0;
+  double _NPitch = 0;
+  double _Pitch = 0;
+  double _DPitch = 0;
+  double _VS = 0;
   double _CurrGSpeed = 0;
   bool _sourceAccseleration = true;
   double _Accseleration = 0;
@@ -296,6 +350,10 @@ private:
   double _PGSpeedAccseleration = 2.5;
   double _IGSpeedAccseleration = 0.1;
   double _DGSpeedAccseleration = 0.5;
+
+  double _PNPitchPitch = 2.5;
+  double _INPitchPitch = 0.1;
+  double _DNPitchPitch = 0.5;
 
   HANDLE HSimConnect;
   

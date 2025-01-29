@@ -1,4 +1,5 @@
 #include "PlanesWork.h"
+#include "mainlogic.h"
 
 PlanesWork::PlanesWork(HANDLE hSimConnect) : HSimConnect(hSimConnect) {
 	Timer = new QTimer(this);
@@ -12,6 +13,19 @@ void PlanesWork::TimerProc() {
 	_CurrTrust = DataT->GData.ENG_N1_RPM1;
 	_CurrAccseleration = DataT->GData.ACCELERATION_BODY_Z * 1.6878098571011956838728492271799;
 	_CurrGSpeed = DataT->GData.GROUND_VELOCITY;
+
+	
+	_Pitch = -DataT->GData.PLANE_PITCH_DEGREES;
+
+	//_DPitch = -DataT->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value;
+	if (mainlogic != NULL) {
+		_NPitch = -mainlogic->NPitch;
+	}
+	else {
+		_NPitch = -DataT->AllData[A32NX_FLIGHT_DIRECTOR_PITCH].Value + _Pitch;
+	}
+	_DPitch = _NPitch - _Pitch;
+	_VS = DataT->GData.VERTICAL_SPEED;
 	GSpeedSet(0);
 	//AccselerationSet(0, 10);
 	TrustSet(0, 10);
@@ -125,6 +139,7 @@ double PlanesWork::PID(double dt, double err, double kp, double ki, double kd, d
 
 void PlanesWork::ThrottleSet(double pos, DWORD speed) { // Transfer to mainlogic and logarifmic set
 	if (TTAS >= SET_THROTTLE) {
+		
 		static double  time_constant = 1.0;
 		static double  prev_in = 0.0;
 		static double  prev_out = 0.0;
@@ -228,8 +243,11 @@ void PlanesWork::RudderSet(double pos, DWORD speed) { // Transfer to mainlogic a
 		}
 		rudder = _outRudder;
 		//_outThrottle = _inThrottle;
-		if (DataT->GData.INDICATED_ALTITUDE < 3000) {
+		if (DataT->GData.PLANE_ALT_ABOVE_GROUND < 20) {
 			emit SendEvent(KEY_RUDDER_SET, int(_outRudder));
+		}
+		else if (DataT->GData.PLANE_ALT_ABOVE_GROUND > 20.0 && DataT->GData.PLANE_ALT_ABOVE_GROUND < 100.0) {
+			emit SendEvent(KEY_RUDDER_SET, int(0));
 		}
 	}
 }
@@ -350,82 +368,84 @@ void PlanesWork::setThrust(FLOAT thrust) {
 
 
 void PlanesWork::GSpeedSet(double pos, double Tr) {
-	if (TTAS >= SET_GSPEED) {
-		double speed = 0;
-		//if (DataT->GData.ATC_CLEARED_TAXI != 2 || DataT->GData.ATC_CLEARED_TAKEOF == 1 || DataT->GData.ATC_CLEARED_LANDING == 1) {
+	if (_Trust != 40) {
+		if (TTAS >= SET_GSPEED) {
+			double speed = 0;
+			//if (DataT->GData.ATC_CLEARED_TAXI != 2 || DataT->GData.ATC_CLEARED_TAKEOF == 1 || DataT->GData.ATC_CLEARED_LANDING == 1) {
 			speed = _GSpeed;
-		//}
-		//else {
-		//	speed = -5;
-		//}
-		double brakes;
-		double N1L = DataT->GData.TURB_ENG_N11;
-		double GS = DataT->GData.GROUND_VELOCITY;
-		static clock_t startTime;
-		static double thrust = N1L;
-		static double throttle = 0;
-		static double startSpeed = GS;
-		clock_t endTime = clock() + 1;
-		double endSpeed = GS;
-		double timeOff = endTime - startTime;
-		double speedOff = endSpeed - startSpeed;
-		double speedA = (timeOff / 1000) * speedOff;
-		double dS = speed - endSpeed;
-		double dA = (dS / 5) - speedA;
-		double dThrust = dA;
+			//}
+			//else {
+			//	speed = -5;
+			//}
+			double brakes;
+			double N1L = DataT->GData.TURB_ENG_N11;
+			double GS = DataT->GData.GROUND_VELOCITY;
+			static clock_t startTime;
+			static double thrust = N1L;
+			static double throttle = 0;
+			static double startSpeed = GS;
+			clock_t endTime = clock() + 1;
+			double endSpeed = GS;
+			double timeOff = endTime - startTime;
+			double speedOff = endSpeed - startSpeed;
+			double speedA = (timeOff / 1000) * speedOff;
+			double dS = speed - endSpeed;
+			double dA = (dS / 5) - speedA;
+			double dThrust = dA;
 
 
-		if (dThrust < -5) {
-			dThrust = -5;
-		}
-		else if (dThrust > 5) {
-			dThrust = 5;
-		}
-		if ((speedA < -0.3) && (speedA > -0.4)) {
-			dThrust = dThrust + 2;
-		}
-		else if ((speedA > 0.3) && (speedA < 0.4)) {
-			dThrust = dThrust - 2;
-		}
-		if (speedA < -0.4) {
-			dThrust = dThrust + 5;
-		}
-		else if (speedA >= 0.4) {
-			dThrust = dThrust - 5;
-		}
-		thrust = N1L + dThrust;
-		bool thrustSet = FALSE;
-		if (thrust < 21) {
-			thrust = 21;
-		}
-		else if (thrust > 100) {
-			thrust = 100;
-		}
-		if (_GSpeed <= 0) {
-			_Trust = 0;
-		}
-		//setThrust(thrust);
-		setThrust(0);
-		thrustSet = TRUE;
-		startTime = clock();
-		startSpeed = GS;
-
-		if (GS > (speed + 2)) {
-			double brake = (GS - speed) / 70.0;
+			if (dThrust < -5) {
+				dThrust = -5;
+			}
+			else if (dThrust > 5) {
+				dThrust = 5;
+			}
+			if ((speedA < -0.3) && (speedA > -0.4)) {
+				dThrust = dThrust + 2;
+			}
+			else if ((speedA > 0.3) && (speedA < 0.4)) {
+				dThrust = dThrust - 2;
+			}
+			if (speedA < -0.4) {
+				dThrust = dThrust + 5;
+			}
+			else if (speedA >= 0.4) {
+				dThrust = dThrust - 5;
+			}
+			thrust = N1L + dThrust;
+			bool thrustSet = FALSE;
+			if (thrust < 21) {
+				thrust = 21;
+			}
+			else if (thrust > 100) {
+				thrust = 100;
+			}
+			if (_GSpeed <= 0) {
+				_Trust = 0;
+			}
+			//setThrust(thrust);
 			setThrust(0);
-			_Trust = 0;
-			brakes = brake;
-		}
-		else if (GS < (speed)) {
-			brakes = 0.0;
-		}
-		if (_GSpeed >= 0) {
-			emit SendEvent(KEY_AXIS_LEFT_BRAKE_SET, brakes * 32768 - 16383);
-			emit SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, brakes * 32768 - 16383);
-		}
-		else {
-			emit SendEvent(KEY_AXIS_LEFT_BRAKE_SET, (brakes+0.05) * 32768 - 16383);
-			emit SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, (brakes+0.05) * 32768 - 16383);
+			thrustSet = TRUE;
+			startTime = clock();
+			startSpeed = GS;
+
+			if (GS > (speed + 2)) {
+				double brake = (GS - speed) / 70.0;
+				setThrust(0);
+				_Trust = 0;
+				brakes = brake;
+			}
+			else if (GS < (speed)) {
+				brakes = 0.0;
+			}
+			if (_GSpeed >= 0) {
+				emit SendEvent(KEY_AXIS_LEFT_BRAKE_SET, brakes * 32768 - 16383);
+				emit SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, brakes * 32768 - 16383);
+			}
+			else {
+				emit SendEvent(KEY_AXIS_LEFT_BRAKE_SET, (brakes + 0.05) * 32768 - 16383);
+				emit SendEvent(KEY_AXIS_RIGHT_BRAKE_SET, (brakes + 0.05) * 32768 - 16383);
+			}
 		}
 	}
 }

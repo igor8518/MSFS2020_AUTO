@@ -814,10 +814,10 @@ SimData::SimData(HANDLE hSimConnect, WasmModuleClientData clientData, WasmModule
 	AddData(HSimConnect, CIRCUIT_SWITCH_ON80);
 	AddData(HSimConnect, EXTERNAL_POWER_AVAILABLE1);
 	AddData(HSimConnect, EXTERNAL_POWER_ON1);
-	//AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
+	AddData(HSimConnect, FUELSYSTEM_VALVE_SWITCH9);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH3);
-	//AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH2);
+	AddData(HSimConnect, FUELSYSTEM_VALVE_SWITCH10);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH5);
 	AddData(HSimConnect, FUELSYSTEM_PUMP_SWITCH6);
 	AddData(HSimConnect, LIGHT_POTENTIOMETER7);

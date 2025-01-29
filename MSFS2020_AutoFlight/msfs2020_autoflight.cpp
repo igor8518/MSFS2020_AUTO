@@ -304,8 +304,8 @@ void MSFS2020_AutoFlight::SelectRow(int Row) {
 	ui->tableView->selectRow(Row);
 }
 
-void MSFS2020_AutoFlight::on_ChangeRow(QItemSelection Row, QItemSelection prev) {
-	emit ChangeCurrentLegIndex(Row.indexes().at(0).row() - 1);	
+void MSFS2020_AutoFlight::on_ChangeRow(int Row, int Col) {
+	emit ChangeCurrentLegIndex(Row - 1);	
 }
 
 void MSFS2020_AutoFlight::on_sb1P(double val) {
@@ -362,6 +362,11 @@ void MSFS2020_AutoFlight::on_cb3curr(QString text) {
 
 void MSFS2020_AutoFlight::on_vs1(int pos) {
   planesWork->setProperty(cb1Text.c_str(), pos);
+}
+
+void MSFS2020_AutoFlight::on_alternateChange(bool check)
+{
+	emit send_alternateChange(check);
 }
 
 
